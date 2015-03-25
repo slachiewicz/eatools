@@ -1,5 +1,12 @@
 package no.eatools.diagramgen;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import no.eatools.util.EaApplicationProperties;
+
 import org.apache.log4j.Logger;
 import org.sparx.Collection;
 import org.sparx.Connector;
@@ -10,13 +17,6 @@ import org.sparx.Element;
 import org.sparx.Package;
 import org.sparx.Project;
 import org.sparx.Repository;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import no.eatools.util.EaApplicationProperties;
 
 
 /**
@@ -82,9 +82,12 @@ public class EaRepo {
      * Closes the Enterprise Architect model repository.
      */
     public void close() {
-        log.info("Closing repository: " + reposFile.getAbsolutePath());
-        repository.CloseFile();
-        repository.Exit();
+        if(isOpen && repository != null) {
+            log.info("Closing repository: " + reposFile.getAbsolutePath());
+            repository.CloseFile();
+            repository.Exit();
+            repository = null;
+        }
         isOpen = false;
     }
 

@@ -1,17 +1,18 @@
 package no.eatools.diagramgen;
 
-import no.eatools.util.EaApplicationProperties;
-import no.eatools.util.IntCounter;
-import no.eatools.util.SystemProperties;
-import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
-import org.sparx.Diagram;
-import org.sparx.Package;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import no.eatools.util.EaApplicationProperties;
+import no.eatools.util.IntCounter;
+import no.eatools.util.SystemProperties;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+import org.sparx.Diagram;
+import org.sparx.Package;
 
 
 /**
@@ -69,8 +70,8 @@ public class EaDiagram {
             return null;
         }
         for (Diagram diagram : pkg.GetDiagrams()) {
-            //log.debug("Diagram name = " + diagram.GetName());
-            if (diagram.GetName().equals(diagramName)) {
+            if (diagram.GetName().equals(diagramName) || diagramName.equals(Integer.valueOf(diagram.GetDiagramID()).toString())) {
+                log.info("Diagram name = " + diagram.GetName() + " ID: " + diagram.GetDiagramID());
                 return new EaDiagram(eaRepo, diagram, getPackagePath(eaRepo, pkg));
             }
         }

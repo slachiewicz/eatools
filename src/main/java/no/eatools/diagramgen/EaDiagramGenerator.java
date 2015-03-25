@@ -1,10 +1,13 @@
 package no.eatools.diagramgen;
 
+import java.io.File;
+import java.util.StringTokenizer;
+
 import no.eatools.util.EaApplicationProperties;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import java.io.File;
 
 /**
  * Utility to be used from the command line to output all diagrams in an EA repo
@@ -16,7 +19,26 @@ import java.io.File;
 public class EaDiagramGenerator {
     static Log log = LogFactory.getLog(EaDiagramGenerator.class);
 
+    static {
+        try {
+//            System.load("C:/chilkatJava/chilkat.dll");
+            System.out.println("*******************************");
+        } catch (UnsatisfiedLinkError e) {
+            System.err.println("Native code library failed to load.\n" + e);
+            System.exit(1);
+        }
+    }
+
+    private static String diagram;
+
     public static void main(String[] args) {
+        String property = System.getProperty("java.library.path");
+        StringTokenizer parser = new StringTokenizer(property, ";");
+        while (parser.hasMoreTokens()) {
+            System.err.println(parser.nextToken());
+        }
+
+        EaRepo eaRepo = null;
         try {
             String propertyFilename;
             if (args.length > 0) {
@@ -25,10 +47,13 @@ public class EaDiagramGenerator {
             } else {
                 EaApplicationProperties.init();
             }
+            if (args.length > 1) {
+                diagram = args[1];
+            }
             File modelFile = new File(EaApplicationProperties.EA_PROJECT.value());
-            EaRepo eaRepo = new EaRepo(modelFile);
+            eaRepo = new EaRepo(modelFile);
             eaRepo.open();
-            if (!EaApplicationProperties.EA_DIAGRAM_TO_GENERATE.value().equals("")) {
+            if (!EaApplicationProperties.EA_DIAGRAM_TO_GENERATE.value().equals("") || diagram != null) {
                 generateSpecificDiagram(eaRepo);
             } else {
                 // geenrate all diagrams
@@ -37,15 +62,28 @@ public class EaDiagramGenerator {
             }
             eaRepo.close();
         } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e);
             String msg = "An error occurred. This might be caused by an incorrect diagramgen-repo connect string.\n" +
                     "Verify that the connect string in the ea.application.properties file is the same as\n" +
                     "the connect string that you can find in Enterprise Architect via the File->Open Project dialog";
             System.out.println(msg);
+        } catch (Throwable t) {
+            System.err.println("An error occurred " + t);
+        } finally {
+            if (eaRepo != null) {
+                eaRepo.close();
+            }
         }
     }
 
     private static void generateSpecificDiagram(EaRepo eaRepo) {
-        String diagramName = EaApplicationProperties.EA_DIAGRAM_TO_GENERATE.value();
+        String diagramName;
+        if (StringUtils.isNotBlank(diagram)) {
+            diagramName = diagram;
+        } else {
+            diagramName = EaApplicationProperties.EA_DIAGRAM_TO_GENERATE.value();
+        }
         EaDiagram diagram = EaDiagram.findDiagram(eaRepo, diagramName);
         if (diagram != null) {
             diagram.writeImageToFile();
