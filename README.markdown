@@ -3,7 +3,7 @@ EaDiagramGenerator - a tool for exporting diagrams from Sparx Enterprise Archite
 
 This prototype software can be used to extract the UML models from the
 [Sparx Enterprise Architect](http://www.sparxsystems.com/products/ea/index.html) UML diagramming tool via it's Java
-API (`eaapi.jar`). We developed the software as part of an enterprise architecture documentation project where we 
+API (`eaapi.jar`). We developed the software as part of an enterprise architecture documentation project where we
 wanted to combine written documentation in a [Confluence](http://www.atlassian.com/software/confluence) wiki with
 architecture models in Enterprise Architect. Via the EaDiagramGenerator software we were able to:
 
@@ -18,7 +18,7 @@ Take a look at the slides for more details about how we used used EaDiagramGener
 Enterprise Architect.
 
 We are not planning to maintain or do more development on this code, but anyone who finds the code useful is welcome to
-do whatever they want with it. 
+do whatever they want with it.
 
 How to build and run EaDiagramGenerator for generating diagrams
 ---------------------------------------------------------------
@@ -53,7 +53,7 @@ Create a properties file with details about the EA repo and UML model that you w
 example file is provided (`ea.application.properties`). Update the property file with your data, and run the diagram
 generator as follows:
 
-        $ java -jar diagramgen.jar <properties file>
+        $ java -jar target/diagramgen.jar <properties file>
 
 
 ### Links to resources
