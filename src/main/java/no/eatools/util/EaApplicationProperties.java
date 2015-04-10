@@ -1,11 +1,11 @@
 package no.eatools.util;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * This class handles the properties that can be used to configure the EA utilities. The property file can:
@@ -119,9 +119,9 @@ public enum EaApplicationProperties {
     private static void loadPropertiesFromFile(File file) {
         try {
             applicationProperties.load(new FileInputStream(file));
-            log.info("Using properties from " + file.getName());
+            log.info("Using properties from " + file.getAbsolutePath());
         } catch (Exception e) {
-            log.info("Unable to load properties from: " + file.getName());
+            log.info("Unable to load properties from: " + file.getAbsolutePath());
         }
     }
 

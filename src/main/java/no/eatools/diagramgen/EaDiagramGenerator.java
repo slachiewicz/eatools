@@ -56,7 +56,7 @@ public class EaDiagramGenerator {
             if (!EaApplicationProperties.EA_DIAGRAM_TO_GENERATE.value().equals("") || diagram != null) {
                 generateSpecificDiagram(eaRepo);
             } else {
-                // geenrate all diagrams
+                // generate all diagrams
                 int count = EaDiagram.generateAll(eaRepo);
                 log.info("Generated " + count + " diagrams");
             }

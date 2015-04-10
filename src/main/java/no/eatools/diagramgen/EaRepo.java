@@ -3,7 +3,9 @@ package no.eatools.diagramgen;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import no.eatools.util.EaApplicationProperties;
 
@@ -17,7 +19,6 @@ import org.sparx.Element;
 import org.sparx.Package;
 import org.sparx.Project;
 import org.sparx.Repository;
-
 
 /**
  * Utilities for use with the EA (Enterprise Architect DLL).
@@ -84,15 +85,16 @@ public class EaRepo {
     public void close() {
         if(isOpen && repository != null) {
             log.info("Closing repository: " + reposFile.getAbsolutePath());
+            repository.SetFlagUpdate(true);
             repository.CloseFile();
-            repository.Exit();
+//            repository.Exit();
             repository = null;
         }
         isOpen = false;
     }
 
     /**
-     * Looks for a subpackage with a given unqualified name whithin a given EA package. The
+     * Looks for a subpackage with a given unqualified name within a given EA package. The
      * search is case sensitive. The first matching package ir returned performing a breadth-first search.
      * If more than one package with the same unqualified name exists within the repos, the result may
      * be ambiguous.
@@ -181,16 +183,15 @@ public class EaRepo {
     }
 
     /**
-     * Generates XSD schema file for the package if its UML stereotye is <<XSDschema>>,
+     * Generates XSD schema file for the package if its UML stereotype is <<XSDschema>>,
      * otherwise a subdirectory corresponding to the UML package is created in
-     * directory and the method is called reciursively for all its subpackages.
+     * directory and the method is called recursively for all its subpackages.
      *
      * @param directory The file system directory for generation
      * @param pkg       The EA model package to process
-     * @param eaProj    Reference to the EA Model project in the repository
      */
-    public void generateXSD(File directory, Package pkg, Project eaProj, String fileSeparator) {
-        ensureRepoIsOpen();
+    public void generateXSD(File directory, Package pkg, String fileSeparator) {
+        Project eaProj = getProject();
 
         String stereotype = pkg.GetStereotypeEx();
         String pkgString = pkg.GetName();
@@ -208,10 +209,34 @@ public class EaRepo {
 
             // Loop through all subpackages in EA model pkg
             for (Package aPackage : pkg.GetPackages()) {
-                generateXSD(f, aPackage, eaProj, fileSeparator);
+                generateXSD(f, aPackage, fileSeparator);
             }
         }
     }
+
+    public Element findXsdType(Package pkg, String xsdTypeName) {
+        String stereotype = pkg.GetStereotypeEx();
+        String pkgString = pkg.GetName();
+
+        if (stereotype.equals(xsdSchemaStereotype)) {
+            log.info("Looking for " + xsdTypeName + " inside  package " + pkgString);
+            for (Element element : pkg.GetElements()) {
+                if(element.GetName().equals(xsdTypeName)) {
+                    return element;
+                }
+            }
+        } else {
+            // Loop through all subpackages in EA model pkg
+            for (Package aPackage : pkg.GetPackages()) {
+                Element element = findXsdType(aPackage, xsdTypeName);
+                if (element != null) {
+                    return element;
+                }
+            }
+        }
+        return null;
+    }
+
 
     /**
      * Find UML Component elements inside a specified UML Package.
@@ -575,7 +600,7 @@ public class EaRepo {
     }
 
     /**
-     * Just an early testmethod to display the internal EA datatypes
+     * Just an early test method to display the internal EA data types
      *
      * @return
      */
@@ -595,6 +620,21 @@ public class EaRepo {
         return sb.toString();
     }
 
+    public List<String> findAllMetaTypesInModel() {
+        Set<String> result = new HashSet<String>();
+        findMetaTypesInPackage(getRootPackage(), result);
+        return new ArrayList<String>(result);
+    }
+
+    private void findMetaTypesInPackage(Package pkg, Set<String> result) {
+        for (Element element : pkg.GetElements()) {
+            result.add(element.GetMetaType());
+        }
+        for (Package aPackage : pkg.GetPackages()) {
+            findMetaTypesInPackage(aPackage, result);
+        }
+    }
+
     public DiagramObject findOrCreateDiagramObject(Package pkg, Diagram diagram, Element reposElement) {
         for (DiagramObject dObject : diagram.GetDiagramObjects()) {
             if (dObject.GetElementID() == reposElement.GetElementID()) {
@@ -609,5 +649,10 @@ public class EaRepo {
         pkg.GetDiagrams().Refresh();
         pkg.Update();
         return diagramObject;
+    }
+
+    @Override
+    public String toString() {
+        return reposFile.getAbsolutePath() + " " + this.repository.toString();
     }
 }

@@ -1,9 +1,10 @@
 package no.eatools.diagramgen;
 
-import junit.framework.TestCase;
+import java.io.File;
+
 import no.eatools.util.EaApplicationProperties;
 
-import java.io.File;
+import junit.framework.TestCase;
 
 /**
  * Helper class that takes care of standard JUnit things
@@ -13,6 +14,7 @@ public abstract class AbtractEaTestCase extends TestCase {
 
     protected void setUp() throws Exception {
         super.setUp();
+        EaApplicationProperties.init("test.ea.application.properties");
         File modelFile = new File(EaApplicationProperties.EA_PROJECT.value());
         eaRepo = new EaRepo(modelFile);
         eaRepo.open();
