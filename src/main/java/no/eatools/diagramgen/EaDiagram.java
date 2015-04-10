@@ -69,6 +69,9 @@ public class EaDiagram {
         if (pkg == null) {
             return null;
         }
+//        for (Element element : pkg.GetElements()) {
+//            element.GetAttributes()
+//        }pkg.GetElements()
         for (Diagram diagram : pkg.GetDiagrams()) {
             if (diagram.GetName().equals(diagramName) || diagramName.equals(Integer.valueOf(diagram.GetDiagramID()).toString())) {
                 log.info("Diagram name = " + diagram.GetName() + " ID: " + diagram.GetDiagramID());
@@ -99,7 +102,11 @@ public class EaDiagram {
 
     private static String makeWebFriendlyFilename(String s) {
         s = StringUtils.replaceChars(s, ' ', '_');
-        s = StringUtils.replaceChars(s, '/', '-');
+        if(SystemProperties.PATH_SEPARATOR.value().equals("/")) {
+            s = StringUtils.replaceChars(s, '\\', '-');
+        } else if(SystemProperties.PATH_SEPARATOR.value().equals("\\")) {
+            s = StringUtils.replaceChars(s, '/', '-');
+        }
         /* Replace Norwegian characters with alternatives */
         s = StringUtils.replace(s, "Æ", "ae");
         s = StringUtils.replace(s, "Ø", "oe");
@@ -122,7 +129,7 @@ public class EaDiagram {
      * Find all UML diagrams inside a specific Package. Non-recursive, searches the top-level (given)
      * package only.
      *
-     * @param pkg the Package to serach in.
+     * @param pkg the Package to search in.
      * @return
      */
     public static List<EaDiagram> findDiagramsInPackage(EaRepo eaRepo, Package pkg) {
@@ -158,8 +165,12 @@ public class EaDiagram {
         File f = new File(getAbsolutePathName());
         f.mkdirs();
         String diagramFileName = getAbsoluteFilename();
+        File file = new File(diagramFileName);
         if (eaRepo.getProject().PutDiagramImageToFile(eaDiagram.GetDiagramGUID(), diagramFileName, imageFileFormat.isRaster())) {
             log.info("Diagram generated at: " + diagramFileName);
+            if (! file.canRead()) {
+                log.error("Unable to read file " + file.getAbsolutePath());
+            }
             return true;
         } else {
             log.error("Unable to create diagram:" + diagramFileName);
@@ -172,7 +183,14 @@ public class EaDiagram {
     }
 
     public String getAbsolutePathName() {
-        return makeWebFriendlyFilename(EaApplicationProperties.EA_DOC_ROOT_DIR.value() + logicalPathname);
+        String dirRootString = EaApplicationProperties.EA_DOC_ROOT_DIR.value();
+        File dirRoot = new File(dirRootString);
+        if(! dirRoot.isAbsolute()) {
+            File cwd = new File(SystemProperties.USER_DIR.value());
+            log.info(dirRootString + " is not a root directory. Using " + cwd);
+            dirRootString = cwd + SystemProperties.FILE_SEPARATOR.value() + dirRootString;
+        }
+        return dirRootString + makeWebFriendlyFilename(logicalPathname);
     }
 
     public String getFilename() {

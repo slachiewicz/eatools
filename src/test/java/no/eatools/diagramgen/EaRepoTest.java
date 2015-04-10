@@ -6,6 +6,9 @@ package no.eatools.diagramgen;
  * @date 23.okt.2008
  */
 
+import java.util.Date;
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sparx.Attribute;
@@ -15,9 +18,6 @@ import org.sparx.Element;
 import org.sparx.ObjectType;
 import org.sparx.Package;
 import org.sparx.TaggedValue;
-
-import java.util.Date;
-import java.util.List;
 
 public class EaRepoTest extends AbtractEaTestCase {
     private static final Log log = LogFactory.getLog(EaRepoTest.class);
@@ -394,5 +394,9 @@ public class EaRepoTest extends AbtractEaTestCase {
         assertNotNull(d);
         assertEquals(d.GetName(), "XyZ Diagram");
         assertEquals(d.GetType(), EaDiagramType.INTERACTION_OVERVIEW.toString());
+    }
+
+    public void testFindAllMetaTypesInModel() throws Exception {
+        log.debug(eaRepo.toString() + " has metatypes: " + eaRepo.findAllMetaTypesInModel());
     }
 }

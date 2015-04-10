@@ -3,6 +3,8 @@
 target
 
 # Package Files #
-*.jar
+# *.jar
 *.war
 *.ear
+.idea/*
+/.idea/*
