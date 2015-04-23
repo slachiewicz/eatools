@@ -3,6 +3,7 @@ package no.eatools.diagramgen;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -49,7 +50,7 @@ public class EaRepo {
     private File reposFile;
     private Repository repository = null;
     private boolean isOpen = false;
-
+    private String reposString;
 
     /**
      * @param repositoryFile local file or database connection string
@@ -65,10 +66,17 @@ public class EaRepo {
         if (isOpen) {
             return;
         }
-
-        log.info("Opening model repository: " + reposFile.getAbsolutePath());
+        reposString = reposFile.getAbsolutePath();
+        String[] reposStrings = reposString.split("db:");
+        if(reposStrings.length >= 2) {
+            reposString = reposStrings[1];
+        }
+        log.info("Opening model repository: " + reposString);
+        log.debug("Before new repos " + new Date());
         repository = new Repository();
-        repository.OpenFile(reposFile.getAbsolutePath());
+        log.debug("After new repos " + new Date());
+        repository.OpenFile(reposString);
+        log.debug("After open " + new Date());
         isOpen = true;
     }
 
@@ -84,10 +92,10 @@ public class EaRepo {
      */
     public void close() {
         if(isOpen && repository != null) {
-            log.info("Closing repository: " + reposFile.getAbsolutePath());
+            log.info("Closing repository: " + reposString);
             repository.SetFlagUpdate(true);
             repository.CloseFile();
-//            repository.Exit();
+            repository.Exit();
             repository = null;
         }
         isOpen = false;
@@ -134,7 +142,7 @@ public class EaRepo {
     }
 
     /**
-     * Looks for a subpackage with a given unqualified name whithin a given EA package. The
+     * Looks for a subpackage with a given unqualified name within a given EA package. The
      * search is case sensitive. The first matching package ir returned performing a breadth-first search.
      * If more than one package with the same unqualified name exists within the repos, the result may
      * be ambiguous. The search is always performed from the root of the repos.
@@ -416,8 +424,11 @@ public class EaRepo {
                 return element;
             }
         }
-
         return null;
+    }
+
+    public Diagram findDiagramById(int id) {
+        return repository.GetDiagramByID(id);
     }
 
     /**
