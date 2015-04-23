@@ -134,7 +134,7 @@ public class EaDiagram {
      */
     public static List<EaDiagram> findDiagramsInPackage(EaRepo eaRepo, Package pkg) {
         if (pkg == null) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<EaDiagram> result = new ArrayList<EaDiagram>();
         for (Diagram d : pkg.GetDiagrams()) {
@@ -199,5 +199,11 @@ public class EaDiagram {
 
     public String getAbsoluteFilename() {
         return getAbsolutePathName() + SystemProperties.FILE_SEPARATOR.value() + getFilename();
+    }
+
+    public static EaDiagram findDiagramById(EaRepo eaRepo, int diagramId) {
+        Diagram diagram = eaRepo.findDiagramById(diagramId);
+        String packagePath = getPackagePath(eaRepo, eaRepo.findPackageByID(diagram.GetPackageID()));
+        return new EaDiagram(eaRepo, diagram, packagePath);
     }
 }

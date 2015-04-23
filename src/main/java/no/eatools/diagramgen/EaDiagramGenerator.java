@@ -1,6 +1,7 @@
 package no.eatools.diagramgen;
 
 import java.io.File;
+import java.util.Date;
 import java.util.StringTokenizer;
 
 import no.eatools.util.EaApplicationProperties;
@@ -52,7 +53,9 @@ public class EaDiagramGenerator {
             }
             File modelFile = new File(EaApplicationProperties.EA_PROJECT.value());
             eaRepo = new EaRepo(modelFile);
+            System.out.println(new Date());
             eaRepo.open();
+            System.out.println(new Date());
             if (!EaApplicationProperties.EA_DIAGRAM_TO_GENERATE.value().equals("") || diagram != null) {
                 generateSpecificDiagram(eaRepo);
             } else {
@@ -84,7 +87,13 @@ public class EaDiagramGenerator {
         } else {
             diagramName = EaApplicationProperties.EA_DIAGRAM_TO_GENERATE.value();
         }
-        EaDiagram diagram = EaDiagram.findDiagram(eaRepo, diagramName);
+        EaDiagram diagram;
+        if(StringUtils.isNumeric(diagramName)) {
+            int diagramId = Integer.parseInt(diagramName);
+            diagram = EaDiagram.findDiagramById(eaRepo, diagramId);
+        } else {
+            diagram = EaDiagram.findDiagram(eaRepo, diagramName);
+        }
         if (diagram != null) {
             diagram.writeImageToFile();
         } else {
