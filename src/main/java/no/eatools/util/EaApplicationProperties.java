@@ -33,7 +33,8 @@ public enum EaApplicationProperties {
     EA_ROOTPKG,
     EA_DOC_ROOT_DIR,
     EA_LOGLEVEL,
-    EA_DIAGRAM_TO_GENERATE;
+    EA_DIAGRAM_TO_GENERATE,
+    EA_DIAGRAM_URL_FILE;
 
     private static final Log log = LogFactory.getLog(EaApplicationProperties.class);
 

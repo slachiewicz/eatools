@@ -1,6 +1,9 @@
 package no.eatools.diagramgen;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -9,6 +12,7 @@ import no.eatools.util.EaApplicationProperties;
 import no.eatools.util.IntCounter;
 import no.eatools.util.SystemProperties;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.sparx.Diagram;
@@ -170,6 +174,23 @@ public class EaDiagram {
             log.info("Diagram generated at: " + diagramFileName);
             if (! file.canRead()) {
                 log.error("Unable to read file " + file.getAbsolutePath());
+            } else {
+                File urlFile = null;
+                String urlBase = "";
+                try {
+                    URL diagramUrl = file.toURI().toURL();
+                    log.info("Diagram url " + diagramUrl);
+                    urlBase = diagramUrl.toString().replace(diagramUrl.getProtocol(), "")
+                            .replace(EaApplicationProperties.EA_DOC_ROOT_DIR.value(), "")
+                            .replace(":", "");
+                    log.info("-> URLBase: " + urlBase);
+                    urlFile = new File(EaApplicationProperties.EA_DIAGRAM_URL_FILE.value());
+                    FileUtils.write(urlFile, urlBase);
+                } catch (MalformedURLException e) {
+                    log.error("Unable to create url from file " + urlBase);
+                } catch (IOException e) {
+                    log.error("Unable to write url to file " + urlFile.getAbsolutePath());
+                }
             }
             return true;
         } else {
