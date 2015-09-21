@@ -56,12 +56,19 @@ public class EaDiagramGenerator {
             System.out.println(new Date());
             eaRepo.open();
             System.out.println(new Date());
-            if (!EaApplicationProperties.EA_DIAGRAM_TO_GENERATE.value().equals("") || diagram != null) {
-                generateSpecificDiagram(eaRepo);
+            if (args.length > 2) {
+                System.out.println(args);
+                String pkg = args[2];
+                EaPackage eaPackage = new EaPackage(pkg, eaRepo);
+                eaPackage.generatePackageRelationships();
             } else {
-                // generate all diagrams
-                int count = EaDiagram.generateAll(eaRepo);
-                log.info("Generated " + count + " diagrams");
+                if (!EaApplicationProperties.EA_DIAGRAM_TO_GENERATE.value().equals("") || diagram != null) {
+                    generateSpecificDiagram(eaRepo);
+                } else {
+                    // generate all diagrams
+                    int count = EaDiagram.generateAll(eaRepo);
+                    log.info("Generated " + count + " diagrams");
+                }
             }
             eaRepo.close();
         } catch (Exception e) {
@@ -88,7 +95,7 @@ public class EaDiagramGenerator {
             diagramName = EaApplicationProperties.EA_DIAGRAM_TO_GENERATE.value();
         }
         EaDiagram diagram;
-        if(StringUtils.isNumeric(diagramName)) {
+        if (StringUtils.isNumeric(diagramName)) {
             int diagramId = Integer.parseInt(diagramName);
             diagram = EaDiagram.findDiagramById(eaRepo, diagramId);
         } else {

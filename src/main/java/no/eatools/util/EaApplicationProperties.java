@@ -34,7 +34,16 @@ public enum EaApplicationProperties {
     EA_DOC_ROOT_DIR,
     EA_LOGLEVEL,
     EA_DIAGRAM_TO_GENERATE,
-    EA_DIAGRAM_URL_FILE;
+    EA_DIAGRAM_URL_FILE,
+
+    /**
+     * Only include packages which matches regexp
+     */
+    EA_PACKAGE_FILTER,
+
+    EA_USERNAME,
+
+    EA_PASSWORD;
 
     private static final Log log = LogFactory.getLog(EaApplicationProperties.class);
 
@@ -136,5 +145,9 @@ public enum EaApplicationProperties {
 
     public String key() {
         return Camel.toPropertyName(super.toString());
+    }
+
+    public boolean exists() {
+        return applicationProperties.getProperty(key()) != null;
     }
 }

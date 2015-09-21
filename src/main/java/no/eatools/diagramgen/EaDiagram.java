@@ -18,7 +18,6 @@ import org.apache.log4j.Logger;
 import org.sparx.Diagram;
 import org.sparx.Package;
 
-
 /**
  * A Wrapper class to facilitate  Diagram generation and manipulation.
  *
@@ -30,7 +29,6 @@ public class EaDiagram {
     private ImageFileFormat defaultImageFormat = ImageFileFormat.PNG;
     private EaRepo eaRepo;
     private String logicalPathname;
-
 
     /**
      * Generate all diagrams from the model into the directory path.
@@ -51,6 +49,14 @@ public class EaDiagram {
      * @param diagramCount
      */
     private static void generateAllDiagrams(EaRepo repo, Package pkg, IntCounter diagramCount) {
+        for (Package p : pkg.GetPackages()) {
+            generateAllDiagrams(repo, p, diagramCount);
+        }
+        if (! repo.packageMatch(pkg)) {
+            log.info("--- Skipping package " + pkg.GetName());
+            return;
+        }
+
         List<EaDiagram> diagrams = findDiagramsInPackage(repo, pkg);
         if (diagrams.size() > 0) {
             log.debug("Generating diagrams in package: " + pkg.GetName());
@@ -59,9 +65,6 @@ public class EaDiagram {
                 log.debug("Generating diagrams: " + d.getFilename());
                 d.writeImageToFile();
             }
-        }
-        for (Package p : pkg.GetPackages()) {
-            generateAllDiagrams(repo, p, diagramCount);
         }
     }
 
@@ -106,9 +109,9 @@ public class EaDiagram {
 
     private static String makeWebFriendlyFilename(String s) {
         s = StringUtils.replaceChars(s, ' ', '_');
-        if(SystemProperties.PATH_SEPARATOR.value().equals("/")) {
+        if (SystemProperties.PATH_SEPARATOR.value().equals("/")) {
             s = StringUtils.replaceChars(s, '\\', '-');
-        } else if(SystemProperties.PATH_SEPARATOR.value().equals("\\")) {
+        } else if (SystemProperties.PATH_SEPARATOR.value().equals("\\")) {
             s = StringUtils.replaceChars(s, '/', '-');
         }
         /* Replace Norwegian characters with alternatives */
@@ -161,7 +164,12 @@ public class EaDiagram {
     }
 
     public boolean writeImageToFile() {
-        return writeImageToFile(defaultImageFormat);
+        try {
+            return writeImageToFile(defaultImageFormat);
+        } catch (Exception e) {
+            log.error(e);
+            return false;
+        }
     }
 
     public boolean writeImageToFile(ImageFileFormat imageFileFormat) {
@@ -169,10 +177,15 @@ public class EaDiagram {
         File f = new File(getAbsolutePathName());
         f.mkdirs();
         String diagramFileName = getAbsoluteFilename();
+        if (diagramFileName == null) {
+            // Something went wrong
+            log.error("Unable to create filename from " + logicalPathname);
+            return false;
+        }
         File file = new File(diagramFileName);
         if (eaRepo.getProject().PutDiagramImageToFile(eaDiagram.GetDiagramGUID(), diagramFileName, imageFileFormat.isRaster())) {
             log.info("Diagram generated at: " + diagramFileName);
-            if (! file.canRead()) {
+            if (!file.canRead()) {
                 log.error("Unable to read file " + file.getAbsolutePath());
             } else {
                 File urlFile = null;
@@ -180,8 +193,7 @@ public class EaDiagram {
                 try {
                     URL diagramUrl = file.toURI().toURL();
                     log.info("Diagram url " + diagramUrl);
-                    urlBase = diagramUrl.toString().replace(diagramUrl.getProtocol(), "")
-                            .replace(EaApplicationProperties.EA_DOC_ROOT_DIR.value(), "")
+                    urlBase = diagramUrl.toString().replace(diagramUrl.getProtocol(), "").replace(EaApplicationProperties.EA_DOC_ROOT_DIR.value(), "")
                             .replace(":", "");
                     log.info("-> URLBase: " + urlBase);
                     urlFile = new File(EaApplicationProperties.EA_DIAGRAM_URL_FILE.value());
@@ -206,7 +218,7 @@ public class EaDiagram {
     public String getAbsolutePathName() {
         String dirRootString = EaApplicationProperties.EA_DOC_ROOT_DIR.value();
         File dirRoot = new File(dirRootString);
-        if(! dirRoot.isAbsolute()) {
+        if (!dirRoot.isAbsolute()) {
             File cwd = new File(SystemProperties.USER_DIR.value());
             log.info(dirRootString + " is not a root directory. Using " + cwd);
             dirRootString = cwd + SystemProperties.FILE_SEPARATOR.value() + dirRootString;

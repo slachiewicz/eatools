@@ -35,8 +35,9 @@ public enum EaLinkDirection {
     ;
 
     public static final String SPACED_RIGHT_ARROW = " -> ";
+
     /**
-     * Simple factory for getting safe EAmetType.
+     * Simple factory for getting safe EA metaType.
      *
      * @param metaType
      * @return never null

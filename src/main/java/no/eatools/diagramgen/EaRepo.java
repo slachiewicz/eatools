@@ -7,9 +7,10 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import no.eatools.util.EaApplicationProperties;
-
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.sparx.Collection;
 import org.sparx.Connector;
@@ -20,6 +21,8 @@ import org.sparx.Element;
 import org.sparx.Package;
 import org.sparx.Project;
 import org.sparx.Repository;
+
+import static no.eatools.util.EaApplicationProperties.*;
 
 /**
  * Utilities for use with the EA (Enterprise Architect DLL).
@@ -51,12 +54,20 @@ public class EaRepo {
     private Repository repository = null;
     private boolean isOpen = false;
     private String reposString;
+    private final Pattern packagePattern;
 
     /**
      * @param repositoryFile local file or database connection string
      */
     public EaRepo(File repositoryFile) {
         reposFile = repositoryFile;
+        String packagePatternRegexp = EA_PACKAGE_FILTER.value();
+        if(StringUtils.isNotBlank(packagePatternRegexp)) {
+            packagePattern = Pattern.compile(packagePatternRegexp);
+            log.info("Looking for packages matching [" + packagePatternRegexp + "]" + packagePattern.pattern());
+        } else {
+            packagePattern = null;
+        }
     }
 
     /**
@@ -75,7 +86,16 @@ public class EaRepo {
         log.debug("Before new repos " + new Date());
         repository = new Repository();
         log.debug("After new repos " + new Date());
-        repository.OpenFile(reposString);
+        repository.SetSuppressEADialogs(true);
+        repository.SetSuppressSecurityDialog(true);
+        if(EA_USERNAME.exists() && EA_PASSWORD.exists()) {
+            String username = EA_USERNAME.value();
+            String pwd = EA_PASSWORD.value();
+//            log.debug("Username/pwd : [" + username + "]:[" + pwd + "]" );
+            repository.OpenFile2(reposString, username, StringUtils.trimToEmpty(pwd));
+        } else {
+            repository.OpenFile(reposString);
+        }
         log.debug("After open " + new Date());
         isOpen = true;
     }
@@ -165,6 +185,14 @@ public class EaRepo {
         return repository.GetPackageByID(packageID);
     }
 
+    public Element findElementByID(int elementId) {
+        if (elementId == 0) {
+            return null;
+        }
+        ensureRepoIsOpen();
+        return repository.GetElementByID((elementId));
+    }
+
     /**
      * Find the top level (aka root) package in a given repository.
      * todo check for NPEs.
@@ -174,7 +202,7 @@ public class EaRepo {
      */
     public Package getRootPackage() {
         ensureRepoIsOpen();
-        String rootPkgName = EaApplicationProperties.EA_ROOTPKG.value();
+        String rootPkgName = EA_ROOTPKG.value();
         System.out.println("root package name = " + rootPkgName);
         for (Package aPackage : repository.GetModels()) {
             if (aPackage.GetName().equalsIgnoreCase(rootPkgName)) {
@@ -280,7 +308,7 @@ public class EaRepo {
     }
 
     /**
-     * Find UML Object elemenst inside a specific UML Package.
+     * Find UML Object elements inside a specific UML Package.
      * Non-recursive, searches the top-level (given) package only.
      *
      * @param pack the Package to serach in.
@@ -291,10 +319,10 @@ public class EaRepo {
     }
 
     /**
-     * Find UML Object elemenst inside a specific UML Package.
+     * Find UML Object elements inside a specific UML Package.
      * Non-recursive, searches the top-level (given) package only.
      *
-     * @param pack the Package to serach in.
+     * @param pack the Package to search in.
      * @return
      */
     public List<Element> findComponentInstancesInPackage(Package pack) {
@@ -317,7 +345,7 @@ public class EaRepo {
     public Element findOrCreateObjectInPackage(Package pack, String objectName, Element classifier) {
         ensureRepoIsOpen();
 
-        // We allow for same name on different elements of different type, therfore
+        // We allow for same name on different elements of different type, therefore
         // must also check type
         for (Element element : findObjectsInPackage(pack)) {
             if (element.GetName().equals(objectName)) {
@@ -665,5 +693,21 @@ public class EaRepo {
     @Override
     public String toString() {
         return reposFile.getAbsolutePath() + " " + this.repository.toString();
+    }
+
+    public boolean packageMatch(Package p) {
+        if(p == null) {
+            return false;
+        }
+        if (packagePattern == null) {
+            return true;
+        }
+        Matcher matcher = packagePattern.matcher(p.GetName());
+        if(matcher.matches()) {
+            log.debug("Package match :" + p.GetName());
+            return true;
+        }
+        log.debug("Looking for parent match");
+        return packageMatch(findPackageByID(p.GetParentID()));
     }
 }

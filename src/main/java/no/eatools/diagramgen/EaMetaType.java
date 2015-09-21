@@ -19,6 +19,9 @@ public enum EaMetaType {
     PACKAGE,
     RELATIONSHIP,
     ASSOCIATION,
+    DEPENDENCY,
+    GENERALIZATION,
+    REALIZATION,
     LINK,
     DIAGRAM;
     // etc.
@@ -43,5 +46,9 @@ public enum EaMetaType {
 
     public String toString() {
         return Camel.toCamelCaseString(super.toString());
+    }
+
+    public boolean equals(String stringType) {
+        return toString().equals(stringType);
     }
 }

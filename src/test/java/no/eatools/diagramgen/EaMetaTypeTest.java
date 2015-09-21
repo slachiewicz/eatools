@@ -27,4 +27,10 @@ public class EaMetaTypeTest extends TestCase {
         assertEquals("Component", EaMetaType.COMPONENT.toString());
         assertEquals("TaggedValue", EaMetaType.TAGGED_VALUE.toString());
     }
+
+    public void testEquals() throws Exception {
+        for (EaMetaType metaType : EaMetaType.values()) {
+            assertTrue(metaType.equals(metaType.toString()));
+        }
+    }
 }
