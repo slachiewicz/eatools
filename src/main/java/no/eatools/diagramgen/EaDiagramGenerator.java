@@ -2,13 +2,22 @@ package no.eatools.diagramgen;
 
 import java.io.File;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.StringTokenizer;
 
-import no.eatools.util.EaApplicationProperties;
+import no.bouvet.ohs.args4j.HelpProducer;
+import no.bouvet.ohs.args4j.UsageHelper;
+import no.bouvet.ohs.futil.ResourceFinder;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.Option;
+
+import static no.eatools.util.EaApplicationProperties.*;
 
 /**
  * Utility to be used from the command line to output all diagrams in an EA repo
@@ -17,58 +26,89 @@ import org.apache.commons.logging.LogFactory;
  *
  * @author Per Spilling (per.spilling@objectware.no)
  */
-public class EaDiagramGenerator {
+public class EaDiagramGenerator implements HelpProducer {
+    public static final String PROPERTY_FILE = "propertyFile";
     static Log log = LogFactory.getLog(EaDiagramGenerator.class);
 
-    static {
-        try {
-//            System.load("C:/chilkatJava/chilkat.dll");
-            System.out.println("*******************************");
-        } catch (UnsatisfiedLinkError e) {
-            System.err.println("Native code library failed to load.\n" + e);
-            System.exit(1);
-        }
-    }
+    @Option(name = "-h", usage = "show help")
+    private boolean help = false;
 
-    private static String diagram;
+    @Option(name = "-r", usage = "create relationships of package", metaVar = "package")
+    private String pack = "";
+
+    @Option(name = "-n", usage = "create url for result file only")
+    private boolean urlForFileOnly = false;
+
+    @Option(name = "-p", usage = "Property override [property]=[new value],... ", metaVar = "list of key, value pairs")
+    private Map<String, String> propertyMap = new HashMap<String, String>();
+
+//    private File inputFile = new File(DEFAULT_FILE_STEM + INPUT_EXTENSION);
+
+    @Argument(metaVar = PROPERTY_FILE, usage = "property file. If omitted standard file is looked for:", index = 0, required = false)
+    private String propertyFilename;
+
+    private final UsageHelper usageHelper = new UsageHelper(this);
+
+//    @Option (name = )
+//    static {
+//        try {
+////            System.load("C:/chilkatJava/chilkat.dll");
+//            System.out.println("*******************************");
+//        } catch (UnsatisfiedLinkError e) {
+//            System.err.println("Native code library failed to load.\n" + e);
+//            System.exit(1);
+//        }
+//    }
+
+    @Argument(metaVar = "diagram", usage = "diagram name or number. If omitted, all diagrams are generated", index = 1, required = false)
+    private String diagram;
 
     public static void main(String[] args) {
+        new EaDiagramGenerator().doMain(args);
+    }
+
+    private void doMain(String[] args) {
+        try {
+            System.out.println(ResourceFinder.findFile("version.txt"));
+            System.out.println(ResourceFinder.findFile("log4j.xml"));
+            ClassLoader classLoader = getClass().getClassLoader();
+            File file = new File(classLoader.getResource("version.txt").getFile());
+            for (String versionLine : FileUtils.readLines(file)) {
+                System.out.println(versionLine);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        usageHelper.parse(args);
         String property = System.getProperty("java.library.path");
         StringTokenizer parser = new StringTokenizer(property, ";");
         while (parser.hasMoreTokens()) {
             System.err.println(parser.nextToken());
         }
 
+        log.debug(propertyMap);
+
         EaRepo eaRepo = null;
         try {
-            String propertyFilename;
-            if (args.length > 0) {
-                propertyFilename = args[0];
-                EaApplicationProperties.init(propertyFilename);
-            } else {
-                EaApplicationProperties.init();
-            }
-            if (args.length > 1) {
-                diagram = args[1];
-            }
-            File modelFile = new File(EaApplicationProperties.EA_PROJECT.value());
+            init(propertyFilename, propertyMap);
+
+            File modelFile = new File(EA_PROJECT.value());
             eaRepo = new EaRepo(modelFile);
             System.out.println(new Date());
             eaRepo.open();
             System.out.println(new Date());
-            if (args.length > 2) {
-                System.out.println(args);
-                String pkg = args[2];
-                EaPackage eaPackage = new EaPackage(pkg, eaRepo);
+
+            if (StringUtils.isNotBlank(pack)) {
+                EaPackage eaPackage = new EaPackage(pack, eaRepo);
                 eaPackage.generatePackageRelationships();
+                return;
+            }
+            if (!EA_DIAGRAM_TO_GENERATE.value().equals("") || diagram != null) {
+                generateSpecificDiagram(eaRepo);
             } else {
-                if (!EaApplicationProperties.EA_DIAGRAM_TO_GENERATE.value().equals("") || diagram != null) {
-                    generateSpecificDiagram(eaRepo);
-                } else {
-                    // generate all diagrams
-                    int count = EaDiagram.generateAll(eaRepo);
-                    log.info("Generated " + count + " diagrams");
-                }
+                // generate all diagrams
+                int count = EaDiagram.generateAll(eaRepo);
+                log.info("Generated " + count + " diagrams");
             }
             eaRepo.close();
         } catch (Exception e) {
@@ -87,12 +127,12 @@ public class EaDiagramGenerator {
         }
     }
 
-    private static void generateSpecificDiagram(EaRepo eaRepo) {
+    private void generateSpecificDiagram(EaRepo eaRepo) {
         String diagramName;
         if (StringUtils.isNotBlank(diagram)) {
             diagramName = diagram;
         } else {
-            diagramName = EaApplicationProperties.EA_DIAGRAM_TO_GENERATE.value();
+            diagramName = EA_DIAGRAM_TO_GENERATE.value();
         }
         EaDiagram diagram;
         if (StringUtils.isNumeric(diagramName)) {
@@ -102,9 +142,14 @@ public class EaDiagramGenerator {
             diagram = EaDiagram.findDiagram(eaRepo, diagramName);
         }
         if (diagram != null) {
-            diagram.writeImageToFile();
+            diagram.writeImageToFile(urlForFileOnly);
         } else {
             log.info("diagram '" + diagramName + "' not found");
         }
+    }
+
+    @Override
+    public boolean isInHelp() {
+        return help;
     }
 }

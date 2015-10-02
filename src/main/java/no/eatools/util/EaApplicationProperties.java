@@ -2,8 +2,10 @@ package no.eatools.util;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -49,13 +51,15 @@ public enum EaApplicationProperties {
 
     private final static Properties applicationProperties = new Properties();
     private static String propsFilename = null;
+    private static Map<String, String> propsMap;
 
-    public static void init() {
-        _init();
-    }
+//    public static void init() {
+//        _init();
+//    }
 
-    public static void init(String propertyFilename) {
+    public static void init(String propertyFilename, Map<String, String> propertyMap) {
         propsFilename = propertyFilename;
+        propsMap=propertyMap;
         _init();
     }
 
@@ -68,7 +72,7 @@ public enum EaApplicationProperties {
      */
     static void _init() {
         final String fileSeparator = SystemProperties.FILE_SEPARATOR.value();
-        if (propsFilename == null) {
+        if (StringUtils.isBlank(propsFilename)) {
             propsFilename = getPropertiesFilename();
         }
         File localPropFile = new File(propsFilename);
@@ -90,6 +94,9 @@ public enum EaApplicationProperties {
             System.exit(0);
         }
 
+        for (String prop : propsMap.keySet()) {
+            applicationProperties.setProperty(prop, propsMap.get(prop));
+        }
         // Check that properties in the Enum property set also exist in the property file
         for (EaApplicationProperties prop : EaApplicationProperties.values()) {
             if (applicationProperties.getProperty(prop.key()) == null) {
@@ -100,14 +107,15 @@ public enum EaApplicationProperties {
         for (Object key : applicationProperties.keySet()) {
             try {
                 String enumName = Camel.propertyNameAsConstant((String) key);
-                EaApplicationProperties.valueOf(enumName);
+                valueOf(enumName);
+                log.info("Property [" + key + "(" + enumName + ")] value [" +  valueOf(enumName).value() + "]");
             } catch (IllegalArgumentException iae) {
-                //log.warn("Missing property enum [" + Camel.propertyNameAsConstant((String) key) + "] in " + EaApplicationProperties.class.getName());
+                log.warn("Missing property enum [" + Camel.propertyNameAsConstant((String) key) + "] in " + EaApplicationProperties.class.getName());
             }
         }
     }
 
-    private static String getPropertiesFilename() {
+    public static String getPropertiesFilename() {
         // Expects a property file with the name of this class:
         String name = EaApplicationProperties.class.getName();
         if (name.lastIndexOf('.') > 0) {

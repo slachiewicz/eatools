@@ -1,6 +1,7 @@
 package no.eatools.diagramgen;
 
 import java.io.File;
+import java.util.HashMap;
 
 import no.eatools.util.EaApplicationProperties;
 
@@ -14,7 +15,7 @@ public abstract class AbtractEaTestCase extends TestCase {
 
     protected void setUp() throws Exception {
         super.setUp();
-        EaApplicationProperties.init("test.ea.application.properties");
+        EaApplicationProperties.init("test.ea.application.properties", new HashMap<String, String>());
         File modelFile = new File(EaApplicationProperties.EA_PROJECT.value());
         eaRepo = new EaRepo(modelFile);
         eaRepo.open();
