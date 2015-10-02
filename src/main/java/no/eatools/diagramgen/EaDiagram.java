@@ -15,7 +15,9 @@ import no.eatools.util.SystemProperties;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.sparx.Collection;
 import org.sparx.Diagram;
+import org.sparx.Element;
 import org.sparx.Package;
 
 /**
@@ -52,7 +54,7 @@ public class EaDiagram {
         for (Package p : pkg.GetPackages()) {
             generateAllDiagrams(repo, p, diagramCount);
         }
-        if (! repo.packageMatch(pkg)) {
+        if (!repo.packageMatch(pkg)) {
             log.info("--- Skipping package " + pkg.GetName());
             return;
         }
@@ -63,7 +65,7 @@ public class EaDiagram {
             diagramCount.count = diagramCount.count + diagrams.size();
             for (EaDiagram d : diagrams) {
                 log.debug("Generating diagrams: " + d.getFilename());
-                d.writeImageToFile();
+                d.writeImageToFile(false);
             }
         }
     }
@@ -144,10 +146,43 @@ public class EaDiagram {
             return Collections.emptyList();
         }
         List<EaDiagram> result = new ArrayList<EaDiagram>();
-        for (Diagram d : pkg.GetDiagrams()) {
+        Collection<Diagram> diagrams;
+        try {
+            diagrams = pkg.GetDiagrams();
+        } catch (Exception e) {
+            log.error("Fuckup in diagram package", e);
+            return Collections.emptyList();
+        }
+        if(diagrams == null) {
+            log.error("Fuckup in diagram package " + pkg.GetName());
+            return Collections.emptyList();
+        }
+        for (Diagram d : diagrams) {
             result.add(new EaDiagram(eaRepo, d, getPackagePath(eaRepo, pkg)));
         }
+        for (Element element : pkg.GetElements()) {
+            findDiagramsInElements(eaRepo, pkg, element, result);
+        }
         return result;
+    }
+
+    /**
+     * Some diagrams may reside below elements
+     * @param eaRepo
+     * @param pkg
+     * @param element
+     * @param diagramList
+     */
+    public static void findDiagramsInElements(EaRepo eaRepo, Package pkg, Element element, List<EaDiagram> diagramList) {
+        if(element == null || element.GetElements() == null) {
+            return;
+        }
+        for (Element child : element.GetElements()) {
+            findDiagramsInElements(eaRepo, pkg, child, diagramList);
+        }
+        for (Diagram diagram : element.GetDiagrams()) {
+            diagramList.add(new EaDiagram(eaRepo, diagram, getPackagePath(eaRepo, pkg)));
+        }
     }
 
     public EaDiagram(EaRepo repository, Diagram diagram, String pathName) {
@@ -163,16 +198,16 @@ public class EaDiagram {
         defaultImageFormat = imageFormat;
     }
 
-    public boolean writeImageToFile() {
+    public boolean writeImageToFile(boolean urlForFileOnly) {
         try {
-            return writeImageToFile(defaultImageFormat);
+            return writeImageToFile(defaultImageFormat, urlForFileOnly);
         } catch (Exception e) {
             log.error(e);
             return false;
         }
     }
 
-    public boolean writeImageToFile(ImageFileFormat imageFileFormat) {
+    public boolean writeImageToFile(ImageFileFormat imageFileFormat, boolean urlForFileOnly) {
         // make sure the directory exists
         File f = new File(getAbsolutePathName());
         f.mkdirs();
@@ -183,32 +218,46 @@ public class EaDiagram {
             return false;
         }
         File file = new File(diagramFileName);
+        log.debug(eaDiagram.GetDiagramGUID() + ": " + eaDiagram.GetDiagramID() + ": " + file.getAbsolutePath());
+
+        String urlBase = createUrlForFile(file);
+        if (urlForFileOnly) {
+            return true;
+        }
+        File urlFile = null;
+
+        try {
+            urlFile = new File(EaApplicationProperties.EA_DIAGRAM_URL_FILE.value());
+            FileUtils.write(urlFile, urlBase);
+        } catch (IOException e) {
+            log.error("Unable to write url to file " + urlFile.getAbsolutePath());
+        }
+
         if (eaRepo.getProject().PutDiagramImageToFile(eaDiagram.GetDiagramGUID(), diagramFileName, imageFileFormat.isRaster())) {
             log.info("Diagram generated at: " + diagramFileName);
             if (!file.canRead()) {
                 log.error("Unable to read file " + file.getAbsolutePath());
-            } else {
-                File urlFile = null;
-                String urlBase = "";
-                try {
-                    URL diagramUrl = file.toURI().toURL();
-                    log.info("Diagram url " + diagramUrl);
-                    urlBase = diagramUrl.toString().replace(diagramUrl.getProtocol(), "").replace(EaApplicationProperties.EA_DOC_ROOT_DIR.value(), "")
-                            .replace(":", "");
-                    log.info("-> URLBase: " + urlBase);
-                    urlFile = new File(EaApplicationProperties.EA_DIAGRAM_URL_FILE.value());
-                    FileUtils.write(urlFile, urlBase);
-                } catch (MalformedURLException e) {
-                    log.error("Unable to create url from file " + urlBase);
-                } catch (IOException e) {
-                    log.error("Unable to write url to file " + urlFile.getAbsolutePath());
-                }
+                return false;
             }
             return true;
         } else {
             log.error("Unable to create diagram:" + diagramFileName);
             return false;
         }
+    }
+
+    private String createUrlForFile(File file) {
+        String urlBase = "";
+        try {
+            URL diagramUrl = file.toURI().toURL();
+            log.info("Diagram url " + diagramUrl);
+            urlBase = diagramUrl.toString().replace(diagramUrl.getProtocol(), "").replace(EaApplicationProperties.EA_DOC_ROOT_DIR.value(), "")
+                    .replace(":", "");
+            log.info("-> URLBase: " + urlBase);
+        } catch (MalformedURLException e) {
+            log.error("Unable to create url from file " + urlBase);
+        }
+        return urlBase;
     }
 
     public String getPathname() {

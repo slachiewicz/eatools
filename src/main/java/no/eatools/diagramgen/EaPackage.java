@@ -35,16 +35,23 @@ public class EaPackage {
      * Generate relationships between subpackages based on relationships between contained classes
      */
     public void generatePackageRelationships() {
+        deleteExistingConnectors(me);
         generateRelationships(me);
     }
 
-    private void generateRelationships(Package pkg) {
-        System.out.println("***********" + pkg.GetName());
+    private void deleteExistingConnectors(Package pkg) {
         Collection<Connector> connectors = pkg.GetElement().GetConnectors();
         for (short i = 0; i < connectors.GetCount(); i++) {
             connectors.Delete(i);
             pkg.Update();
         }
+        for (Package aPackage : pkg.GetPackages()) {
+            deleteExistingConnectors(aPackage);
+        }
+    }
+
+    private void generateRelationships(Package pkg) {
+        System.out.println("***********" + pkg.GetName());
 
         for (Package aPackage : pkg.GetPackages()) {
             generateRelationships(aPackage);
@@ -61,52 +68,48 @@ public class EaPackage {
                 String connectorType;
                 String connType = connector.GetType();
                 LOG.debug("ConnType : " + connType);
-                if (EaMetaType.GENERALIZATION.equals(connType)) {
-                    connectorType = EaMetaType.REALIZATION.toString();
-                } else {
-                    connectorType = EaMetaType.DEPENDENCY.toString();
-                }
+//                if (EaMetaType.GENERALIZATION.equals(connType)) {
+//                    connectorType = EaMetaType.REALIZATION.toString();
+//                } else {
+                connectorType = EaMetaType.DEPENDENCY.toString();
+//                }
                 System.out.println("Other end: " + other.GetName());
-                if (other.GetPackageID() != pkg.GetPackageID()) {
-                    Package otherPkg = repos.findPackageByID(other.GetPackageID());
+                int otherPackageId = other.GetPackageID();
+                if (otherPackageId != pkg.GetPackageID()) {
+                    Package otherPkg = repos.findPackageByID(otherPackageId);
 
-                    String connectorId = element.GetName() + " -> " + other.GetName();
-                    String reverseConnectorId = other.GetName() + " -> " + element.GetName();
+                    String connectorId = pkg.GetName() + " -> " + otherPkg.GetName();
+                    String reverseConnectorId = otherPkg.GetName() + " -> " + pkg.GetName();
 
                     if (allConnectors.contains(connectorId) || allConnectors.contains(reverseConnectorId)) {
                         LOG.debug("Already had " + connectorId);
-                    }
-// else {
+                    } else {
                         LOG.debug("Connecting " + connectorId);
                         LOG.debug("Adding connector type " + connectorType);
                         allConnectors.add(connectorId);
-                        Connector newConn = pkg.GetElement().GetConnectors().AddNew(connectorId, connectorType);
+                        Connector newConn = pkg.GetElement().GetConnectors().AddNew("", connectorType);
 
 //                    newConn.
 //                    newConn.SetMetaType(connectorType);
 //                    newConn.SetClientID(pkg.GetPackageID());
                         newConn.SetSupplierID(otherPkg.GetElement().GetElementID());
                         newConn.SetDirection("Unspecified");
+                        newConn.SetStereotype("xref");
 
                         System.out.println("Update connector " + newConn.Update());
                         pkg.GetConnectors().Refresh();
 
-                        System.out.println("Added " + newConn.GetName() + newConn.GetClientID() + " " + newConn.GetSupplierID());
-                        LOG.debug(repos.findPackageByID(pkg.GetPackageID()).GetName());
-                        LOG.debug(repos.findPackageByID(other.GetPackageID()).GetName());
-//                    }
+                        LOG.debug("Added " + newConn.GetName() + newConn.GetClientID() + " " + newConn.GetSupplierID());
+                        LOG.debug(pkg.GetName());
+                        LOG.debug(otherPkg.GetName());
+                    }
+
                     System.out.println("Update pack 1 " + pkg.Update() + " " + pkg.GetName());
                     System.out.println("Update pack 2 " + otherPkg.Update() + " " + otherPkg.GetName());
                 }
-
-                System.out.println(connector.GetName());
-                System.out.println(connector.GetSupplierEnd().GetObjectType());
-                System.out.println(connector.GetClientEnd().GetObjectType());
-                System.out.println(connector.GetClientEnd().GetEnd());
-                System.out.println(pkg.GetConnectors().GetCount());
-                for (Connector connector1 : pkg.GetConnectors()) {
-                    System.out.println(connector1);
-                }
+//
+//                System.out.println(connector.GetName());
+//                System.out.println(pkg.GetConnectors().GetCount());
             }
         }
     }
