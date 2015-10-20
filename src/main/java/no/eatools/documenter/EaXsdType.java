@@ -17,14 +17,14 @@ public class EaXsdType {
 
     private final EaRepo eaRepo;
 
-    public EaXsdType(EaRepo eaRepo) {
+    public EaXsdType(final EaRepo eaRepo) {
         this.eaRepo = eaRepo;
     }
 
-    public void setNewDocumentation(String s) {
-        Element xsdType = eaRepo.findXsdType(eaRepo.getRootPackage(), "ComplexType1");
+    public void setNewDocumentation(final String s) {
+        final Element xsdType = eaRepo.findXsdType(eaRepo.getRootPackage(), "ComplexType1");
 
-        ObjectGraph objectGraph = new ObjectGraph();
+        final ObjectGraph objectGraph = new ObjectGraph();
         LOG.debug(objectGraph.createDotGraph(xsdType));
 
         LOG.debug("Old doc " + xsdType.GetNotes());
@@ -32,9 +32,4 @@ public class EaXsdType {
         xsdType.SetNotes(s);
         xsdType.Update();
     }
-//    public static void setElementDoc(String pkgName, String elementName, String docString) {
-//        EaRepo =
-//        Element element =
-//        return null;
-//    }
 }

@@ -36,7 +36,7 @@ public class EaDiagramTest extends AbtractEaTestCase {
         if (diagramName.equals("")) diagramName = "Domain Model";
         EaDiagram diagram = EaDiagram.findDiagram(eaRepo, diagramName);
         if (diagram != null) {
-            boolean didCreate = diagram.writeImageToFile();
+            boolean didCreate = diagram.writeImageToFile(false);
             assertTrue(didCreate);
         } else {
             fail();
@@ -49,7 +49,7 @@ public class EaDiagramTest extends AbtractEaTestCase {
         for (ImageFileFormat imageFileFormat : ImageFileFormat.values()) {
             List<EaDiagram> diagrams = EaDiagram.findDiagramsInPackage(eaRepo, pkg);
             for (EaDiagram d : diagrams) {
-                boolean didCreate = d.writeImageToFile(imageFileFormat);
+                boolean didCreate = d.writeImageToFile(imageFileFormat, false);
                 assertTrue(didCreate);
             }
         }

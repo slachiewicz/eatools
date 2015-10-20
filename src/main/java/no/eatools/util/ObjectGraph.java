@@ -29,34 +29,34 @@ public class ObjectGraph {
 
     Set<Object> dependents = new HashSet<Object>();
 
-    public String createDotGraph(Object obj) {
-        StringBuilder sb = new StringBuilder();
+    public String createDotGraph(final Object obj) {
+        final StringBuilder sb = new StringBuilder();
         recurseTheGraph(sb, obj);
 
 
         return sb.toString();
     }
 
-    private void recurseTheGraph(StringBuilder sb, Object obj) {
+    private void recurseTheGraph(final StringBuilder sb, final Object obj) {
         if (obj == null || dependents.contains(obj)) {
             sb.append("\n");
             return;
         }
-        Class clazz = obj.getClass();
+        final Class clazz = obj.getClass();
         dependents.add(obj);
         sb.append(obj.toString()).append("\n");
         if(terminatingClasses.contains(clazz)) {
             return;
         }
         if(clazz == org.sparx.Collection.class) {
-            org.sparx.Collection collection = (Collection) obj;
-            for (Object aCollection : collection) {
+            final org.sparx.Collection collection = (Collection) obj;
+            for (final Object aCollection : collection) {
                 recurseTheGraph(sb, aCollection);
             }
         }
         sb.append("  ");
         for (final Method method : clazz.getMethods()) {
-            String methodName = method.getName();
+            final String methodName = method.getName();
             if (methodName.startsWith("Get")
 //                    || methodName.startsWith("get")
                     && method.getParameterTypes().length == 0) {
@@ -64,7 +64,7 @@ public class ObjectGraph {
                 Object prop = null;
                 try {
                     prop = method.invoke(obj, new Object[]{});
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     LOG.debug("Skipped " + methodName);
                 }
                 sb.append(methodName).append("=");

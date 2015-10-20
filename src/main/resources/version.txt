@@ -1,2 +1,4 @@
-version=${pom.version}
-build.date=${timestamp}
+# Application info
+application.name=${pom.name}
+application.version=${pom.version}
+application.build=${buildNumber}

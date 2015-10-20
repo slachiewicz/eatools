@@ -1,6 +1,8 @@
 package no.eatools.diagramgen;
 
-import no.eatools.util.Camel;
+import no.bouvet.ohs.jops.Camel;
+import no.bouvet.ohs.jops.Default;
+import no.bouvet.ohs.jops.Enums;
 
 /**
  * @author AB22273
@@ -8,6 +10,7 @@ import no.eatools.util.Camel;
  * @since 28.nov.2008 12:01:46
  */
 public enum EaLinkDirection {
+    @Default
     UNSPECIFIED,
 
     /**
@@ -43,13 +46,7 @@ public enum EaLinkDirection {
      * @return never null
      */
     public static EaLinkDirection fromString(String metaType) {
-        EaLinkDirection theType = EaLinkDirection.UNSPECIFIED;
-        try {
-            theType = EaLinkDirection.valueOf(Camel.toConstantString(metaType));
-        } catch (IllegalArgumentException iae) {
-            // Default to the safe instance
-        }
-        return theType;
+        return Enums.valueOf(EaLinkDirection.class, Camel.toConstantString(metaType), UNSPECIFIED);
     }
 
     public String toString() {

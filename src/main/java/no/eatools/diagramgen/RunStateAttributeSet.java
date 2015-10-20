@@ -1,11 +1,12 @@
 package no.eatools.diagramgen;
 
-import no.eatools.util.SystemProperties;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import no.bouvet.ohs.jops.SystemProperties;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * @author AB22273
@@ -20,13 +21,13 @@ public class RunStateAttributeSet {
     /**
      * @param xmlAttributes xml-fragment as produced from xmlBean-instances.
      */
-    public RunStateAttributeSet(String xmlAttributes) {
+    public RunStateAttributeSet(final String xmlAttributes) {
         String allAttribs = xmlAttributes.replaceAll("\\<[^ ]* ", "");
         allAttribs = allAttribs.replaceAll("xmlns:xsi.*", "");
 
-        String singleAttributes[] = allAttribs.split("\" ");
-        for (String single : singleAttributes) {
-            RunStateAttribute runStateAttribute = new RunStateAttribute(single);
+        final String[] singleAttributes = allAttribs.split("\" ");
+        for (final String single : singleAttributes) {
+            final RunStateAttribute runStateAttribute = new RunStateAttribute(single);
             theAttributes.put(runStateAttribute.getName(), runStateAttribute);
         }
     }
@@ -37,9 +38,9 @@ public class RunStateAttributeSet {
      * @param filteredAttributes the list of attributes to remove from the RunStateAttributeSet.
      */
     @SuppressWarnings({"VariableArgumentMethod"})
-    public void filter(String... filteredAttributes) {
-        for (String filteredAtt : filteredAttributes) {
-            RunStateAttribute runStateAttribute = theAttributes.get(filteredAtt);
+    public void filter(final String... filteredAttributes) {
+        for (final String filteredAtt : filteredAttributes) {
+            final RunStateAttribute runStateAttribute = theAttributes.get(filteredAtt);
             if (runStateAttribute != null) {
                 theAttributes.remove(runStateAttribute.getName());
             }
@@ -52,8 +53,8 @@ public class RunStateAttributeSet {
      * @return EA-compliant RunState string.
      */
     public String toRunState() {
-        StringBuilder sb = new StringBuilder();
-        for (RunStateAttribute runStateAttribute : theAttributes.values()) {
+        final StringBuilder sb = new StringBuilder();
+        for (final RunStateAttribute runStateAttribute : theAttributes.values()) {
             sb.append(runStateAttribute.toRunState());
         }
         return sb.toString();
@@ -61,8 +62,8 @@ public class RunStateAttributeSet {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for (RunStateAttribute runStateAttribute : theAttributes.values()) {
+        final StringBuilder sb = new StringBuilder();
+        for (final RunStateAttribute runStateAttribute : theAttributes.values()) {
             sb.append(runStateAttribute.toString()).append(SystemProperties.LINE_SEPARATOR.value());
         }
         return sb.toString();

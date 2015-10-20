@@ -1,6 +1,6 @@
 package no.eatools.diagramgen;
 
-import no.eatools.util.Camel;
+import no.bouvet.ohs.jops.Camel;
 
 /**
  * @author AB22273
@@ -24,7 +24,7 @@ public enum EaDiagramType {
     INTERACTION_OVERVIEW
     ;
     // todo complete as needs arise
-    
+
     /**
      * Simple factory for getting safe EAmetType.
      *
