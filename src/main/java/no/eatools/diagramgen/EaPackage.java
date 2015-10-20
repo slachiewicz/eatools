@@ -1,16 +1,25 @@
 package no.eatools.diagramgen;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import no.bouvet.ohs.ea.dd.DDEntry;
+
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.sparx.Attribute;
 import org.sparx.Collection;
 import org.sparx.Connector;
 import org.sparx.Element;
 import org.sparx.Package;
+
 
 /**
  * @author ohs
@@ -25,7 +34,7 @@ public class EaPackage {
     final Set<String> allConnectors = new HashSet<String>();
 //    BiMap
 
-    public EaPackage(String name, EaRepo repos) {
+    public EaPackage(final String name, final EaRepo repos) {
         this.name = name;
         this.repos = repos;
         this.me = repos.findPackageByName(name, true);
@@ -39,34 +48,83 @@ public class EaPackage {
         generateRelationships(me);
     }
 
-    private void deleteExistingConnectors(Package pkg) {
-        Collection<Connector> connectors = pkg.GetElement().GetConnectors();
+    public void generateAttributesFile() {
+        final List<String> attributes = new ArrayList<>();
+        generateAttributesInPackage(this.me, attributes);
+        try {
+            FileUtils.writeLines(new File("attributes.csv"), "UTF-8", attributes);
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void generateAttributesInPackage(final Package pkg, final List<String> attributes) {
+        System.out.println("***********" + pkg.GetName());
+
+        for (final Package aPackage : pkg.GetPackages()) {
+            generateAttributesInPackage(aPackage, attributes);
+        }
+        for (final Element element : pkg.GetElements()) {
+            System.out.println(element.GetName());
+            for (final Attribute attribute : element.GetAttributes()) {
+                attributes.add(createAttributeLine(element.GetName(), attribute, element.GetVersion()));
+            }
+        }
+    }
+
+    private String createAttributeLine(final String elementName, final Attribute attribute, final String version) {
+//        final StringJoiner sj = new StringJoiner(";");
+//        sj.add(elementName + "." + attribute.GetName());
+//        sj.add(attribute.GetNotes().replaceAll("\n", "\\\\n").replaceAll("\r", ""));
+//        sj.add(attribute.GetLowerBound() + ".." + attribute.GetUpperBound());
+//        sj.add(booleanToYesNo(attribute.GetIsID()));
+//        sj.add(attribute.GetType());
+//        sj.add(attribute.GetStereotypeEx());
+//        sj.add(attribute.GetAttributeGUID());
+//        sj.add(version);
+
+//        String description = attribute.GetNotes().replaceAll("\n", "\\\\n").replaceAll("\r", "");
+        final String description = attribute.GetNotes();//.replaceAll("\n", "\\\\n").replaceAll("\r", "");
+
+        final DDEntry ddEntry = new DDEntry(elementName + "." + attribute.GetName(), description,
+                attribute.GetLowerBound() + ".." + attribute.GetUpperBound(), attribute.GetType(), attribute.GetStereotypeEx(),
+                attribute.GetAttributeGUID(), version, booleanToYesNo(attribute.GetIsID()));
+
+        return ddEntry.toJson();
+    }
+
+    private String booleanToYesNo(final boolean b) {
+        return b ? "Yes" : "No";
+    }
+
+    private void deleteExistingConnectors(final Package pkg) {
+        final Collection<Connector> connectors = pkg.GetElement().GetConnectors();
         for (short i = 0; i < connectors.GetCount(); i++) {
             connectors.Delete(i);
             pkg.Update();
         }
-        for (Package aPackage : pkg.GetPackages()) {
+        for (final Package aPackage : pkg.GetPackages()) {
             deleteExistingConnectors(aPackage);
         }
     }
 
-    private void generateRelationships(Package pkg) {
+    private void generateRelationships(final Package pkg) {
         System.out.println("***********" + pkg.GetName());
 
-        for (Package aPackage : pkg.GetPackages()) {
+        for (final Package aPackage : pkg.GetPackages()) {
             generateRelationships(aPackage);
         }
-        for (Element element : pkg.GetElements()) {
+        for (final Element element : pkg.GetElements()) {
             System.out.println(element.GetName());
-            for (Connector connector : element.GetConnectors()) {
-                Element other;
+            for (final Connector connector : element.GetConnectors()) {
+                final Element other;
                 if (connector.GetClientID() == element.GetElementID()) {
                     other = repos.findElementByID(connector.GetSupplierID());
                 } else {
                     other = repos.findElementByID(connector.GetClientID());
                 }
-                String connectorType;
-                String connType = connector.GetType();
+                final String connectorType;
+                final String connType = connector.GetType();
                 LOG.debug("ConnType : " + connType);
 //                if (EaMetaType.GENERALIZATION.equals(connType)) {
 //                    connectorType = EaMetaType.REALIZATION.toString();
@@ -74,12 +132,12 @@ public class EaPackage {
                 connectorType = EaMetaType.DEPENDENCY.toString();
 //                }
                 System.out.println("Other end: " + other.GetName());
-                int otherPackageId = other.GetPackageID();
+                final int otherPackageId = other.GetPackageID();
                 if (otherPackageId != pkg.GetPackageID()) {
-                    Package otherPkg = repos.findPackageByID(otherPackageId);
+                    final Package otherPkg = repos.findPackageByID(otherPackageId);
 
-                    String connectorId = pkg.GetName() + " -> " + otherPkg.GetName();
-                    String reverseConnectorId = otherPkg.GetName() + " -> " + pkg.GetName();
+                    final String connectorId = pkg.GetName() + " -> " + otherPkg.GetName();
+                    final String reverseConnectorId = otherPkg.GetName() + " -> " + pkg.GetName();
 
                     if (allConnectors.contains(connectorId) || allConnectors.contains(reverseConnectorId)) {
                         LOG.debug("Already had " + connectorId);
@@ -87,7 +145,7 @@ public class EaPackage {
                         LOG.debug("Connecting " + connectorId);
                         LOG.debug("Adding connector type " + connectorType);
                         allConnectors.add(connectorId);
-                        Connector newConn = pkg.GetElement().GetConnectors().AddNew("", connectorType);
+                        final Connector newConn = pkg.GetElement().GetConnectors().AddNew("", connectorType);
 
 //                    newConn.
 //                    newConn.SetMetaType(connectorType);

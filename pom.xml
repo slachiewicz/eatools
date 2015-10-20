@@ -5,12 +5,19 @@
     <groupId>no.eatools</groupId>
     <artifactId>eatools</artifactId>
     <packaging>jar</packaging>
-    <name>Parsing of deployment configuration files</name>
+    <name>EaTools</name>
     <description>
         A little PoC tool for generating PNG diagram files with logical file names, i.e. the same names as used in the
         model in EA.
     </description>
     <version>1.0-SNAPSHOT</version>
+
+    <scm>
+        <connection>scm:svn:http://127.0.0.1/dummy</connection>
+        <developerConnection>scm:svn:https://127.0.0.1/dummy</developerConnection>
+        <tag>HEAD</tag>
+        <url>http://127.0.0.1/dummy</url>
+    </scm>
 
     <dependencies>
         <!--
@@ -29,16 +36,16 @@
             <version>1.2.14</version>
         </dependency>
 
-        <dependency>
-            <groupId>commons-cli</groupId>
-            <artifactId>commons-cli</artifactId>
-            <version>1.1</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>commons-cli</groupId>-->
+            <!--<artifactId>commons-cli</artifactId>-->
+            <!--<version>1.1</version>-->
+        <!--</dependency>-->
 
         <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
-            <version>2.4</version>
+            <version>2.6</version>
         </dependency>
 
         <dependency>
@@ -66,8 +73,18 @@
         <dependency>
             <groupId>no.bouvet.ohs</groupId>
             <artifactId>cli</artifactId>
+            <version>1.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>no.bouvet.ohs</groupId>
+            <artifactId>eadd</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <!--<dependency>-->
+            <!--<groupId>no.bouvet.ohs.futil</groupId>-->
+            <!--<artifactId>futil</artifactId>-->
+            <!--<version>1.1-SNAPSHOT</version>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
@@ -84,11 +101,11 @@
     <properties>
         <packageName>no.eatools.diagramgen</packageName>
         <mainClass>${packageName}.EaDiagramGenerator</mainClass>
-        <jarFileName>diagen</jarFileName>
+        <jarFileName>diagramgen</jarFileName>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <timestamp>${maven.build.timestamp}</timestamp>
-        <maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
+        <maven.build.timestamp.format>yyyy-MM-dd HH:mmZ</maven.build.timestamp.format>
     </properties>
 
     <build>
@@ -110,30 +127,26 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.5.1</version>
+                <version>3.3</version>
                 <configuration>
                     <verbose>true</verbose>
                     <fork>true</fork>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                    <!--
-                                        <compilerVersion>1.5</compilerVersion>
-                                        <executable>${JDK_HOME}/bin/javac</executable>
-                    -->
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.2-beta-1</version>
+                <version>2.5.3</version>
                 <configuration>
                     <!--finalName>${pom.artifactId}</finalName-->
                     <finalName>${jarFileName}</finalName>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <!--<appendAssemblyId>false</appendAssemblyId>-->
+                    <appendAssemblyId>false</appendAssemblyId>
                     <archive>
                         <manifest>
                             <mainClass>${mainClass}</mainClass>
@@ -156,6 +169,35 @@
                 </executions>
             </plugin>
 
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+                <version>1.3</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>create</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <doCheck>false</doCheck>
+                    <doUpdate>false</doUpdate>
+                    <revisionOnScmFailure>na</revisionOnScmFailure>
+
+                    <!--<format>{0,number}</format>-->
+                    <!--<items>-->
+                        <!--<item>buildNumber</item>-->
+                    <!--</items>-->
+
+                    <format>{0,date,yyyy-MM-dd HH:mmZ} {1}</format>
+                    <items>
+                        <item>timestamp</item>
+                        <item>buildNumber</item>
+                    </items>
+                </configuration>
+            </plugin>
             <!--<plugin>-->
             <!--<artifactId>maven-surefire-plugin</artifactId>-->
             <!--<version>2.11</version>-->

@@ -8,9 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import no.eatools.util.EaApplicationProperties;
 import no.eatools.util.IntCounter;
-import no.eatools.util.SystemProperties;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -20,6 +18,9 @@ import org.sparx.Diagram;
 import org.sparx.Element;
 import org.sparx.Package;
 
+import static no.bouvet.ohs.jops.SystemProperties.*;
+import static no.eatools.util.EaApplicationProperties.*;
+
 /**
  * A Wrapper class to facilitate  Diagram generation and manipulation.
  *
@@ -27,18 +28,18 @@ import org.sparx.Package;
  */
 public class EaDiagram {
     private static final Logger log = Logger.getLogger(EaDiagram.class);
-    private Diagram eaDiagram;
+    private final Diagram eaDiagram;
     private ImageFileFormat defaultImageFormat = ImageFileFormat.PNG;
-    private EaRepo eaRepo;
-    private String logicalPathname;
+    private final EaRepo eaRepo;
+    private final String logicalPathname;
 
     /**
      * Generate all diagrams from the model into the directory path.
      * The package structure of the model is retained as directory structure.
      * All existing diagrams are overwritten.
      */
-    public static int generateAll(EaRepo eaRepo) {
-        IntCounter count = new IntCounter();
+    public static int generateAll(final EaRepo eaRepo) {
+        final IntCounter count = new IntCounter();
         generateAllDiagrams(eaRepo, eaRepo.getRootPackage(), count);
         return count.count;
     }
@@ -50,8 +51,8 @@ public class EaDiagram {
      * @param pkg
      * @param diagramCount
      */
-    private static void generateAllDiagrams(EaRepo repo, Package pkg, IntCounter diagramCount) {
-        for (Package p : pkg.GetPackages()) {
+    private static void generateAllDiagrams(final EaRepo repo, final Package pkg, final IntCounter diagramCount) {
+        for (final Package p : pkg.GetPackages()) {
             generateAllDiagrams(repo, p, diagramCount);
         }
         if (!repo.packageMatch(pkg)) {
@@ -59,37 +60,37 @@ public class EaDiagram {
             return;
         }
 
-        List<EaDiagram> diagrams = findDiagramsInPackage(repo, pkg);
+        final List<EaDiagram> diagrams = findDiagramsInPackage(repo, pkg);
         if (diagrams.size() > 0) {
             log.debug("Generating diagrams in package: " + pkg.GetName());
             diagramCount.count = diagramCount.count + diagrams.size();
-            for (EaDiagram d : diagrams) {
+            for (final EaDiagram d : diagrams) {
                 log.debug("Generating diagrams: " + d.getFilename());
                 d.writeImageToFile(false);
             }
         }
     }
 
-    public static EaDiagram findDiagram(EaRepo eaRepo, String diagramName) {
+    public static EaDiagram findDiagram(final EaRepo eaRepo, final String diagramName) {
         return findDiagram(eaRepo, eaRepo.getRootPackage(), diagramName, true);
     }
 
-    private static EaDiagram findDiagram(EaRepo eaRepo, Package pkg, String diagramName, boolean recursive) {
+    private static EaDiagram findDiagram(final EaRepo eaRepo, final Package pkg, final String diagramName, final boolean recursive) {
         if (pkg == null) {
             return null;
         }
 //        for (Element element : pkg.GetElements()) {
 //            element.GetAttributes()
 //        }pkg.GetElements()
-        for (Diagram diagram : pkg.GetDiagrams()) {
+        for (final Diagram diagram : pkg.GetDiagrams()) {
             if (diagram.GetName().equals(diagramName) || diagramName.equals(Integer.valueOf(diagram.GetDiagramID()).toString())) {
                 log.info("Diagram name = " + diagram.GetName() + " ID: " + diagram.GetDiagramID());
                 return new EaDiagram(eaRepo, diagram, getPackagePath(eaRepo, pkg));
             }
         }
         if (recursive) {
-            for (Package p : pkg.GetPackages()) {
-                EaDiagram d = findDiagram(eaRepo, p, diagramName, recursive);
+            for (final Package p : pkg.GetPackages()) {
+                final EaDiagram d = findDiagram(eaRepo, p, diagramName, recursive);
                 if (d != null) {
                     return d;
                 }
@@ -98,22 +99,22 @@ public class EaDiagram {
         return null;
     }
 
-    private static String getPackagePath(EaRepo eaRepo, Package pkg) {
-        ArrayList<Package> ancestorPackages = new ArrayList<Package>();
+    private static String getPackagePath(final EaRepo eaRepo, final Package pkg) {
+        final ArrayList<Package> ancestorPackages = new ArrayList<Package>();
         getAncestorPackages(ancestorPackages, eaRepo, pkg);
-        StringBuffer pathName = new StringBuffer();
+        final StringBuffer pathName = new StringBuffer();
         Collections.reverse(ancestorPackages);
-        for (Package p : ancestorPackages) {
-            pathName.append(SystemProperties.FILE_SEPARATOR.value() + p.GetName());
+        for (final Package p : ancestorPackages) {
+            pathName.append(FILE_SEPARATOR.value() + p.GetName());
         }
         return pathName.toString();
     }
 
     private static String makeWebFriendlyFilename(String s) {
         s = StringUtils.replaceChars(s, ' ', '_');
-        if (SystemProperties.PATH_SEPARATOR.value().equals("/")) {
+        if (PATH_SEPARATOR.value().equals("/")) {
             s = StringUtils.replaceChars(s, '\\', '-');
-        } else if (SystemProperties.PATH_SEPARATOR.value().equals("\\")) {
+        } else if (PATH_SEPARATOR.value().equals("\\")) {
             s = StringUtils.replaceChars(s, '/', '-');
         }
         /* Replace Norwegian characters with alternatives */
@@ -127,7 +128,7 @@ public class EaDiagram {
         return s;
     }
 
-    private static void getAncestorPackages(ArrayList<Package> ancestorPackages, EaRepo eaRepo, Package pkg) {
+    private static void getAncestorPackages(final ArrayList<Package> ancestorPackages, final EaRepo eaRepo, final Package pkg) {
         ancestorPackages.add(pkg);
         if (pkg.GetParentID() != 0) {
             getAncestorPackages(ancestorPackages, eaRepo, eaRepo.findPackageByID(pkg.GetParentID()));
@@ -141,15 +142,15 @@ public class EaDiagram {
      * @param pkg the Package to search in.
      * @return
      */
-    public static List<EaDiagram> findDiagramsInPackage(EaRepo eaRepo, Package pkg) {
+    public static List<EaDiagram> findDiagramsInPackage(final EaRepo eaRepo, final Package pkg) {
         if (pkg == null) {
             return Collections.emptyList();
         }
-        List<EaDiagram> result = new ArrayList<EaDiagram>();
-        Collection<Diagram> diagrams;
+        final List<EaDiagram> result = new ArrayList<EaDiagram>();
+        final Collection<Diagram> diagrams;
         try {
             diagrams = pkg.GetDiagrams();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             log.error("Fuckup in diagram package", e);
             return Collections.emptyList();
         }
@@ -157,10 +158,10 @@ public class EaDiagram {
             log.error("Fuckup in diagram package " + pkg.GetName());
             return Collections.emptyList();
         }
-        for (Diagram d : diagrams) {
+        for (final Diagram d : diagrams) {
             result.add(new EaDiagram(eaRepo, d, getPackagePath(eaRepo, pkg)));
         }
-        for (Element element : pkg.GetElements()) {
+        for (final Element element : pkg.GetElements()) {
             findDiagramsInElements(eaRepo, pkg, element, result);
         }
         return result;
@@ -173,63 +174,63 @@ public class EaDiagram {
      * @param element
      * @param diagramList
      */
-    public static void findDiagramsInElements(EaRepo eaRepo, Package pkg, Element element, List<EaDiagram> diagramList) {
+    public static void findDiagramsInElements(final EaRepo eaRepo, final Package pkg, final Element element, final List<EaDiagram> diagramList) {
         if(element == null || element.GetElements() == null) {
             return;
         }
-        for (Element child : element.GetElements()) {
+        for (final Element child : element.GetElements()) {
             findDiagramsInElements(eaRepo, pkg, child, diagramList);
         }
-        for (Diagram diagram : element.GetDiagrams()) {
+        for (final Diagram diagram : element.GetDiagrams()) {
             diagramList.add(new EaDiagram(eaRepo, diagram, getPackagePath(eaRepo, pkg)));
         }
     }
 
-    public EaDiagram(EaRepo repository, Diagram diagram, String pathName) {
+    public EaDiagram(final EaRepo repository, final Diagram diagram, final String pathName) {
         eaDiagram = diagram;
         eaRepo = repository;
         logicalPathname = pathName;
     }
 
-    public EaDiagram(EaRepo repository, Diagram diagram, String pathName, ImageFileFormat imageFormat) {
+    public EaDiagram(final EaRepo repository, final Diagram diagram, final String pathName, final ImageFileFormat imageFormat) {
         eaDiagram = diagram;
         eaRepo = repository;
         logicalPathname = pathName;
         defaultImageFormat = imageFormat;
     }
 
-    public boolean writeImageToFile(boolean urlForFileOnly) {
+    public boolean writeImageToFile(final boolean urlForFileOnly) {
         try {
             return writeImageToFile(defaultImageFormat, urlForFileOnly);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             log.error(e);
             return false;
         }
     }
 
-    public boolean writeImageToFile(ImageFileFormat imageFileFormat, boolean urlForFileOnly) {
+    public boolean writeImageToFile(final ImageFileFormat imageFileFormat, final boolean urlForFileOnly) {
         // make sure the directory exists
-        File f = new File(getAbsolutePathName());
+        final File f = new File(getAbsolutePathName());
         f.mkdirs();
-        String diagramFileName = getAbsoluteFilename();
+        final String diagramFileName = getAbsoluteFilename();
         if (diagramFileName == null) {
             // Something went wrong
             log.error("Unable to create filename from " + logicalPathname);
             return false;
         }
-        File file = new File(diagramFileName);
+        final File file = new File(diagramFileName);
         log.debug(eaDiagram.GetDiagramGUID() + ": " + eaDiagram.GetDiagramID() + ": " + file.getAbsolutePath());
 
-        String urlBase = createUrlForFile(file);
+        final String urlBase = createUrlForFile(file);
         if (urlForFileOnly) {
             return true;
         }
         File urlFile = null;
 
         try {
-            urlFile = new File(EaApplicationProperties.EA_DIAGRAM_URL_FILE.value());
+            urlFile = new File(EA_DIAGRAM_URL_FILE.value());
             FileUtils.write(urlFile, urlBase);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             log.error("Unable to write url to file " + urlFile.getAbsolutePath());
         }
 
@@ -246,15 +247,15 @@ public class EaDiagram {
         }
     }
 
-    private String createUrlForFile(File file) {
+    private String createUrlForFile(final File file) {
         String urlBase = "";
         try {
-            URL diagramUrl = file.toURI().toURL();
+            final URL diagramUrl = file.toURI().toURL();
             log.info("Diagram url " + diagramUrl);
-            urlBase = diagramUrl.toString().replace(diagramUrl.getProtocol(), "").replace(EaApplicationProperties.EA_DOC_ROOT_DIR.value(), "")
+            urlBase = diagramUrl.toString().replace(diagramUrl.getProtocol(), "").replace(EA_DOC_ROOT_DIR.value(), "")
                     .replace(":", "");
             log.info("-> URLBase: " + urlBase);
-        } catch (MalformedURLException e) {
+        } catch (final MalformedURLException e) {
             log.error("Unable to create url from file " + urlBase);
         }
         return urlBase;
@@ -265,27 +266,28 @@ public class EaDiagram {
     }
 
     public String getAbsolutePathName() {
-        String dirRootString = EaApplicationProperties.EA_DOC_ROOT_DIR.value();
-        File dirRoot = new File(dirRootString);
+        String dirRootString = EA_DOC_ROOT_DIR.value();
+        final File dirRoot = new File(dirRootString);
         if (!dirRoot.isAbsolute()) {
-            File cwd = new File(SystemProperties.USER_DIR.value());
+            final File cwd = new File(USER_DIR.value());
             log.info(dirRootString + " is not a root directory. Using " + cwd);
-            dirRootString = cwd + SystemProperties.FILE_SEPARATOR.value() + dirRootString;
+            dirRootString = cwd + FILE_SEPARATOR.value() + dirRootString;
         }
         return dirRootString + makeWebFriendlyFilename(logicalPathname);
     }
 
     public String getFilename() {
-        return makeWebFriendlyFilename(eaDiagram.GetName() + defaultImageFormat.getFileExtension());
+        final String version = EA_ADD_VERSION.exists() ? eaDiagram.GetVersion() : StringUtils.EMPTY;
+        return makeWebFriendlyFilename(eaDiagram.GetName() + version + defaultImageFormat.getFileExtension());
     }
 
     public String getAbsoluteFilename() {
-        return getAbsolutePathName() + SystemProperties.FILE_SEPARATOR.value() + getFilename();
+        return getAbsolutePathName() + FILE_SEPARATOR.value() + getFilename();
     }
 
-    public static EaDiagram findDiagramById(EaRepo eaRepo, int diagramId) {
-        Diagram diagram = eaRepo.findDiagramById(diagramId);
-        String packagePath = getPackagePath(eaRepo, eaRepo.findPackageByID(diagram.GetPackageID()));
+    public static EaDiagram findDiagramById(final EaRepo eaRepo, final int diagramId) {
+        final Diagram diagram = eaRepo.findDiagramById(diagramId);
+        final String packagePath = getPackagePath(eaRepo, eaRepo.findPackageByID(diagram.GetPackageID()));
         return new EaDiagram(eaRepo, diagram, packagePath);
     }
 }

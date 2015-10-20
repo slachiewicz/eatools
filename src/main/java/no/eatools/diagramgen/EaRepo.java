@@ -59,9 +59,9 @@ public class EaRepo {
     /**
      * @param repositoryFile local file or database connection string
      */
-    public EaRepo(File repositoryFile) {
+    public EaRepo(final File repositoryFile) {
         reposFile = repositoryFile;
-        String packagePatternRegexp = EA_PACKAGE_FILTER.value();
+        final String packagePatternRegexp = EA_PACKAGE_FILTER.value();
         if(StringUtils.isNotBlank(packagePatternRegexp)) {
             packagePattern = Pattern.compile(packagePatternRegexp);
             log.info("Looking for packages matching [" + packagePatternRegexp + "]" + packagePattern.pattern());
@@ -78,7 +78,7 @@ public class EaRepo {
             return;
         }
         reposString = reposFile.getAbsolutePath();
-        String[] reposStrings = reposString.split("db:");
+        final String[] reposStrings = reposString.split("db:");
         if(reposStrings.length >= 2) {
             reposString = reposStrings[1];
         }
@@ -89,8 +89,8 @@ public class EaRepo {
         repository.SetSuppressEADialogs(true);
         repository.SetSuppressSecurityDialog(true);
         if(EA_USERNAME.exists() && EA_PASSWORD.exists()) {
-            String username = EA_USERNAME.value();
-            String pwd = EA_PASSWORD.value();
+            final String username = EA_USERNAME.value();
+            final String pwd = EA_PASSWORD.value();
 //            log.debug("Username/pwd : [" + username + "]:[" + pwd + "]" );
             repository.OpenFile2(reposString, username, StringUtils.trimToEmpty(pwd));
         } else {
@@ -133,7 +133,7 @@ public class EaRepo {
      *                  false to do a flat search at current level only
      * @return The Package object in the EA model, or null if package was not found.
      */
-    public Package findPackageByName(final String theName, Package rootPkg, boolean recursive) {
+    public Package findPackageByName(final String theName, final Package rootPkg, final boolean recursive) {
         ensureRepoIsOpen();
 
         if (rootPkg == null) {
@@ -142,7 +142,7 @@ public class EaRepo {
 
         Package nextPkg;
 
-        for (Package pkg : rootPkg.GetPackages()) {
+        for (final Package pkg : rootPkg.GetPackages()) {
             if (pkg.GetName().equals(theName)) {
                 return pkg;
             }
@@ -172,11 +172,11 @@ public class EaRepo {
      *                  false to do a flat search at current level only
      * @return The Package object in the EA model, or null if package was not found.
      */
-    public Package findPackageByName(String theName, boolean recursive) {
+    public Package findPackageByName(final String theName, final boolean recursive) {
         return findPackageByName(theName, getRootPackage(), recursive);
     }
 
-    public Package findPackageByID(int packageID) {
+    public Package findPackageByID(final int packageID) {
         if (packageID == 0) {
             // id=0 means this is the root
             return null;
@@ -185,7 +185,7 @@ public class EaRepo {
         return repository.GetPackageByID(packageID);
     }
 
-    public Element findElementByID(int elementId) {
+    public Element findElementByID(final int elementId) {
         if (elementId == 0) {
             return null;
         }
@@ -202,9 +202,9 @@ public class EaRepo {
      */
     public Package getRootPackage() {
         ensureRepoIsOpen();
-        String rootPkgName = EA_ROOTPKG.value();
+        final String rootPkgName = EA_ROOTPKG.value();
         System.out.println("root package name = " + rootPkgName);
-        for (Package aPackage : repository.GetModels()) {
+        for (final Package aPackage : repository.GetModels()) {
             if (aPackage.GetName().equalsIgnoreCase(rootPkgName)) {
                 log.debug("Found top level package: " + aPackage.GetName());
                 return aPackage;
@@ -226,45 +226,45 @@ public class EaRepo {
      * @param directory The file system directory for generation
      * @param pkg       The EA model package to process
      */
-    public void generateXSD(File directory, Package pkg, String fileSeparator) {
-        Project eaProj = getProject();
+    public void generateXSD(final File directory, final Package pkg, final String fileSeparator) {
+        final Project eaProj = getProject();
 
-        String stereotype = pkg.GetStereotypeEx();
-        String pkgString = pkg.GetName();
+        final String stereotype = pkg.GetStereotypeEx();
+        final String pkgString = pkg.GetName();
 
         if (stereotype.equals(xsdSchemaStereotype)) {
             log.info("Generate XSD for package " + pkgString);
             eaProj.GenerateXSD(pkg.GetPackageGUID(), directory.getAbsolutePath() + fileSeparator + pkgString + ".xsd", xmlEncoding, null);
         } else {
             // Create subdirectory in generation directory
-            File f = new File(directory, pkgString);
+            final File f = new File(directory, pkgString);
 
             if (f.mkdirs()) {
                 log.debug("New subdir at: " + f.getAbsolutePath());
             }
 
             // Loop through all subpackages in EA model pkg
-            for (Package aPackage : pkg.GetPackages()) {
+            for (final Package aPackage : pkg.GetPackages()) {
                 generateXSD(f, aPackage, fileSeparator);
             }
         }
     }
 
-    public Element findXsdType(Package pkg, String xsdTypeName) {
-        String stereotype = pkg.GetStereotypeEx();
-        String pkgString = pkg.GetName();
+    public Element findXsdType(final Package pkg, final String xsdTypeName) {
+        final String stereotype = pkg.GetStereotypeEx();
+        final String pkgString = pkg.GetName();
 
         if (stereotype.equals(xsdSchemaStereotype)) {
             log.info("Looking for " + xsdTypeName + " inside  package " + pkgString);
-            for (Element element : pkg.GetElements()) {
+            for (final Element element : pkg.GetElements()) {
                 if(element.GetName().equals(xsdTypeName)) {
                     return element;
                 }
             }
         } else {
             // Loop through all subpackages in EA model pkg
-            for (Package aPackage : pkg.GetPackages()) {
-                Element element = findXsdType(aPackage, xsdTypeName);
+            for (final Package aPackage : pkg.GetPackages()) {
+                final Element element = findXsdType(aPackage, xsdTypeName);
                 if (element != null) {
                     return element;
                 }
@@ -281,7 +281,7 @@ public class EaRepo {
      * @param pack
      * @return
      */
-    public List<Element> findComponentsInPackage(Package pack) {
+    public List<Element> findComponentsInPackage(final Package pack) {
         return findElementsOfTypeInPackage(pack, EaMetaType.COMPONENT);
     }
 
@@ -292,7 +292,7 @@ public class EaRepo {
      * @param pack
      * @return
      */
-    public List<Element> findNodesInPackage(Package pack) {
+    public List<Element> findNodesInPackage(final Package pack) {
         return findElementsOfTypeInPackage(pack, EaMetaType.NODE);
     }
 
@@ -303,7 +303,7 @@ public class EaRepo {
      * @param pack the Package to serach in.
      * @return
      */
-    public List<Element> findClassesInPackage(Package pack) {
+    public List<Element> findClassesInPackage(final Package pack) {
         return findElementsOfTypeInPackage(pack, EaMetaType.CLASS);
     }
 
@@ -314,7 +314,7 @@ public class EaRepo {
      * @param pack the Package to serach in.
      * @return
      */
-    public List<Element> findObjectsInPackage(Package pack) {
+    public List<Element> findObjectsInPackage(final Package pack) {
         return findElementsOfTypeInPackage(pack, EaMetaType.OBJECT);
     }
 
@@ -325,10 +325,10 @@ public class EaRepo {
      * @param pack the Package to search in.
      * @return
      */
-    public List<Element> findComponentInstancesInPackage(Package pack) {
-        List<Element> theComponents = findElementsOfTypeInPackage(pack, EaMetaType.COMPONENT);
-        List<Element> componentInstances = new ArrayList<Element>();
-        for (Element component : theComponents) {
+    public List<Element> findComponentInstancesInPackage(final Package pack) {
+        final List<Element> theComponents = findElementsOfTypeInPackage(pack, EaMetaType.COMPONENT);
+        final List<Element> componentInstances = new ArrayList<Element>();
+        for (final Element component : theComponents) {
             if (EaMetaType.COMPONENT.toString().equals(component.GetClassifierType())) {
                 componentInstances.add(component);
             }
@@ -342,12 +342,12 @@ public class EaRepo {
      * @param classifier
      * @return
      */
-    public Element findOrCreateObjectInPackage(Package pack, String objectName, Element classifier) {
+    public Element findOrCreateObjectInPackage(final Package pack, final String objectName, final Element classifier) {
         ensureRepoIsOpen();
 
         // We allow for same name on different elements of different type, therefore
         // must also check type
-        for (Element element : findObjectsInPackage(pack)) {
+        for (final Element element : findObjectsInPackage(pack)) {
             if (element.GetName().equals(objectName)) {
                 if (isOfType(element, classifier)) {
                     return element;
@@ -357,8 +357,8 @@ public class EaRepo {
         return addElementInPackage(pack, objectName, EaMetaType.OBJECT, classifier);
     }
 
-    public Element findOrCreateComponentInstanceInPackage(Package pack, String name, Element classifier) {
-        Element component = findOrCreateComponentInPackage(pack, name);
+    public Element findOrCreateComponentInstanceInPackage(final Package pack, final String name, final Element classifier) {
+        final Element component = findOrCreateComponentInPackage(pack, name);
         if (classifier != null) {
             component.SetClassifierID(classifier.GetElementID());
             component.Update();
@@ -367,10 +367,10 @@ public class EaRepo {
         return component;
     }
 
-    private Element addElementInPackage(Package pack, String name, EaMetaType umlType, Element classifier) {
+    private Element addElementInPackage(final Package pack, final String name, final EaMetaType umlType, final Element classifier) {
         ensureRepoIsOpen();
 
-        Element element = pack.GetElements().AddNew(name, umlType.toString());
+        final Element element = pack.GetElements().AddNew(name, umlType.toString());
         pack.GetElements().Refresh();
 
         if (classifier != null) {
@@ -384,8 +384,8 @@ public class EaRepo {
         return element;
     }
 
-    public boolean isOfType(Element theObject, Element classifier) {
-        int classifierId = theObject.GetClassifierID();
+    public boolean isOfType(final Element theObject, final Element classifier) {
+        final int classifierId = theObject.GetClassifierID();
         if (classifier == null) {
             return (classifierId == 0);
         }
@@ -393,10 +393,10 @@ public class EaRepo {
         return (classifier.GetElementID() == classifierId);
     }
 
-    private Element findNamedElementOnList(List<Element> elementList, String elementName) {
+    private Element findNamedElementOnList(final List<Element> elementList, final String elementName) {
         ensureRepoIsOpen();
 
-        for (Element element : elementList) {
+        for (final Element element : elementList) {
             if (element.GetName().equals(elementName)) {
                 return element;
             }
@@ -413,18 +413,18 @@ public class EaRepo {
      * @param type the type of Element to look for.
      * @return a List of found Elements, possibly empty, but never null.
      */
-    public List<Element> findElementsOfTypeInPackage(Package pkg, EaMetaType type) {
+    public List<Element> findElementsOfTypeInPackage(final Package pkg, EaMetaType type) {
         ensureRepoIsOpen();
 
         if (pkg == null) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
 
         type = (type == null) ? EaMetaType.NULL : type;
 
-        List<Element> result = new ArrayList<Element>();
+        final List<Element> result = new ArrayList<Element>();
 
-        for (Element e : pkg.GetElements()) {
+        for (final Element e : pkg.GetElements()) {
             if (type.toString().equals(e.GetMetaType())) {
                 result.add(e);
             }
@@ -441,13 +441,13 @@ public class EaRepo {
      * @param name
      * @return null if no match is found.
      */
-    public Element findElementOfType(Package pack, EaMetaType type, String name) {
+    public Element findElementOfType(final Package pack, final EaMetaType type, String name) {
         ensureRepoIsOpen();
         name = name.trim();
 
-        List<Element> existingElements = findElementsOfTypeInPackage(pack, type);
+        final List<Element> existingElements = findElementsOfTypeInPackage(pack, type);
 
-        for (Element element : existingElements) {
+        for (final Element element : existingElements) {
             if (element.GetName().equals(name)) {
                 return element;
             }
@@ -455,7 +455,7 @@ public class EaRepo {
         return null;
     }
 
-    public Diagram findDiagramById(int id) {
+    public Diagram findDiagramById(final int id) {
         return repository.GetDiagramByID(id);
     }
 
@@ -466,7 +466,7 @@ public class EaRepo {
      * @param name
      * @param value
      */
-    public void setAttributeValue(Element object, String name, String value) {
+    public void setAttributeValue(final Element object, final String name, final String value) {
         ensureRepoIsOpen();
         // @VAR;Variable=name;Value=mittNavnPaaObjekt;Op==;@ENDVAR;@VAR;Variable=attribEn;Value=enverdi;Op==;@ENDVAR;
         object.SetRunState("@VAR;Variable=name;Value=dittnavn;Op==;@ENDVAR;");
@@ -477,7 +477,7 @@ public class EaRepo {
      * @param namespaceURI
      * @return
      */
-    public Package findOrCreatePackageFromNamespace(String namespaceURI) {
+    public Package findOrCreatePackageFromNamespace(final String namespaceURI) {
         ensureRepoIsOpen();
         log.debug("Looking for package with namespace:" + namespaceURI);
 
@@ -490,7 +490,7 @@ public class EaRepo {
      * @param className
      * @return
      */
-    public Element findOrCreateClassInPackage(Package definedPackage, String className) {
+    public Element findOrCreateClassInPackage(final Package definedPackage, final String className) {
         ensureRepoIsOpen();
 
         Element theClass = findNamedElementOnList(findClassesInPackage(definedPackage), className);
@@ -511,10 +511,10 @@ public class EaRepo {
      * @param componentName
      * @return
      */
-    public Element findOrCreateComponentInPackage(Package definedPackage, String componentName) {
+    public Element findOrCreateComponentInPackage(final Package definedPackage, final String componentName) {
         ensureRepoIsOpen();
 
-        Element theComponent = findNamedElementOnList(findComponentsInPackage(definedPackage), componentName);
+        final Element theComponent = findNamedElementOnList(findComponentsInPackage(definedPackage), componentName);
 
         if (theComponent != null) {
             return theComponent;
@@ -523,13 +523,13 @@ public class EaRepo {
         return addElementInPackage(definedPackage, componentName, EaMetaType.COMPONENT, null);
     }
 
-    public boolean deleteObjectInPackage(Package pkg, String objectName, Element classifier) {
+    public boolean deleteObjectInPackage(final Package pkg, final String objectName, final Element classifier) {
         if (pkg == null) {
             return false;
         }
         short index = 0;
         short indexToDelete = -1;
-        for (Element element : pkg.GetElements()) {
+        for (final Element element : pkg.GetElements()) {
             if (element.GetName().equals(objectName)) {
                 if ((classifier == null) || (classifier.GetElementID() == element.GetClassifierID())) {
                     indexToDelete = index;
@@ -554,16 +554,16 @@ public class EaRepo {
      * @param type the type of UML Diagram to look for or create.
      * @return the Diagram created or found.
      */
-    public Diagram findOrCreateDiagramInPackage(Package pkg, String name, EaDiagramType type) {
+    public Diagram findOrCreateDiagramInPackage(final Package pkg, String name, final EaDiagramType type) {
         if (name == null) {
             name = pkg.GetName();
         }
-        for (Diagram d : pkg.GetDiagrams()) {
+        for (final Diagram d : pkg.GetDiagrams()) {
             if (d.GetName().equals(name) && (type.toString().equals(d.GetType()))) {
                 return d;
             }
         }
-        Diagram newDiagram = pkg.GetDiagrams().AddNew(name, type.toString());
+        final Diagram newDiagram = pkg.GetDiagrams().AddNew(name, type.toString());
         pkg.GetDiagrams().Refresh();
         newDiagram.Update();
         pkg.Update();
@@ -571,7 +571,7 @@ public class EaRepo {
         return newDiagram;
     }
 
-    public Package findOrCreatePackage(Package parent, String name, boolean recursive) {
+    public Package findOrCreatePackage(final Package parent, final String name, final boolean recursive) {
         ensureRepoIsOpen();
         Package pkg = findPackageByName(name, parent, recursive);
         if (pkg != null) {
@@ -586,11 +586,11 @@ public class EaRepo {
         return pkg;
     }
 
-    public Package findOrCreatePackage(Package parent, String name) {
+    public Package findOrCreatePackage(final Package parent, final String name) {
         return findOrCreatePackage(parent, name, EaRepo.NON_RECURSIVE);
     }
 
-    public Connector findOrCreateAssociation(Element from, Element to, String name) {
+    public Connector findOrCreateAssociation(final Element from, final Element to, final String name) {
         // todo check for existence
 //        from.GetConnectors().AddNew(name, )
 //        for (Connector c : from.GetConnectors()) {
@@ -605,9 +605,9 @@ public class EaRepo {
      * @param name name of the link. Used to look up already existing links.
      * @return
      */
-    public Connector findOrCreateLink(Element from, Element to, String name) {
+    public Connector findOrCreateLink(final Element from, final Element to, final String name) {
         // check for existence
-        for (Connector c : to.GetConnectors()) {
+        for (final Connector c : to.GetConnectors()) {
             if (c.GetName().equals(name)) {
                 if ((c.GetSupplierID() == to.GetElementID()) && (c.GetClientID() == from.GetElementID())) {
                     return c;
@@ -615,7 +615,7 @@ public class EaRepo {
             }
         }
 
-        Connector c = to.GetConnectors().AddNew(name, EaMetaType.ASSOCIATION.toString());
+        final Connector c = to.GetConnectors().AddNew(name, EaMetaType.ASSOCIATION.toString());
         c.SetSupplierID(to.GetElementID());
         if (!c.Update()) {
             log.error("Unable to update connector to: " + to.GetName());
@@ -651,36 +651,36 @@ public class EaRepo {
 //            System.out.println(a.GetName());
 //        }
 
-        StringBuilder sb = new StringBuilder();
-        Collection<Datatype> dataTypes = repository.GetDatatypes();
-        for (Datatype dt : dataTypes) {
+        final StringBuilder sb = new StringBuilder();
+        final Collection<Datatype> dataTypes = repository.GetDatatypes();
+        for (final Datatype dt : dataTypes) {
             sb.append(dt.GetName()).append(", ");
         }
         return sb.toString();
     }
 
     public List<String> findAllMetaTypesInModel() {
-        Set<String> result = new HashSet<String>();
+        final Set<String> result = new HashSet<String>();
         findMetaTypesInPackage(getRootPackage(), result);
         return new ArrayList<String>(result);
     }
 
-    private void findMetaTypesInPackage(Package pkg, Set<String> result) {
-        for (Element element : pkg.GetElements()) {
+    private void findMetaTypesInPackage(final Package pkg, final Set<String> result) {
+        for (final Element element : pkg.GetElements()) {
             result.add(element.GetMetaType());
         }
-        for (Package aPackage : pkg.GetPackages()) {
+        for (final Package aPackage : pkg.GetPackages()) {
             findMetaTypesInPackage(aPackage, result);
         }
     }
 
-    public DiagramObject findOrCreateDiagramObject(Package pkg, Diagram diagram, Element reposElement) {
-        for (DiagramObject dObject : diagram.GetDiagramObjects()) {
+    public DiagramObject findOrCreateDiagramObject(final Package pkg, final Diagram diagram, final Element reposElement) {
+        for (final DiagramObject dObject : diagram.GetDiagramObjects()) {
             if (dObject.GetElementID() == reposElement.GetElementID()) {
                 return dObject;
             }
         }
-        DiagramObject diagramObject = diagram.GetDiagramObjects().AddNew("","");
+        final DiagramObject diagramObject = diagram.GetDiagramObjects().AddNew("","");
         diagramObject.SetInstanceID(reposElement.GetElementID());
         diagramObject.SetElementID(reposElement.GetElementID());
         diagramObject.Update();
@@ -695,14 +695,14 @@ public class EaRepo {
         return reposFile.getAbsolutePath() + " " + this.repository.toString();
     }
 
-    public boolean packageMatch(Package p) {
+    public boolean packageMatch(final Package p) {
         if(p == null) {
             return false;
         }
         if (packagePattern == null) {
             return true;
         }
-        Matcher matcher = packagePattern.matcher(p.GetName());
+        final Matcher matcher = packagePattern.matcher(p.GetName());
         if(matcher.matches()) {
             log.debug("Package match :" + p.GetName());
             return true;

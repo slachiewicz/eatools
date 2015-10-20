@@ -1,6 +1,7 @@
 package no.eatools.diagramgen;
 
-import no.eatools.util.Camel;
+import no.bouvet.ohs.jops.Camel;
+import no.bouvet.ohs.jops.Enums;
 
 /**
  * The set of EA Meta types (should correspond to UML meta types).
@@ -35,13 +36,7 @@ public enum EaMetaType {
      * @return never null
      */
     public static EaMetaType fromString(String metaType) {
-        EaMetaType theType = EaMetaType.NULL;
-        try {
-            theType = EaMetaType.valueOf(Camel.toConstantString(metaType));
-        } catch (IllegalArgumentException iae) {
-            // Default to the safe instance
-        }
-        return theType;
+        return Enums.valueOf(EaMetaType.class, Camel.toConstantString(metaType), NULL);
     }
 
     public String toString() {
