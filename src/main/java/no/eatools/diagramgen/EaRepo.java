@@ -11,7 +11,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sparx.Collection;
 import org.sparx.Connector;
 import org.sparx.Datatype;
@@ -39,11 +40,11 @@ import static no.eatools.util.EaApplicationProperties.*;
  * @author AB22273 et al.
  */
 public class EaRepo {
+    private static final transient Logger log = LoggerFactory.getLogger(EaRepo.class);
     /* Boolean flags that can be used as input params */
     public static final boolean RECURSIVE = true;
     public static final boolean NON_RECURSIVE = false;
 
-    private static final Logger log = Logger.getLogger(EaRepo.class);
 
     /* Name of the UML stereotype for an XSDschema package */
     private static final String xsdSchemaStereotype = "XSDschema";
@@ -62,7 +63,7 @@ public class EaRepo {
     public EaRepo(final File repositoryFile) {
         reposFile = repositoryFile;
         final String packagePatternRegexp = EA_PACKAGE_FILTER.value();
-        if(StringUtils.isNotBlank(packagePatternRegexp)) {
+        if (StringUtils.isNotBlank(packagePatternRegexp)) {
             packagePattern = Pattern.compile(packagePatternRegexp);
             log.info("Looking for packages matching [" + packagePatternRegexp + "]" + packagePattern.pattern());
         } else {
@@ -73,45 +74,57 @@ public class EaRepo {
     /**
      * Open the Enterprise Architect model repository.
      */
-    public void open() {
+    public boolean open() {
         if (isOpen) {
-            return;
+            return true;
         }
-        reposString = reposFile.getAbsolutePath();
-        final String[] reposStrings = reposString.split("db:");
-        if(reposStrings.length >= 2) {
-            reposString = reposStrings[1];
-        }
-        log.info("Opening model repository: " + reposString);
-        log.debug("Before new repos " + new Date());
-        repository = new Repository();
-        log.debug("After new repos " + new Date());
-        repository.SetSuppressEADialogs(true);
-        repository.SetSuppressSecurityDialog(true);
-        if(EA_USERNAME.exists() && EA_PASSWORD.exists()) {
-            final String username = EA_USERNAME.value();
-            final String pwd = EA_PASSWORD.value();
+        try {
+            reposString = reposFile.getAbsolutePath();
+            final String[] reposStrings = reposString.split("db:");
+            if (reposStrings.length >= 2) {
+                reposString = reposStrings[1];
+            }
+            log.info("Opening model repository: " + reposString);
+            log.debug("Before new repos " + new Date());
+            repository = new Repository();
+            log.debug("After new repos " + new Date());
+            repository.SetSuppressEADialogs(true);
+            repository.SetSuppressSecurityDialog(true);
+            if (EA_USERNAME.exists() && EA_PASSWORD.exists()) {
+                final String username = EA_USERNAME.value();
+                final String pwd = EA_PASSWORD.value();
 //            log.debug("Username/pwd : [" + username + "]:[" + pwd + "]" );
-            repository.OpenFile2(reposString, username, StringUtils.trimToEmpty(pwd));
-        } else {
-            repository.OpenFile(reposString);
+                repository.OpenFile2(reposString, username, StringUtils.trimToEmpty(pwd));
+            } else {
+                repository.OpenFile(reposString);
+            }
+            log.debug("After open " + new Date());
+            isOpen = true;
+        } catch (final Exception e) {
+            e.printStackTrace();
+            LOG.error(e.toString());
+            final String msg = "An error occurred. This might be caused by an incorrect diagramgen-repo connect string.\n" +
+                    "Verify that the connect string in the ea.application.properties file is the same as\n" +
+                    "the connect string that you can find in Enterprise Architect via the File->Open Project dialog";
+            System.out.println(msg);
+            return false;
         }
-        log.debug("After open " + new Date());
-        isOpen = true;
+        return true;
     }
 
     /**
      * Alternative name for better code readability internally in this class
      */
-    private void ensureRepoIsOpen() {
-        open();
+
+    private boolean ensureRepoIsOpen() {
+        return open();
     }
 
     /**
      * Closes the Enterprise Architect model repository.
      */
     public void close() {
-        if(isOpen && repository != null) {
+        if (isOpen && repository != null) {
             log.info("Closing repository: " + reposString);
             repository.SetFlagUpdate(true);
             repository.CloseFile();
@@ -198,7 +211,7 @@ public class EaRepo {
      * todo check for NPEs.
      *
      * @return the root package or possibly null if there are no root package in the repository.
-     *         This is normally the "Views" package or the "Model" package, but it may have an arbitrary name.
+     * This is normally the "Views" package or the "Model" package, but it may have an arbitrary name.
      */
     public Package getRootPackage() {
         ensureRepoIsOpen();
@@ -257,7 +270,7 @@ public class EaRepo {
         if (stereotype.equals(xsdSchemaStereotype)) {
             log.info("Looking for " + xsdTypeName + " inside  package " + pkgString);
             for (final Element element : pkg.GetElements()) {
-                if(element.GetName().equals(xsdTypeName)) {
+                if (element.GetName().equals(xsdTypeName)) {
                     return element;
                 }
             }
@@ -272,7 +285,6 @@ public class EaRepo {
         }
         return null;
     }
-
 
     /**
      * Find UML Component elements inside a specified UML Package.
@@ -549,7 +561,7 @@ public class EaRepo {
     /**
      * todo move to EaDiagram class...
      *
-     * @param pkg the Package to create the Diagram in.
+     * @param pkg  the Package to create the Diagram in.
      * @param name name of the Diagram, if null, the Diagram will have the same name as the Package.
      * @param type the type of UML Diagram to look for or create.
      * @return the Diagram created or found.
@@ -680,7 +692,7 @@ public class EaRepo {
                 return dObject;
             }
         }
-        final DiagramObject diagramObject = diagram.GetDiagramObjects().AddNew("","");
+        final DiagramObject diagramObject = diagram.GetDiagramObjects().AddNew("", "");
         diagramObject.SetInstanceID(reposElement.GetElementID());
         diagramObject.SetElementID(reposElement.GetElementID());
         diagramObject.Update();
@@ -696,14 +708,14 @@ public class EaRepo {
     }
 
     public boolean packageMatch(final Package p) {
-        if(p == null) {
+        if (p == null) {
             return false;
         }
         if (packagePattern == null) {
             return true;
         }
         final Matcher matcher = packagePattern.matcher(p.GetName());
-        if(matcher.matches()) {
+        if (matcher.matches()) {
             log.debug("Package match :" + p.GetName());
             return true;
         }

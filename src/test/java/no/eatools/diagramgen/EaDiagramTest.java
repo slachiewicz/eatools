@@ -4,15 +4,15 @@ import java.util.List;
 
 import no.eatools.util.EaApplicationProperties;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sparx.Package;
 
 /**
  * Unit tests for the EaDiagram class. Note that these tests rely on the model defined in the
  */
 public class EaDiagramTest extends AbtractEaTestCase {
-    private static final Log log = LogFactory.getLog(EaDiagramTest.class);
+    private static final transient Logger log = LoggerFactory.getLogger(EaDiagramTest.class);
 
     public void testFindDiagramsInPackage() throws Exception {
         Package rootPkg = eaRepo.getRootPackage();

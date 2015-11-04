@@ -3,8 +3,8 @@ package no.eatools.documenter;
 import no.eatools.diagramgen.EaRepo;
 import no.eatools.util.ObjectGraph;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sparx.Element;
 
 /**
@@ -13,7 +13,7 @@ import org.sparx.Element;
  * @author ohs
  */
 public class EaXsdType {
-    private static final transient Log LOG = LogFactory.getLog(EaXsdType.class);
+    private static final transient Logger LOG = LoggerFactory.getLogger(EaXsdType.class);
 
     private final EaRepo eaRepo;
 

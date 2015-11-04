@@ -12,26 +12,25 @@ import java.util.Set;
 import no.bouvet.ohs.ea.dd.DDEntry;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sparx.Attribute;
 import org.sparx.Collection;
 import org.sparx.Connector;
 import org.sparx.Element;
 import org.sparx.Package;
 
-
 /**
  * @author ohs
  */
 public class EaPackage {
-    private static final transient Log LOG = LogFactory.getLog(EaPackage.class);
+    private static final transient Logger LOG = LoggerFactory.getLogger(EaPackage.class);
 
     final String name;
     final EaRepo repos;
     final Package me;
-    final Map<Connector, String> connectorMap = new HashMap<Connector, String>();
-    final Set<String> allConnectors = new HashSet<String>();
+    final Map<Connector, String> connectorMap = new HashMap<>();
+    final Set<String> allConnectors = new HashSet<>();
 //    BiMap
 
     public EaPackage(final String name, final EaRepo repos) {
@@ -73,22 +72,11 @@ public class EaPackage {
     }
 
     private String createAttributeLine(final String elementName, final Attribute attribute, final String version) {
-//        final StringJoiner sj = new StringJoiner(";");
-//        sj.add(elementName + "." + attribute.GetName());
-//        sj.add(attribute.GetNotes().replaceAll("\n", "\\\\n").replaceAll("\r", ""));
-//        sj.add(attribute.GetLowerBound() + ".." + attribute.GetUpperBound());
-//        sj.add(booleanToYesNo(attribute.GetIsID()));
-//        sj.add(attribute.GetType());
-//        sj.add(attribute.GetStereotypeEx());
-//        sj.add(attribute.GetAttributeGUID());
-//        sj.add(version);
-
-//        String description = attribute.GetNotes().replaceAll("\n", "\\\\n").replaceAll("\r", "");
         final String description = attribute.GetNotes();//.replaceAll("\n", "\\\\n").replaceAll("\r", "");
 
-        final DDEntry ddEntry = new DDEntry(elementName + "." + attribute.GetName(), description,
-                attribute.GetLowerBound() + ".." + attribute.GetUpperBound(), attribute.GetType(), attribute.GetStereotypeEx(),
-                attribute.GetAttributeGUID(), version, booleanToYesNo(attribute.GetIsID()));
+        final DDEntry ddEntry =
+                new DDEntry(elementName + "." + attribute.GetName(), description, attribute.GetLowerBound() + ".." + attribute.GetUpperBound(),
+                        attribute.GetType(), attribute.GetStereotypeEx(), attribute.GetAttributeGUID(), version, booleanToYesNo(attribute.GetIsID()));
 
         return ddEntry.toJson();
     }

@@ -5,8 +5,8 @@ import java.util.Map;
 
 import no.bouvet.ohs.jops.SystemProperties;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author AB22273
@@ -14,7 +14,7 @@ import org.apache.commons.logging.LogFactory;
  * @since 05.nov.2008 15:08:02
  */
 public class RunStateAttributeSet {
-    private static final Log log = LogFactory.getLog(RunStateAttributeSet.class);
+    private static final transient Logger LOG = LoggerFactory.getLogger(RunStateAttributeSet.class);
 
     private Map<String, RunStateAttribute> theAttributes = new HashMap<String, RunStateAttribute>();
 
