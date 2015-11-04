@@ -1,7 +1,7 @@
 package no.eatools.diagramgen;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class holds a single object attributes that are to be represented as runState in the EA Object Instance.
@@ -15,7 +15,7 @@ import org.apache.commons.logging.LogFactory;
  * @since 05.nov.2008 14:47:55
  */
 public class RunStateAttribute {
-    private static final Log log = LogFactory.getLog(RunStateAttribute.class);
+    private static final transient Logger LOG = LoggerFactory.getLogger(RunStateAttribute.class);
 
     public static final String VAR_PREFIX = "@VAR;Variable=";
     public static final String VAR_SUFFIX = ";Op==;@ENDVAR;";

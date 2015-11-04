@@ -9,8 +9,8 @@ package no.eatools.diagramgen;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sparx.Attribute;
 import org.sparx.Collection;
 import org.sparx.Diagram;
@@ -20,7 +20,7 @@ import org.sparx.Package;
 import org.sparx.TaggedValue;
 
 public class EaRepoTest extends AbtractEaTestCase {
-    private static final Log log = LogFactory.getLog(EaRepoTest.class);
+    private static final transient Logger log = LoggerFactory.getLogger(EaRepoTest.class);
 
     public void testOpenRepository() throws Exception {
         eaRepo.open();
@@ -160,7 +160,7 @@ public class EaRepoTest extends AbtractEaTestCase {
         log.info(myClass.GetClassifierID() + ":" + myClass.GetClassfierID());
         log.info(myClass.GetMetaType());
 
-        log.info(myClass.GetElementID());
+        log.info("ElementID {}", myClass.GetElementID());
 
         Element newObject = theElements.AddNew("EtObject", EaMetaType.OBJECT.toString());
 

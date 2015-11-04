@@ -2,7 +2,6 @@ package no.eatools.diagramgen;
 
 import java.io.File;
 
-import no.bouvet.ohs.args4j.PropertyMap;
 import no.eatools.util.EaApplicationProperties;
 
 import junit.framework.TestCase;
@@ -15,7 +14,8 @@ public abstract class AbtractEaTestCase extends TestCase {
 
     protected void setUp() throws Exception {
         super.setUp();
-        EaApplicationProperties.init("test.ea.application.properties", new PropertyMap(EaApplicationProperties.class));
+
+//        EaApplicationProperties.init("test.ea.application.properties", new PropertyMap(EaApplicationProperties.class));
         File modelFile = new File(EaApplicationProperties.EA_PROJECT.value());
         eaRepo = new EaRepo(modelFile);
         eaRepo.open();

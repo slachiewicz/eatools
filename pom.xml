@@ -7,8 +7,8 @@
     <packaging>jar</packaging>
     <name>EaTools</name>
     <description>
-        A little PoC tool for generating PNG diagram files with logical file names, i.e. the same names as used in the
-        model in EA.
+        A little tool for generating PNG diagram files with logical file names, i.e. the same names as used in the
+        model in EA. And other EA-related chores...
     </description>
     <version>1.0-SNAPSHOT</version>
 
@@ -30,17 +30,35 @@
             <version>1.0.0</version>
         </dependency>
 
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.14</version>
-        </dependency>
+        <!--<dependency>-->
+        <!--<groupId>log4j</groupId>-->
+        <!--<artifactId>log4j</artifactId>-->
+        <!--<version>1.2.14</version>-->
+        <!--</dependency>-->
 
         <!--<dependency>-->
-            <!--<groupId>commons-cli</groupId>-->
-            <!--<artifactId>commons-cli</artifactId>-->
-            <!--<version>1.1</version>-->
+        <!--<groupId>commons-cli</groupId>-->
+        <!--<artifactId>commons-cli</artifactId>-->
+        <!--<version>1.1</version>-->
         <!--</dependency>-->
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.1.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>1.1.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.12</version>
+        </dependency>
 
         <dependency>
             <groupId>commons-lang</groupId>
@@ -51,20 +69,21 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.8</version>
+            <version>4.12</version>
+            <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-            <version>1.1</version>
-        </dependency>
+        <!--<dependency>-->
+        <!--<groupId>commons-logging</groupId>-->
+        <!--<artifactId>commons-logging</artifactId>-->
+        <!--<version>1.1</version>-->
+        <!--</dependency>-->
 
-        <dependency>
-            <groupId>org.apache.xmlbeans</groupId>
-            <artifactId>xmlbeans</artifactId>
-            <version>2.4.0</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.apache.xmlbeans</groupId>-->
+            <!--<artifactId>xmlbeans</artifactId>-->
+            <!--<version>2.4.0</version>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
@@ -74,22 +93,43 @@
             <groupId>no.bouvet.ohs</groupId>
             <artifactId>cli</artifactId>
             <version>1.1-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>ch.qos.logback</groupId>
+                    <artifactId>logback-classic</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>no.bouvet.ohs</groupId>
             <artifactId>eadd</artifactId>
             <version>1.0-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>ch.qos.logback</groupId>
+                    <artifactId>logback-classic</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!--<dependency>-->
-            <!--<groupId>no.bouvet.ohs.futil</groupId>-->
-            <!--<artifactId>futil</artifactId>-->
-            <!--<version>1.1-SNAPSHOT</version>-->
+        <!--<groupId>no.bouvet.ohs.futil</groupId>-->
+        <!--<artifactId>futil</artifactId>-->
+        <!--<version>1.1-SNAPSHOT</version>-->
         <!--</dependency>-->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>17.0</version>
         </dependency>
+
         <!--<dependency>-->
         <!--<groupId>commons-beanutils</groupId>-->
         <!--<artifactId>commons-beanutils</artifactId>-->
@@ -139,7 +179,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.5.3</version>
+                <version>2.6</version>
                 <configuration>
                     <!--finalName>${pom.artifactId}</finalName-->
                     <finalName>${jarFileName}</finalName>
@@ -157,6 +197,35 @@
                             <mode>development</mode>
                         </manifestEntries>
                     </archive>
+                    <!--<dependencySets>-->
+                        <!--<dependencySet>-->
+                            <!--&lt;!&ndash;<outputDirectory/>&ndash;&gt;-->
+                            <!--&lt;!&ndash;<includes/>&ndash;&gt;-->
+                            <!--<excludes>-->
+                                <!--log4j:log4j-->
+                            <!--</excludes>-->
+                            <!--&lt;!&ndash;<fileMode/>&ndash;&gt;-->
+                            <!--&lt;!&ndash;<directoryMode/>&ndash;&gt;-->
+                            <!--&lt;!&ndash;<useStrictFiltering/>&ndash;&gt;-->
+                            <!--&lt;!&ndash;<outputFileNameMapping/>&ndash;&gt;-->
+                            <!--&lt;!&ndash;<unpack/>&ndash;&gt;-->
+                            <!--<unpackOptions>-->
+                                <!--<includes/>-->
+                                <!--<excludes>-->
+                                    <!--log4j:log4j-->
+                                <!--</excludes>-->
+                                <!--<filtered/>-->
+                                <!--<lineEnding/>-->
+                                <!--<useDefaultExcludes/>-->
+                                <!--<encoding/>-->
+                            <!--</unpackOptions>-->
+                            <!--&lt;!&ndash;<scope/>&ndash;&gt;-->
+                            <!--&lt;!&ndash;<useProjectArtifact/>&ndash;&gt;-->
+                            <!--&lt;!&ndash;<useProjectAttachments/>&ndash;&gt;-->
+                            <!--&lt;!&ndash;<useTransitiveDependencies/>&ndash;&gt;-->
+                            <!--&lt;!&ndash;<useTransitiveFiltering/>&ndash;&gt;-->
+                        <!--</dependencySet>-->
+                    <!--</dependencySets>-->
                 </configuration>
                 <executions>
                     <execution>
@@ -165,8 +234,11 @@
                         <goals>
                             <goal>assembly</goal>
                         </goals>
+                        <configuration>
+                        </configuration>
                     </execution>
                 </executions>
+
             </plugin>
 
             <plugin>
@@ -188,7 +260,7 @@
 
                     <!--<format>{0,number}</format>-->
                     <!--<items>-->
-                        <!--<item>buildNumber</item>-->
+                    <!--<item>buildNumber</item>-->
                     <!--</items>-->
 
                     <format>{0,date,yyyy-MM-dd HH:mmZ} {1}</format>

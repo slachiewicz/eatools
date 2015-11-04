@@ -12,9 +12,11 @@ import no.eatools.util.IntCounter;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sparx.Collection;
 import org.sparx.Diagram;
+import org.sparx.DiagramLink;
 import org.sparx.Element;
 import org.sparx.Package;
 
@@ -27,7 +29,7 @@ import static no.eatools.util.EaApplicationProperties.*;
  * @author Per Spilling (per.spilling@objectware.no)
  */
 public class EaDiagram {
-    private static final Logger log = Logger.getLogger(EaDiagram.class);
+    private static final transient Logger log = LoggerFactory.getLogger(EaDiagram.class);
     private final Diagram eaDiagram;
     private ImageFileFormat defaultImageFormat = ImageFileFormat.PNG;
     private final EaRepo eaRepo;
@@ -69,6 +71,17 @@ public class EaDiagram {
                 d.writeImageToFile(false);
             }
         }
+    }
+
+    public static EaDiagram findEaDiagram(final EaRepo eaRepo, final String diagramName) {
+        final EaDiagram diagram;
+        if (StringUtils.isNumeric(diagramName)) {
+            final int diagramId = Integer.parseInt(diagramName);
+            diagram = findDiagramById(eaRepo, diagramId);
+        } else {
+            diagram = findDiagram(eaRepo, diagramName);
+        }
+        return diagram;
     }
 
     public static EaDiagram findDiagram(final EaRepo eaRepo, final String diagramName) {
@@ -192,6 +205,34 @@ public class EaDiagram {
         logicalPathname = pathName;
     }
 
+    /**
+     * Experimental
+     *
+     * @param style
+     */
+    public void setAllConnectorsToStyle(int style) {
+//        for (DiagramObject diagramObject : eaDiagram.GetDiagramObjects()) {
+//            diagramObject.GetBottom();
+//
+//            Element element = eaRepo.findElementByID(diagramObject.GetElementID());
+//            for (Connector connector : element.GetConnectors()) {
+//                System.out.println("ConnectorStyle" +  connector.GetName() + ":" + connector.GetRouteStyle());
+//            }
+//        }
+        System.out.println("Modifying diagram " + eaDiagram.GetName());
+        for (DiagramLink diagramLink : eaDiagram.GetDiagramLinks()) {
+            String styleString = diagramLink.GetStyle();
+            System.out.println("Old style: " + styleString);
+            if(! styleString.contains("TREE")) {
+                styleString += "TREE=OS;";
+                diagramLink.SetStyle(styleString);
+                System.out.println("New style: " + styleString);
+                diagramLink.Update();
+            }
+        }
+        eaDiagram.Update();
+    }
+
     public EaDiagram(final EaRepo repository, final Diagram diagram, final String pathName, final ImageFileFormat imageFormat) {
         eaDiagram = diagram;
         eaRepo = repository;
@@ -203,7 +244,7 @@ public class EaDiagram {
         try {
             return writeImageToFile(defaultImageFormat, urlForFileOnly);
         } catch (final Exception e) {
-            log.error(e);
+            log.error("Unable to write to file", e);
             return false;
         }
     }

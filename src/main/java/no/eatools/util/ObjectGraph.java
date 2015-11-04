@@ -4,8 +4,8 @@ import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sparx.Collection;
 
 /**
@@ -14,7 +14,7 @@ import org.sparx.Collection;
  * @author ohs
  */
 public class ObjectGraph {
-    private static final transient Log LOG = LogFactory.getLog(ObjectGraph.class);
+    private static final transient Logger LOG = LoggerFactory.getLogger(ObjectGraph.class);
 
     private final static Set<Class> terminatingClasses = new HashSet<Class>();
     static {
