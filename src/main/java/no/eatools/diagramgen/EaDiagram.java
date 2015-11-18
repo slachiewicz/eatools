@@ -20,7 +20,7 @@ import org.sparx.DiagramLink;
 import org.sparx.Element;
 import org.sparx.Package;
 
-import static no.bouvet.ohs.jops.SystemProperties.*;
+import static no.bouvet.ohs.jops.SystemPropertySet.*;
 import static no.eatools.util.EaApplicationProperties.*;
 
 /**

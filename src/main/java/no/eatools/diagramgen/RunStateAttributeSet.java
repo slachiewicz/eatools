@@ -3,10 +3,10 @@ package no.eatools.diagramgen;
 import java.util.HashMap;
 import java.util.Map;
 
-import no.bouvet.ohs.jops.SystemProperties;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static no.bouvet.ohs.jops.SystemPropertySet.LINE_SEPARATOR;
 
 /**
  * @author AB22273
@@ -64,7 +64,7 @@ public class RunStateAttributeSet {
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         for (final RunStateAttribute runStateAttribute : theAttributes.values()) {
-            sb.append(runStateAttribute.toString()).append(SystemProperties.LINE_SEPARATOR.value());
+            sb.append(runStateAttribute.toString()).append(LINE_SEPARATOR.value());
         }
         return sb.toString();
     }
