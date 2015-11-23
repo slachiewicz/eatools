@@ -468,7 +468,12 @@ public class EaRepo {
     }
 
     public Diagram findDiagramById(final int id) {
-        return repository.GetDiagramByID(id);
+        try {
+            return repository.GetDiagramByID(id);
+        } catch (Exception e) {
+            log.error("Could not find diagram with id {} in repos {}", id, this);
+            return null;
+        }
     }
 
     /**

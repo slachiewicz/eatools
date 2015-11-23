@@ -10,6 +10,7 @@ import no.bouvet.ohs.args4j.UsageHelper;
 import no.bouvet.ohs.futil.ResourceFinder;
 import no.bouvet.ohs.jops.PropertyMap;
 import no.eatools.util.EaApplicationProperties;
+import no.eatools.util.RotatingProgressBar;
 
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
@@ -67,13 +68,6 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         ResourceFinder.findResourceAsStringList(VERSION_FILE).forEach(LOG::info);
 
         usageHelper.parse(args);
-//        if (LOG.isDebugEnabled()) {
-//            final String property = System.getProperty("java.library.path");
-//            final StringTokenizer parser = new StringTokenizer(property, ";");
-//            while (parser.hasMoreTokens()) {
-//                System.err.println(parser.nextToken());
-//            }
-//        }
         LOG.debug(propertyMap.toString());
 
 //        if(! EA_PROJECT.exists()) {
@@ -83,6 +77,8 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
 //        try {
         LOG.info("Using properties" + listAllProperties());
 
+        RotatingProgressBar pb = new RotatingProgressBar();
+        pb.start();
         final File modelFile = new File(EA_PROJECT.value());
         eaRepo = new EaRepo(modelFile);
         if (!eaRepo.open()) {
@@ -110,6 +106,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             LOG.info("Generated " + count + " diagrams");
         }
         eaRepo.close();
+        pb.setShowProgress(false);
 //        } catch (final Exception e) {
 //            e.printStackTrace();
 //            LOG.error(e.toString());
