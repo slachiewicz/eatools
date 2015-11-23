@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  * @author Per Spilling
  * @since 05.nov.2008 09:25:13
  */
-public enum EaApplicationProperties implements EnumProperty<EaApplicationProperties> {
+public enum EaApplicationProperties implements EnumProperty {
     @Description(text = "Name of .eap file or connection string to database repos.", mandatory = true)
     EA_PROJECT,
 
@@ -66,6 +66,10 @@ public enum EaApplicationProperties implements EnumProperty<EaApplicationPropert
 
     @Override
     public PropertyMap<? extends EnumProperty> getPropertyMap() {
+        return propsMap;
+    }
+
+    public static PropertyMap<EaApplicationProperties> getThePropertyMap() {
         return propsMap;
     }
 }

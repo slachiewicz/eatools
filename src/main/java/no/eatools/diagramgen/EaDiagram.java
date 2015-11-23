@@ -328,6 +328,9 @@ public class EaDiagram {
 
     public static EaDiagram findDiagramById(final EaRepo eaRepo, final int diagramId) {
         final Diagram diagram = eaRepo.findDiagramById(diagramId);
+        if(diagram == null) {
+            return null;
+        }
         final String packagePath = getPackagePath(eaRepo, eaRepo.findPackageByID(diagram.GetPackageID()));
         return new EaDiagram(eaRepo, diagram, packagePath);
     }
