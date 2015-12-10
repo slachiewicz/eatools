@@ -156,7 +156,7 @@ public class EaRepo {
         Package nextPkg;
 
         for (final Package pkg : rootPkg.GetPackages()) {
-            if (pkg.GetName().equals(theName)) {
+            if (pkg.GetName().equals(theName) && packageMatch(pkg)) {
                 return pkg;
             }
 
@@ -724,7 +724,7 @@ public class EaRepo {
             log.debug("Package match :" + p.GetName());
             return true;
         }
-        log.debug("Looking for parent match");
+        log.debug("Looking for parent match for {} ", p.GetName());
         return packageMatch(findPackageByID(p.GetParentID()));
     }
 }

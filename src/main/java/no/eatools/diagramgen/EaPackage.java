@@ -2,6 +2,7 @@ package no.eatools.diagramgen;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import no.bouvet.ohs.ea.dd.DDEntry;
+import no.bouvet.ohs.ea.dd.DDType;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -37,18 +39,26 @@ public class EaPackage {
         this.name = name;
         this.repos = repos;
         this.me = repos.findPackageByName(name, true);
+        if(me == null) {
+            LOG.error("Package {} not found", name);
+        }
     }
 
     /**
      * Generate relationships between subpackages based on relationships between contained classes
      */
     public void generatePackageRelationships() {
+        if(me == null) {
+            LOG.warn("Cannot generate relationships. Package {} is not found", name);
+            return;
+        }
         deleteExistingConnectors(me);
         generateRelationships(me);
     }
 
     public void generateAttributesFile() {
         final List<String> attributes = new ArrayList<>();
+        attributes.add("// Generated at " + ZonedDateTime.now().toString());
         generateAttributesInPackage(this.me, attributes);
         try {
             FileUtils.writeLines(new File("attributes.csv"), "UTF-8", attributes);
@@ -58,17 +68,28 @@ public class EaPackage {
     }
 
     private void generateAttributesInPackage(final Package pkg, final List<String> attributes) {
-        System.out.println("***********" + pkg.GetName());
+        System.out.println("Exporting Attributes in package " + pkg.GetName() + " id:" + pkg.GetPackageID());
 
         for (final Package aPackage : pkg.GetPackages()) {
             generateAttributesInPackage(aPackage, attributes);
         }
         for (final Element element : pkg.GetElements()) {
             System.out.println(element.GetName());
+            attributes.add(createElementLine(element));
             for (final Attribute attribute : element.GetAttributes()) {
                 attributes.add(createAttributeLine(element.GetName(), attribute, element.GetVersion()));
             }
         }
+    }
+
+    private String createElementLine(final Element element) {
+        final String description = element.GetNotes();//.replaceAll("\n", "\\\\n").replaceAll("\r", "");
+
+        final DDEntry ddEntry =
+                new DDEntry(element.GetName(), description, null,
+                            element.GetType(), element.GetStereotypeEx(), element.GetElementGUID(), element.GetVersion(), booleanToYesNo(false), DDType.ELEMENT);
+
+        return ddEntry.toJson();
     }
 
     private String createAttributeLine(final String elementName, final Attribute attribute, final String version) {
@@ -76,7 +97,7 @@ public class EaPackage {
 
         final DDEntry ddEntry =
                 new DDEntry(elementName + "." + attribute.GetName(), description, attribute.GetLowerBound() + ".." + attribute.GetUpperBound(),
-                        attribute.GetType(), attribute.GetStereotypeEx(), attribute.GetAttributeGUID(), version, booleanToYesNo(attribute.GetIsID()));
+                            attribute.GetType(), attribute.GetStereotypeEx(), attribute.GetAttributeGUID(), version, booleanToYesNo(attribute.GetIsID()), DDType.ATTRIBUTE);
 
         return ddEntry.toJson();
     }
@@ -86,6 +107,7 @@ public class EaPackage {
     }
 
     private void deleteExistingConnectors(final Package pkg) {
+        LOG.info("Deleting old connectore in {}", pkg.GetName());
         final Collection<Connector> connectors = pkg.GetElement().GetConnectors();
         for (short i = 0; i < connectors.GetCount(); i++) {
             connectors.Delete(i);
