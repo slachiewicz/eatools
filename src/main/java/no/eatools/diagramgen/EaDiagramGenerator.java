@@ -10,16 +10,15 @@ import no.bouvet.ohs.args4j.UsageHelper;
 import no.bouvet.ohs.futil.ResourceFinder;
 import no.bouvet.ohs.jops.PropertyMap;
 import no.eatools.util.EaApplicationProperties;
-import no.eatools.util.RotatingProgressBar;
 
+import org.apache.commons.io.FilenameUtils;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static no.eatools.util.EaApplicationProperties.EA_DIAGRAM_TO_GENERATE;
-import static no.eatools.util.EaApplicationProperties.EA_PROJECT;
-import static org.apache.commons.lang.StringUtils.isNotBlank;
+import static no.eatools.util.EaApplicationProperties.*;
+import static org.apache.commons.lang.StringUtils.*;
 
 /**
  * Utility to be used from the command line to output all diagrams in an EA repo
@@ -46,10 +45,13 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     private String elementCreationPackage = "";
 
     @Option(name = "-p", usage = "Property override [property]=[new value],... ", metaVar = "list of key, value pairs")
-    private PropertyMap<EaApplicationProperties> propertyMap = EaApplicationProperties.getThePropertyMap();
+    private PropertyMap<EaApplicationProperties> propertyMap = getThePropertyMap();
 
     @Option(name = "-c", usage = "set connectors", metaVar = "Connector Type")
     private Integer connectorType = null;
+
+    @Option(name = "-v", usage = "Shov version and exit")
+    private boolean showVersion = false;
 
 //    @Argument(metaVar = PROPERTY_FILE, usage = "property file. If omitted standard file is looked for ", index = 0, required = true)
 //    private String propertyFilename;
@@ -61,7 +63,19 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     private EaRepo eaRepo;
 
     public static void main(final String[] args) {
-        new EaDiagramGenerator().initMain(args);
+
+        EaDiagramGenerator eaDiagramGenerator = new EaDiagramGenerator();
+        try {
+            eaDiagramGenerator.initMain(args);
+        } catch (Throwable e) {
+            System.out.println("\nTerminated with error: " + e);
+        } finally {
+            eaDiagramGenerator.stopProgress();
+        }
+    }
+
+    public EaDiagramGenerator() {
+        super(true);
     }
 
     protected void doMain(final String[] args) {
@@ -70,16 +84,19 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         usageHelper.parse(args);
         LOG.debug(propertyMap.toString());
 
-//        if(! EA_PROJECT.exists()) {
-//            LOG.error("Missing property {}", EA_PROJECT.keyAsPropertyName());
-//            usageHelper.ter();
-//        }
-//        try {
-        LOG.info("Using properties" + listAllProperties());
+        if(showVersion) {
+            ResourceFinder.findResourceAsStringList(VERSION_FILE).forEach(System.out::println);
+            return;
+        }
 
-        RotatingProgressBar pb = new RotatingProgressBar();
-        pb.start();
-        final File modelFile = new File(EA_PROJECT.value());
+        LOG.info("Using properties" + listAllProperties());
+        startProgress();
+
+        String reposString = EA_PROJECT.value();
+        LOG.info("Trying repos {}", reposString);
+        String normalizedFileName = FilenameUtils.normalize(reposString);
+        final File modelFile = new File(normalizedFileName);
+        LOG.info("Trying repos: asProperty: [{}] to file: [{}]", reposString, modelFile.getAbsolutePath());
         eaRepo = new EaRepo(modelFile);
         if (!eaRepo.open()) {
             usageHelper.terminateWithHelp(-2, ERROR_ON_EXIT);
@@ -106,19 +123,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             LOG.info("Generated " + count + " diagrams");
         }
         eaRepo.close();
-        pb.setShowProgress(false);
-//        } catch (final Exception e) {
-//            e.printStackTrace();
-//            LOG.error(e.toString());
-//            final String msg = ERROR_ON_EXIT;
-//            System.out.println(msg);
-//        } catch (final Throwable t) {
-//            System.err.println("An error occurred " + t);
-//        } finally {
-//            if (eaRepo != null) {
-//                eaRepo.close();
-//            }
-//        }
+        stopProgress();
     }
 
     @Override
