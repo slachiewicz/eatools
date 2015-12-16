@@ -59,7 +59,10 @@ public enum EaApplicationProperties implements EnumProperty {
     EA_PASSWORD,
 
     @Description(text = "If present, add diagram version as part of diagram filename")
-    EA_ADD_VERSION;
+    EA_ADD_VERSION,
+
+    @Description(text = "For -m option, generate HTML to this path")
+    EA_HTML_OUTPUT;
     private static final transient Logger log = LoggerFactory.getLogger(EaApplicationProperties.class);
 
     private static PropertyMap<EaApplicationProperties> propsMap = new PropertyMap<>(EaApplicationProperties.class);
