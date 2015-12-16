@@ -1,19 +1,15 @@
 package no.eatools.diagramgen;
 
-import java.io.File;
-import java.io.IOException;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import no.bouvet.ohs.ea.dd.DDEntry;
-import no.bouvet.ohs.ea.dd.DDType;
+import no.bouvet.ohs.ea.dd.DDEntryList;
 
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sparx.Attribute;
@@ -21,6 +17,9 @@ import org.sparx.Collection;
 import org.sparx.Connector;
 import org.sparx.Element;
 import org.sparx.Package;
+
+import static java.util.Collections.*;
+import static no.bouvet.ohs.ea.dd.DDType.*;
 
 /**
  * @author ohs
@@ -39,7 +38,7 @@ public class EaPackage {
         this.name = name;
         this.repos = repos;
         this.me = repos.findPackageByName(name, true);
-        if(me == null) {
+        if (me == null) {
             LOG.error("Package {} not found", name);
         }
     }
@@ -48,7 +47,7 @@ public class EaPackage {
      * Generate relationships between subpackages based on relationships between contained classes
      */
     public void generatePackageRelationships() {
-        if(me == null) {
+        if (me == null) {
             LOG.warn("Cannot generate relationships. Package {} is not found", name);
             return;
         }
@@ -57,49 +56,52 @@ public class EaPackage {
     }
 
     public void generateAttributesFile() {
-        final List<String> attributes = new ArrayList<>();
-        attributes.add("// Generated at " + ZonedDateTime.now().toString());
+        final DDEntryList attributes = new DDEntryList();
         generateAttributesInPackage(this.me, attributes);
-        try {
-            FileUtils.writeLines(new File("attributes.csv"), "UTF-8", attributes);
-        } catch (final IOException e) {
-            e.printStackTrace();
-        }
+        attributes.writeToFile(name);
     }
 
-    private void generateAttributesInPackage(final Package pkg, final List<String> attributes) {
+    private void generateAttributesInPackage(final Package pkg, final DDEntryList attributes) {
         System.out.println("Exporting Attributes in package " + pkg.GetName() + " id:" + pkg.GetPackageID());
 
         for (final Package aPackage : pkg.GetPackages()) {
             generateAttributesInPackage(aPackage, attributes);
         }
         for (final Element element : pkg.GetElements()) {
-            System.out.println(element.GetName());
-            attributes.add(createElementLine(element));
-            for (final Attribute attribute : element.GetAttributes()) {
-                attributes.add(createAttributeLine(element.GetName(), attribute, element.GetVersion()));
+            final EaElement eaElement = new EaElement(element, repos);
+            System.out.println(eaElement.getName());
+            attributes.add(createElementLine(eaElement));
+            for (final Attribute attribute : eaElement.getAttributes()) {
+                attributes.add(createAttributeLine(eaElement.getName(), attribute, eaElement.getVersion()));
             }
         }
     }
 
-    private String createElementLine(final Element element) {
-        final String description = element.GetNotes();//.replaceAll("\n", "\\\\n").replaceAll("\r", "");
+    private DDEntry createElementLine(final EaElement element) {
+        final String description = element.getNotes();//.replaceAll("\n", "\\\\n").replaceAll("\r", "");
 
+        final List<String> parents = element.findParents()
+                                            .stream()
+                                            .map(e -> e.getPackageName() + UML_PACKAGE_DELIMITER + e.getName())
+                                            .collect(Collectors.toList());
         final DDEntry ddEntry =
-                new DDEntry(element.GetName(), description, null,
-                            element.GetType(), element.GetStereotypeEx(), element.GetElementGUID(), element.GetVersion(), booleanToYesNo(false), DDType.ELEMENT);
+                new DDEntry(element.getName(), description, null,
+                            element.getType(), element.getStereotypeEx(), element.getElementGUID(), element.getVersion(), booleanToYesNo(false),
+                            ELEMENT, parents);
 
-        return ddEntry.toJson();
+        return ddEntry;
     }
 
-    private String createAttributeLine(final String elementName, final Attribute attribute, final String version) {
+    private DDEntry createAttributeLine(final String elementName, final Attribute attribute, final String version) {
         final String description = attribute.GetNotes();//.replaceAll("\n", "\\\\n").replaceAll("\r", "");
 
         final DDEntry ddEntry =
-                new DDEntry(elementName + "." + attribute.GetName(), description, attribute.GetLowerBound() + ".." + attribute.GetUpperBound(),
-                            attribute.GetType(), attribute.GetStereotypeEx(), attribute.GetAttributeGUID(), version, booleanToYesNo(attribute.GetIsID()), DDType.ATTRIBUTE);
+                new DDEntry(elementName + ATTRIBUTE_DELIMITER + attribute.GetName(), description, attribute.GetLowerBound() +
+                        UML_MULTIPLICITY_DELIMITER + attribute.GetUpperBound(),
+                            attribute.GetType(), attribute.GetStereotypeEx(), attribute.GetAttributeGUID(), version,
+                            booleanToYesNo(attribute.GetIsID()), ATTRIBUTE, emptyList());
 
-        return ddEntry.toJson();
+        return ddEntry;
     }
 
     private String booleanToYesNo(final boolean b) {
@@ -108,7 +110,8 @@ public class EaPackage {
 
     private void deleteExistingConnectors(final Package pkg) {
         LOG.info("Deleting old connectore in {}", pkg.GetName());
-        final Collection<Connector> connectors = pkg.GetElement().GetConnectors();
+        final Collection<Connector> connectors = pkg.GetElement()
+                                                    .GetConnectors();
         for (short i = 0; i < connectors.GetCount(); i++) {
             connectors.Delete(i);
             pkg.Update();
@@ -118,6 +121,11 @@ public class EaPackage {
         }
     }
 
+    /**
+     * Recursively generate relationships
+     *
+     * @param pkg
+     */
     private void generateRelationships(final Package pkg) {
         System.out.println("***********" + pkg.GetName());
 
@@ -125,60 +133,65 @@ public class EaPackage {
             generateRelationships(aPackage);
         }
         for (final Element element : pkg.GetElements()) {
-            System.out.println(element.GetName());
-            for (final Connector connector : element.GetConnectors()) {
-                final Element other;
-                if (connector.GetClientID() == element.GetElementID()) {
-                    other = repos.findElementByID(connector.GetSupplierID());
-                } else {
-                    other = repos.findElementByID(connector.GetClientID());
-                }
-                final String connectorType;
-                final String connType = connector.GetType();
-                LOG.debug("ConnType : " + connType);
-//                if (EaMetaType.GENERALIZATION.equals(connType)) {
-//                    connectorType = EaMetaType.REALIZATION.toString();
-//                } else {
-                connectorType = EaMetaType.DEPENDENCY.toString();
-//                }
-                System.out.println("Other end: " + other.GetName());
-                final int otherPackageId = other.GetPackageID();
-                if (otherPackageId != pkg.GetPackageID()) {
-                    final Package otherPkg = repos.findPackageByID(otherPackageId);
+            final EaElement eaElement = new EaElement(element, repos);
 
-                    final String connectorId = pkg.GetName() + " -> " + otherPkg.GetName();
-                    final String reverseConnectorId = otherPkg.GetName() + " -> " + pkg.GetName();
-
-                    if (allConnectors.contains(connectorId) || allConnectors.contains(reverseConnectorId)) {
-                        LOG.debug("Already had " + connectorId);
-                    } else {
-                        LOG.debug("Connecting " + connectorId);
-                        LOG.debug("Adding connector type " + connectorType);
-                        allConnectors.add(connectorId);
-                        final Connector newConn = pkg.GetElement().GetConnectors().AddNew("", connectorType);
-
-//                    newConn.
-//                    newConn.SetMetaType(connectorType);
-//                    newConn.SetClientID(pkg.GetPackageID());
-                        newConn.SetSupplierID(otherPkg.GetElement().GetElementID());
-                        newConn.SetDirection("Unspecified");
-                        newConn.SetStereotype("xref");
-
-                        System.out.println("Update connector " + newConn.Update());
-                        pkg.GetConnectors().Refresh();
-
-                        LOG.debug("Added " + newConn.GetName() + newConn.GetClientID() + " " + newConn.GetSupplierID());
-                        LOG.debug(pkg.GetName());
-                        LOG.debug(otherPkg.GetName());
-                    }
-
-                    System.out.println("Update pack 1 " + pkg.Update() + " " + pkg.GetName());
-                    System.out.println("Update pack 2 " + otherPkg.Update() + " " + otherPkg.GetName());
-                }
-//
-//                System.out.println(connector.GetName());
-//                System.out.println(pkg.GetConnectors().GetCount());
+            LOG.debug("Finding connectors for Element {}", eaElement.getName());
+            for (final Connector connector : eaElement.getConnectors()) {
+                connectPackages(pkg, eaElement, connector);
             }
+        }
+    }
+
+    private void connectPackages(final Package pkg, final EaElement element, final Connector connector) {
+        final EaElement other = element.findConnectedElement(connector);
+        final String packageConnectorType = EaMetaType.DEPENDENCY.toString();
+        final String connType = connector.GetType();
+        LOG.debug("ConnType : " + connType);
+
+        System.out.println("Other end: " + other.getName());
+
+        final int otherPackageId = other.getPackageID();
+        if (otherPackageId != pkg.GetPackageID()) {
+            final Package otherPkg = repos.findPackageByID(otherPackageId);
+
+            final String connectorId = pkg.GetName() + " -> " + otherPkg.GetName();
+            final String reverseConnectorId = otherPkg.GetName() + " -> " + pkg.GetName();
+
+            if (allConnectors.contains(connectorId) || allConnectors.contains(reverseConnectorId)) {
+                LOG.debug("Already had " + connectorId);
+            } else {
+                addPackageConnector(pkg, packageConnectorType, otherPkg, connectorId);
+            }
+            System.out.println("Update pack 1 " + pkg.Update() + " " + pkg.GetName());
+            System.out.println("Update pack 2 " + otherPkg.Update() + " " + otherPkg.GetName());
+        }
+    }
+
+    private void addPackageConnector(final Package pkg, final String packageConnectorType, final Package otherPkg, final String connectorName) {
+        LOG.debug("Connecting " + connectorName);
+        LOG.debug("Adding connector type " + packageConnectorType);
+        allConnectors.add(connectorName);
+        final Connector newConn = pkg.GetElement()
+                                     .GetConnectors()
+                                     .AddNew("", packageConnectorType);
+
+        newConn.SetSupplierID(otherPkg.GetElement()
+                                      .GetElementID());
+        newConn.SetDirection("Unspecified");
+        newConn.SetStereotype("xref");
+
+        System.out.println("Update connector " + newConn.Update());
+        pkg.GetConnectors()
+           .Refresh();
+
+        LOG.debug("Added " + newConn.GetName() + newConn.GetClientID() + " " + newConn.GetSupplierID());
+        LOG.debug(pkg.GetName());
+        LOG.debug(otherPkg.GetName());
+    }
+
+    public void listElementProperties() {
+        for (final Element element : me.GetElements()) {
+            new EaElement(element, repos).listProperties();
         }
     }
 

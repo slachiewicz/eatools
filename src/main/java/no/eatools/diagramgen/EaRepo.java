@@ -231,6 +231,12 @@ public class EaRepo {
         return repository.GetProjectInterface();
     }
 
+    public void generateHtml(String path) {
+        Package rootPackage = getRootPackage();
+        System.out.println("Generating HTML doc for package " + rootPackage.GetName() + " to " + path);
+        repository.GetProjectInterface().RunHTMLReport(rootPackage.GetPackageGUID(), path, "PNG", "<default>", ".html");
+    }
+
     /**
      * Generates XSD schema file for the package if its UML stereotype is <<XSDschema>>,
      * otherwise a subdirectory corresponding to the UML package is created in
@@ -604,7 +610,7 @@ public class EaRepo {
     }
 
     public Package findOrCreatePackage(final Package parent, final String name) {
-        return findOrCreatePackage(parent, name, EaRepo.NON_RECURSIVE);
+        return findOrCreatePackage(parent, name, NON_RECURSIVE);
     }
 
     public Connector findOrCreateAssociation(final Element from, final Element to, final String name) {

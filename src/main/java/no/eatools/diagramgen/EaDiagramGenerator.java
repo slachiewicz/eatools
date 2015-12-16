@@ -47,11 +47,18 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     @Option(name = "-p", usage = "Property override [property]=[new value],... ", metaVar = "list of key, value pairs")
     private PropertyMap<EaApplicationProperties> propertyMap = getThePropertyMap();
 
-    @Option(name = "-c", usage = "set connectors", metaVar = "Connector Type")
+    @Option(name = "-c", usage = "Set connectors on given diagram to type", metaVar = "Connector Type")
     private Integer connectorType = null;
 
-    @Option(name = "-v", usage = "Shov version and exit")
+    @Option(name = "-v", usage = "Show version and exit")
     private boolean showVersion = false;
+
+    @Option(name = "-l", usage = "List properties of elements")
+    private boolean list = false;
+
+    @Option(name = "-m", usage = "Create HTML report tp path")
+    private String htmlOutputPath = null;
+
 
 //    @Argument(metaVar = PROPERTY_FILE, usage = "property file. If omitted standard file is looked for ", index = 0, required = true)
 //    private String propertyFilename;
@@ -64,10 +71,10 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
 
     public static void main(final String[] args) {
 
-        EaDiagramGenerator eaDiagramGenerator = new EaDiagramGenerator();
+        final EaDiagramGenerator eaDiagramGenerator = new EaDiagramGenerator();
         try {
             eaDiagramGenerator.initMain(args);
-        } catch (Throwable e) {
+        } catch (final Throwable e) {
             System.out.println("\nTerminated with error: " + e);
         } finally {
             eaDiagramGenerator.stopProgress();
@@ -79,6 +86,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     }
 
     protected void doMain(final String[] args) {
+        setDiagram();
         ResourceFinder.findResourceAsStringList(VERSION_FILE).forEach(LOG::info);
 
         usageHelper.parse(args);
@@ -88,18 +96,32 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             ResourceFinder.findResourceAsStringList(VERSION_FILE).forEach(System.out::println);
             return;
         }
-
         LOG.info("Using properties" + listAllProperties());
         startProgress();
 
-        String reposString = EA_PROJECT.value();
+        final String reposString = EA_PROJECT.value();
         LOG.info("Trying repos {}", reposString);
-        String normalizedFileName = FilenameUtils.normalize(reposString);
+        final String normalizedFileName = FilenameUtils.normalize(reposString);
         final File modelFile = new File(normalizedFileName);
         LOG.info("Trying repos: asProperty: [{}] to file: [{}]", reposString, modelFile.getAbsolutePath());
         eaRepo = new EaRepo(modelFile);
         if (!eaRepo.open()) {
             usageHelper.terminateWithHelp(-2, ERROR_ON_EXIT);
+        }
+
+        executeTasks();
+        eaRepo.close();
+        stopProgress();
+    }
+
+    private void executeTasks() {
+        if(list) {
+            if(isBlank(pack)) {
+                usageHelper.terminateWithHelp(-2, "No package to list elements in");
+            }
+            final EaPackage eaPackage = new EaPackage(pack, eaRepo);
+            eaPackage.listElementProperties();
+            return;
         }
 
         if (connectorType != null) {
@@ -115,15 +137,23 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             createElementFile();
             return;
         }
-        if (!EA_DIAGRAM_TO_GENERATE.exists() || isNotBlank(diagram)) {
+        if(htmlOutputPath != null) {
+            eaRepo.generateHtml(htmlOutputPath);
+            return;
+        }
+        if (isNotBlank(diagram)) {
             generateSpecificDiagram();
         } else {
             // generate all diagrams
             final int count = EaDiagram.generateAll(eaRepo);
             LOG.info("Generated " + count + " diagrams");
         }
-        eaRepo.close();
-        stopProgress();
+    }
+
+    private void setDiagram() {
+        if (isBlank(diagram)) {
+            diagram = EA_DIAGRAM_TO_GENERATE.value();
+        }
     }
 
     @Override
@@ -150,17 +180,22 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
 //    }
 
     private void generateSpecificDiagram() {
-        final String diagramName;
-        if (isNotBlank(diagram)) {
-            diagramName = diagram;
+        final EaDiagram eaDiagram = EaDiagram.findEaDiagram(eaRepo, diagram);
+        if (eaDiagram != null) {
+            eaDiagram.writeImageToFile(urlForFileOnly);
         } else {
-            diagramName = EA_DIAGRAM_TO_GENERATE.value();
-        }
-        final EaDiagram diagram = EaDiagram.findEaDiagram(eaRepo, diagramName);
-        if (diagram != null) {
-            diagram.writeImageToFile(urlForFileOnly);
-        } else {
-            LOG.info("diagram '" + diagramName + "' not found");
+            LOG.info("diagram '{}' not found", diagram);
         }
     }
+
+//    private void generateReposHtml() {
+//        org.sparx.Repository r = new org.sparx.Repository();
+//
+//        System.out.println("Repository: " + args[0]);
+//        System.out.println("Package:    " + args[1]);
+//        System.out.println("Output:     " + args[2]);
+//        r.OpenFile(args[0]);
+//        r.GetProjectInterface().RunHTMLReport(args[1], args[2], "PNG", "<default>", ".html");
+//        r.CloseFile();
+//    }
 }
