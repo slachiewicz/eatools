@@ -13,10 +13,12 @@ import no.bouvet.ohs.ea.dd.DDEntryList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sparx.Attribute;
+import org.sparx.AttributeTag;
 import org.sparx.Collection;
 import org.sparx.Connector;
 import org.sparx.Element;
 import org.sparx.Package;
+import org.sparx.TaggedValue;
 
 import static java.util.Collections.*;
 import static no.bouvet.ohs.ea.dd.DDType.*;
@@ -32,7 +34,6 @@ public class EaPackage {
     final Package me;
     final Map<Connector, String> connectorMap = new HashMap<>();
     final Set<String> allConnectors = new HashSet<>();
-//    BiMap
 
     public EaPackage(final String name, final EaRepo repos) {
         this.name = name;
@@ -89,6 +90,9 @@ public class EaPackage {
                             element.getType(), element.getStereotypeEx(), element.getElementGUID(), element.getVersion(), booleanToYesNo(false),
                             ELEMENT, parents);
 
+        for (final TaggedValue attributeTag : element.getTaggedValuesEx()) {
+            ddEntry.addTaggedValue(attributeTag.GetName(), attributeTag.GetValue());
+        }
         return ddEntry;
     }
 
@@ -101,6 +105,14 @@ public class EaPackage {
                             attribute.GetType(), attribute.GetStereotypeEx(), attribute.GetAttributeGUID(), version,
                             booleanToYesNo(attribute.GetIsID()), ATTRIBUTE, emptyList());
 
+        for (final AttributeTag attributeTag : attribute.GetTaggedValuesEx()) {
+            System.out.println(elementName + "." + attribute.GetName() + ":" + attributeTag.GetName() + "=" + attributeTag.GetValue());
+            ddEntry.addTaggedValue(attributeTag.GetName(), attributeTag.GetValue());
+        }
+        for (final AttributeTag attributeTag : attribute.GetTaggedValues()) {
+//            System.out.println(attributeTag.GetName() + attributeTag.GetValue());
+            ddEntry.addTaggedValue(attributeTag.GetName(), attributeTag.GetValue());
+        }
         return ddEntry;
     }
 
@@ -193,6 +205,77 @@ public class EaPackage {
         for (final Element element : me.GetElements()) {
             new EaElement(element, repos).listProperties();
         }
+    }
+
+    public void setTaggedValues(final List<String> taggedValues) {
+        setTaggedValuesInPackage(me, taggedValues);
+    }
+
+    private void setTaggedValuesInPackage(final Package pkg, final List<String> taggedValues) {
+        System.out.println("************** Setting tagged values in package " + pkg.GetName() + " id:" + pkg.GetPackageID());
+
+        for (final Package aPackage : pkg.GetPackages()) {
+            setTaggedValuesInPackage(aPackage, taggedValues);
+        }
+        if (repos.packageMatch(pkg)) {
+            for (final Element element : pkg.GetElements()) {
+//                createTaggedValues(element, taggedValues);
+                for (final Attribute attribute : element.GetAttributes()) {
+                    createTaggedValues(attribute, taggedValues);
+                    element.SetName(element.GetName() + "1");
+                    element.Update();
+                }
+                listElementProperties();
+            }
+            pkg.Update();
+        } else {
+            System.out.println("************** Skipping package " + pkg.GetName() + " id:" + pkg.GetPackageID());
+        }
+    }
+
+    private void createTaggedValues(final Element element, final List<String> taggedValues) {
+        final Collection<TaggedValue> oldValues = element.GetTaggedValues();
+        for (final String taggedValue : taggedValues) {
+            if (oldValues.GetByName(taggedValue) == null) {
+                oldValues.AddNew(taggedValue, "");
+                element.Update();
+                element.Refresh();
+                System.out.println("************** Set tag " + taggedValue + " for element " + element.GetName());
+            }
+        }
+//        element.Update();
+    }
+
+    private void createTaggedValues(final Attribute attribute, final List<String> taggedValues) {
+        final Collection<AttributeTag> oldValues = attribute.GetTaggedValues();
+        Set<String> existingTags = new HashSet<>();
+        for (AttributeTag oldValue : oldValues) {
+            System.out.println("Existing tag ############## " + oldValue.GetName());
+            existingTags.add(oldValue.GetName());
+        }
+        for (final String taggedValue : taggedValues) {
+            if (!existingTags.contains(taggedValue)) {
+
+                oldValues.AddNew(taggedValue, "xyz");
+                oldValues.Refresh();
+                attribute.Update();
+
+                Collection<AttributeTag> attributeTags = attribute.GetTaggedValuesEx();
+                attributeTags
+                         .AddNew(taggedValue, "abx");
+                attributeTags.Refresh();
+                attribute.Update();
+                System.out.println("************** Set tag " + taggedValue + " for attribute " + attribute.GetName());
+            }
+//            if(oldValues.GetByName(taggedValue) == null) {
+//                oldValues.AddNew(taggedValue, "");
+//                attribute.Update();
+//            }
+            for (AttributeTag oldValue : attribute.GetTaggedValues()) {
+                System.out.println("############## After update " + oldValue.GetName());
+            }
+        }
+//        attribute.Update();
     }
 
     /**

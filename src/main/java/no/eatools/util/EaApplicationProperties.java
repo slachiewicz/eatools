@@ -30,42 +30,54 @@ import org.slf4j.LoggerFactory;
  */
 public enum EaApplicationProperties implements EnumProperty {
     @Description(text = "Name of .eap file or connection string to database repos.", mandatory = true)
-    EA_PROJECT,
+    EA_PROJECT(),
 
     @Description(text = "The root package in the repo to generate from. Must be a top level package.")
-    EA_ROOTPKG,
+    EA_ROOTPKG(),
 
     @Description(text = "The directory root to place diagrams in when generating the diagrams.\nNB! Must be given as an absolute pathname or "
             + "relative to cwd.")
-    EA_DOC_ROOT_DIR,
+    EA_DOC_ROOT_DIR(),
 
     @Description(text = "The loglevel when running the utility.", defaultValue = "INFO")
-    EA_LOGLEVEL,
+    EA_LOGLEVEL(),
 
     @Description(text = "Name or diagramId (internal EA number) of diagram to generate. I ")
-    EA_DIAGRAM_TO_GENERATE,
+    EA_DIAGRAM_TO_GENERATE(),
 
     @Description(text = "Which file to place the url of the generated diagram. This file may be used for scripting after generation or as a "
             + "debugging aid.")
-    EA_DIAGRAM_URL_FILE,
+    EA_DIAGRAM_URL_FILE(),
 
     @Description(text = "Only include packages which matches given regexp")
-    EA_PACKAGE_FILTER,
+    EA_PACKAGE_FILTER(),
+
+    @Description(text = "Top level package for commands that require a starting package")
+    EA_TOP_LEVEL_PACKAGE("Must be set"),
 
     @Description(text = "Username for EA repos")
-    EA_USERNAME,
+    EA_USERNAME(),
 
     @Description(text = "Password for EA repos")
-    EA_PASSWORD,
+    EA_PASSWORD(),
 
     @Description(text = "If present, add diagram version as part of diagram filename")
-    EA_ADD_VERSION,
+    EA_ADD_VERSION(),
 
     @Description(text = "For -m option, generate HTML to this path")
-    EA_HTML_OUTPUT;
+    EA_HTML_OUTPUT();
     private static final transient Logger log = LoggerFactory.getLogger(EaApplicationProperties.class);
 
     private static PropertyMap<EaApplicationProperties> propsMap = new PropertyMap<>(EaApplicationProperties.class);
+    private final String message;
+
+    EaApplicationProperties(String message) {
+        this.message = message;
+    }
+
+    EaApplicationProperties() {
+        this.message = "";
+    }
 
     @Override
     public PropertyMap<? extends EnumProperty> getPropertyMap() {
@@ -74,5 +86,9 @@ public enum EaApplicationProperties implements EnumProperty {
 
     public static PropertyMap<EaApplicationProperties> getThePropertyMap() {
         return propsMap;
+    }
+
+    public String getMessage() {
+        return keyAsPropertyName() + ":" + message;
     }
 }

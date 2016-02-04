@@ -6,9 +6,11 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sparx.Attribute;
+import org.sparx.AttributeTag;
 import org.sparx.Collection;
 import org.sparx.Connector;
 import org.sparx.Element;
+import org.sparx.TaggedValue;
 
 /**
  * @author ohs
@@ -69,8 +71,29 @@ public class EaElement {
     }
 
     public void listProperties() {
+        System.out.println("Element " + theElement.GetName());
         for (EaElement eaElement : findParents()) {
             System.out.printf("Element %s has parent %s\n", getName(), eaElement.getName());
+        }
+        listAttributes();
+    }
+
+    private void listAttributes() {
+        for (Attribute attribute : theElement.GetAttributesEx()) {
+            listTaggedValues(attribute, " (Ex) ");
+        }
+        for (Attribute attribute : theElement.GetAttributes()) {
+            listTaggedValues(attribute, " (regular) ");
+        }
+    }
+
+    private void listTaggedValues(Attribute attribute, String prefix) {
+        System.out.println("Attribute : " + prefix + attribute.GetName());
+        for (AttributeTag attributeTag : attribute.GetTaggedValuesEx()) {
+            System.out.println("Tag (Ex): " + attributeTag.GetName() + " : [" + attributeTag.GetValue() + "]");
+        }
+        for (AttributeTag attributeTag : attribute.GetTaggedValues()) {
+            System.out.println("Tag : " + attributeTag.GetName() + " : [" + attributeTag.GetValue() + "]");
         }
     }
 
@@ -91,4 +114,7 @@ public class EaElement {
     }
 
 
+    public Collection<TaggedValue> getTaggedValuesEx() {
+        return theElement.GetTaggedValuesEx();
+    }
 }
