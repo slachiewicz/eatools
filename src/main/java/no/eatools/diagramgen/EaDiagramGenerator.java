@@ -18,6 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static no.eatools.util.EaApplicationProperties.*;
+import static no.eatools.util.EaApplicationProperties.getThePropertyMap;
+import static no.eatools.util.NameNormalizer.*;
 import static org.apache.commons.lang.StringUtils.*;
 
 /**
@@ -41,6 +43,9 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     @Option(name = "-n", usage = "create url for result file only")
     private boolean urlForFileOnly = false;
 
+    @Option(name = "-np", usage = "create url from nodePath ", metaVar = "Node Path as exported from EA")
+    private String nodePath = "";
+
     @Option(name = "-e", usage = "create file with attribute entries", metaVar = "package to generate elements from")
     private String elementCreationPackage = "";
 
@@ -56,9 +61,11 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     @Option(name = "-l", usage = "List properties of elements")
     private boolean list = false;
 
-    @Option(name = "-m", usage = "Create HTML report tp path")
+    @Option(name = "-m", usage = "Create HTML report to path", metaVar = "Path to html reports")
     private String htmlOutputPath = null;
 
+    @Option(name = "-tv", usage = "Add tagged values to all elements and attributes in given package", metaVar = "Comma separated list of tagged values to add")
+    private List<String> taggedValues = new ArrayList<>();
 
 //    @Argument(metaVar = PROPERTY_FILE, usage = "property file. If omitted standard file is looked for ", index = 0, required = true)
 //    private String propertyFilename;
@@ -91,12 +98,18 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
 
         usageHelper.parse(args);
         LOG.debug(propertyMap.toString());
+        LOG.info(taggedValues.toString());
 
         if(showVersion) {
             ResourceFinder.findResourceAsStringList(VERSION_FILE).forEach(System.out::println);
             return;
         }
         LOG.info("Using properties" + listAllProperties());
+        if(isNotBlank(nodePath)) {
+            final String urlForNode = nodePathToUrl(nodePath);
+            EaDiagram.updateDiagramUrlFile(urlForNode);
+            return;
+        }
         startProgress();
 
         final String reposString = EA_PROJECT.value();
@@ -128,6 +141,16 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             adjustConnectors();
         }
 
+        if(! taggedValues.isEmpty()) {
+            if(EA_TOP_LEVEL_PACKAGE.exists()) {
+                final EaPackage eaPackage = new EaPackage(EA_TOP_LEVEL_PACKAGE.value(), eaRepo);
+                eaPackage.setTaggedValues(taggedValues);
+                return;
+            } else {
+                usageHelper.terminateWithHelp(-2, EA_TOP_LEVEL_PACKAGE.getMessage());
+            }
+        }
+
         if (isNotBlank(pack)) {
             final EaPackage eaPackage = new EaPackage(pack, eaRepo);
             eaPackage.generatePackageRelationships();
@@ -136,7 +159,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         if (isNotBlank(elementCreationPackage)) {
             createElementFile();
             return;
-        }
+    }
         if(htmlOutputPath != null) {
             eaRepo.generateHtml(htmlOutputPath);
             return;

@@ -22,6 +22,7 @@ import org.sparx.Package;
 
 import static no.bouvet.ohs.jops.SystemPropertySet.*;
 import static no.eatools.util.EaApplicationProperties.*;
+import static no.eatools.util.NameNormalizer.*;
 
 /**
  * A Wrapper class to facilitate  Diagram generation and manipulation.
@@ -31,7 +32,7 @@ import static no.eatools.util.EaApplicationProperties.*;
 public class EaDiagram {
     private static final transient Logger log = LoggerFactory.getLogger(EaDiagram.class);
     private final Diagram eaDiagram;
-    private ImageFileFormat defaultImageFormat = ImageFileFormat.PNG;
+    public static final ImageFileFormat defaultImageFormat = ImageFileFormat.PNG;
     private final EaRepo eaRepo;
     private final String logicalPathname;
 
@@ -123,24 +124,6 @@ public class EaDiagram {
         return pathName.toString();
     }
 
-    private static String makeWebFriendlyFilename(String s) {
-        s = StringUtils.replaceChars(s, ' ', '_');
-        if (PATH_SEPARATOR.value().equals("/")) {
-            s = StringUtils.replaceChars(s, '\\', '-');
-        } else if (PATH_SEPARATOR.value().equals("\\")) {
-            s = StringUtils.replaceChars(s, '/', '-');
-        }
-        /* Replace Norwegian characters with alternatives */
-        s = StringUtils.replace(s, "Æ", "ae");
-        s = StringUtils.replace(s, "Ø", "oe");
-        s = StringUtils.replace(s, "Å", "aa");
-        s = StringUtils.replace(s, "æ", "ae");
-        s = StringUtils.replace(s, "ø", "oe");
-        s = StringUtils.replace(s, "å", "aa");
-        s = StringUtils.lowerCase(s);
-        return s;
-    }
-
     private static void getAncestorPackages(final ArrayList<Package> ancestorPackages, final EaRepo eaRepo, final Package pkg) {
         ancestorPackages.add(pkg);
         if (pkg.GetParentID() != 0) {
@@ -210,7 +193,7 @@ public class EaDiagram {
      *
      * @param style
      */
-    public void setAllConnectorsToStyle(int style) {
+    public void setAllConnectorsToStyle(final int style) {
 //        for (DiagramObject diagramObject : eaDiagram.GetDiagramObjects()) {
 //            diagramObject.GetBottom();
 //
@@ -220,7 +203,7 @@ public class EaDiagram {
 //            }
 //        }
         System.out.println("Modifying diagram " + eaDiagram.GetName());
-        for (DiagramLink diagramLink : eaDiagram.GetDiagramLinks()) {
+        for (final DiagramLink diagramLink : eaDiagram.GetDiagramLinks()) {
             String styleString = diagramLink.GetStyle();
             System.out.println("Old style: " + styleString);
             if(! styleString.contains("TREE")) {
@@ -233,12 +216,12 @@ public class EaDiagram {
         eaDiagram.Update();
     }
 
-    public EaDiagram(final EaRepo repository, final Diagram diagram, final String pathName, final ImageFileFormat imageFormat) {
-        eaDiagram = diagram;
-        eaRepo = repository;
-        logicalPathname = pathName;
-        defaultImageFormat = imageFormat;
-    }
+//    public EaDiagram(final EaRepo repository, final Diagram diagram, final String pathName, final ImageFileFormat imageFormat) {
+//        eaDiagram = diagram;
+//        eaRepo = repository;
+//        logicalPathname = pathName;
+//        defaultImageFormat = imageFormat;
+//    }
 
     public boolean writeImageToFile(final boolean urlForFileOnly) {
         try {
@@ -251,7 +234,7 @@ public class EaDiagram {
 
     public boolean writeImageToFile(final ImageFileFormat imageFileFormat, final boolean urlForFileOnly) {
         // make sure the directory exists
-        final File f = new File(getAbsolutePathName());
+        final File f = new File(getAbsolutePathName(logicalPathname));
         f.mkdirs();
         final String diagramFileName = getAbsoluteFilename();
         if (diagramFileName == null) {
@@ -263,16 +246,9 @@ public class EaDiagram {
         log.debug(eaDiagram.GetDiagramGUID() + ": " + eaDiagram.GetDiagramID() + ": " + file.getAbsolutePath());
 
         final String urlBase = createUrlForFile(file);
+        updateDiagramUrlFile(urlBase);
         if (urlForFileOnly) {
             return true;
-        }
-        File urlFile = null;
-
-        try {
-            urlFile = new File(EA_DIAGRAM_URL_FILE.value());
-            FileUtils.write(urlFile, urlBase);
-        } catch (final IOException e) {
-            log.error("Unable to write url to file " + urlFile.getAbsolutePath());
         }
 
         if (eaRepo.getProject().PutDiagramImageToFile(eaDiagram.GetDiagramGUID(), diagramFileName, imageFileFormat.isRaster())) {
@@ -285,6 +261,16 @@ public class EaDiagram {
         } else {
             log.error("Unable to create diagram:" + diagramFileName);
             return false;
+        }
+    }
+
+    public static void updateDiagramUrlFile(final String urlBase) {
+        File urlFile = null;
+        try {
+            urlFile = new File(EA_DIAGRAM_URL_FILE.value());
+            FileUtils.write(urlFile, urlBase);
+        } catch (final IOException e) {
+            log.error("Unable to write url to file " + urlFile.getAbsolutePath());
         }
     }
 
@@ -306,7 +292,7 @@ public class EaDiagram {
         return logicalPathname;
     }
 
-    public String getAbsolutePathName() {
+    public String getAbsolutePathName(String logicalPathname) {
         String dirRootString = EA_DOC_ROOT_DIR.value();
         final File dirRoot = new File(dirRootString);
         if (!dirRoot.isAbsolute()) {
@@ -323,7 +309,7 @@ public class EaDiagram {
     }
 
     public String getAbsoluteFilename() {
-        return getAbsolutePathName() + FILE_SEPARATOR.value() + getFilename();
+        return getAbsolutePathName(logicalPathname) + FILE_SEPARATOR.value() + getFilename();
     }
 
     public static EaDiagram findDiagramById(final EaRepo eaRepo, final int diagramId) {
