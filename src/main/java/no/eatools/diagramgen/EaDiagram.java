@@ -186,6 +186,7 @@ public class EaDiagram {
         eaDiagram = diagram;
         eaRepo = repository;
         logicalPathname = pathName;
+        System.out.println(diagram.GetDiagramGUID());
     }
 
     /**
@@ -257,6 +258,8 @@ public class EaDiagram {
                 log.error("Unable to read file " + file.getAbsolutePath());
                 return false;
             }
+            log.info("Adding metadata");
+
             return true;
         } else {
             log.error("Unable to create diagram:" + diagramFileName);

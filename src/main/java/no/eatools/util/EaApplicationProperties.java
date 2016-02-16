@@ -91,4 +91,8 @@ public enum EaApplicationProperties implements EnumProperty {
     public String getMessage() {
         return keyAsPropertyName() + ":" + message;
     }
+
+    public String getKeyValue() {
+        return keyAsPropertyName() + "=" + value();
+    }
 }
