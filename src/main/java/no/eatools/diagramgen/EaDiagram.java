@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import no.eatools.util.ImageMetadata;
 import no.eatools.util.IntCounter;
 
 import org.apache.commons.io.FileUtils;
@@ -244,7 +245,8 @@ public class EaDiagram {
             return false;
         }
         final File file = new File(diagramFileName);
-        log.debug(eaDiagram.GetDiagramGUID() + ": " + eaDiagram.GetDiagramID() + ": " + file.getAbsolutePath());
+        String diagramGUID = eaDiagram.GetDiagramGUID();
+        log.debug(diagramGUID + ": " + eaDiagram.GetDiagramID() + ": " + file.getAbsolutePath());
 
         final String urlBase = createUrlForFile(file);
         updateDiagramUrlFile(urlBase);
@@ -252,14 +254,14 @@ public class EaDiagram {
             return true;
         }
 
-        if (eaRepo.getProject().PutDiagramImageToFile(eaDiagram.GetDiagramGUID(), diagramFileName, imageFileFormat.isRaster())) {
+        if (eaRepo.getProject().PutDiagramImageToFile(diagramGUID, diagramFileName, imageFileFormat.isRaster())) {
             log.info("Diagram generated at: " + diagramFileName);
             if (!file.canRead()) {
                 log.error("Unable to read file " + file.getAbsolutePath());
                 return false;
             }
             log.info("Adding metadata");
-
+            new ImageMetadata().writeCustomMetaData(file, "EA_GUID", diagramGUID);
             return true;
         } else {
             log.error("Unable to create diagram:" + diagramFileName);
