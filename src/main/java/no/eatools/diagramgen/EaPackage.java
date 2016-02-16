@@ -1,15 +1,20 @@
 package no.eatools.diagramgen;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 import no.bouvet.ohs.ea.dd.DDEntry;
 import no.bouvet.ohs.ea.dd.DDEntryList;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sparx.Attribute;
@@ -40,7 +45,7 @@ public class EaPackage {
         this.repos = repos;
         this.me = repos.findPackageByName(name, true);
         if (me == null) {
-            LOG.error("Package {} not found", name);
+            LOG.error("Package [{}] not found", name);
         }
     }
 
@@ -121,7 +126,7 @@ public class EaPackage {
     }
 
     private void deleteExistingConnectors(final Package pkg) {
-        LOG.info("Deleting old connectore in {}", pkg.GetName());
+        LOG.info("Deleting old connectors in {}", pkg.GetName());
         final Collection<Connector> connectors = pkg.GetElement()
                                                     .GetConnectors();
         for (short i = 0; i < connectors.GetCount(); i++) {
@@ -248,8 +253,8 @@ public class EaPackage {
 
     private void createTaggedValues(final Attribute attribute, final List<String> taggedValues) {
         final Collection<AttributeTag> oldValues = attribute.GetTaggedValues();
-        Set<String> existingTags = new HashSet<>();
-        for (AttributeTag oldValue : oldValues) {
+        final Set<String> existingTags = new HashSet<>();
+        for (final AttributeTag oldValue : oldValues) {
             System.out.println("Existing tag ############## " + oldValue.GetName());
             existingTags.add(oldValue.GetName());
         }
@@ -260,9 +265,9 @@ public class EaPackage {
                 oldValues.Refresh();
                 attribute.Update();
 
-                Collection<AttributeTag> attributeTags = attribute.GetTaggedValuesEx();
+                final Collection<AttributeTag> attributeTags = attribute.GetTaggedValuesEx();
                 attributeTags
-                         .AddNew(taggedValue, "abx");
+                        .AddNew(taggedValue, "abx");
                 attributeTags.Refresh();
                 attribute.Update();
                 System.out.println("************** Set tag " + taggedValue + " for attribute " + attribute.GetName());
@@ -271,11 +276,53 @@ public class EaPackage {
 //                oldValues.AddNew(taggedValue, "");
 //                attribute.Update();
 //            }
-            for (AttributeTag oldValue : attribute.GetTaggedValues()) {
+            for (final AttributeTag oldValue : attribute.GetTaggedValues()) {
                 System.out.println("############## After update " + oldValue.GetName());
             }
         }
 //        attribute.Update();
+    }
+
+    public void listComponents() {
+        final List<String> components = new ArrayList<>();
+        components.add(new StringJoiner(";").add("Component name")
+                                            .add("StereoTypes")
+                                            .add("Description")
+                                            .add("Component type (for instances)")
+                                            .add("Created by")
+                                            .toString());
+        listComponents(me, components);
+        try {
+            FileUtils.writeLines(new File(me.GetName() + "_components.csv"), components);
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void listComponents(final Package pkg, final List<String> components) {
+        System.out.println("************** Listing components in package " + pkg.GetName() + " id:" + pkg.GetPackageID());
+
+        for (final Package aPackage : pkg.GetPackages()) {
+            listComponents(aPackage, components);
+        }
+        if (repos.packageMatch(pkg)) {
+            for (final Element element : pkg.GetElements()) {
+                if (EaMetaType.COMPONENT.equals(element.GetType())
+                        || EaMetaType.COMPONENT.equals(element.GetClassifierType())) {
+                    System.out.println("Found Component: " + element.GetName() + " Classifier name :" + element.GetClassifierName() + " type " +
+                                               element.GetClassifierType() + " classfierId " + element.GetClassfierID() + " classifierId " + element.GetClassifierID());
+                    System.out.println(element.GetAssociationClassConnectorID());
+                    components.add(new StringJoiner(";").add(element.GetName())
+                                                        .add(element.GetStereotypeList())
+                                                        .add(element.GetNotes())
+                                                        .add(element.GetClassifierName())
+                                                        .add(element.GetAuthor())
+                                                        .toString());
+                }
+            }
+        } else {
+            System.out.println("************** Skipping package " + pkg.GetName() + " id:" + pkg.GetPackageID());
+        }
     }
 
     /**

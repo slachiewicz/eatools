@@ -8,6 +8,7 @@ import no.bouvet.ohs.args4j.CliApp;
 import no.bouvet.ohs.args4j.HelpProducer;
 import no.bouvet.ohs.args4j.UsageHelper;
 import no.bouvet.ohs.futil.ResourceFinder;
+import no.bouvet.ohs.jops.EnumProperty;
 import no.bouvet.ohs.jops.PropertyMap;
 import no.eatools.util.EaApplicationProperties;
 
@@ -18,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static no.eatools.util.EaApplicationProperties.*;
-import static no.eatools.util.EaApplicationProperties.getThePropertyMap;
 import static no.eatools.util.NameNormalizer.*;
 import static org.apache.commons.lang.StringUtils.*;
 
@@ -64,8 +64,12 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     @Option(name = "-m", usage = "Create HTML report to path", metaVar = "Path to html reports")
     private String htmlOutputPath = null;
 
-    @Option(name = "-tv", usage = "Add tagged values to all elements and attributes in given package", metaVar = "Comma separated list of tagged values to add")
+    @Option(name = "-tv", usage = "Add tagged values to all elements and attributes in given package", metaVar = "Comma separated list of tagged " +
+            "values to add")
     private List<String> taggedValues = new ArrayList<>();
+
+    @Option(name = "-cl", usage = "List all components recursively in given package", metaVar = "Package root")
+    private String packageForList = "";
 
 //    @Argument(metaVar = PROPERTY_FILE, usage = "property file. If omitted standard file is looked for ", index = 0, required = true)
 //    private String propertyFilename;
@@ -94,18 +98,26 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
 
     protected void doMain(final String[] args) {
         setDiagram();
-        ResourceFinder.findResourceAsStringList(VERSION_FILE).forEach(LOG::info);
-
+        ResourceFinder.findResourceAsStringList(VERSION_FILE)
+                      .forEach(LOG::info);
         usageHelper.parse(args);
         LOG.debug(propertyMap.toString());
         LOG.info(taggedValues.toString());
 
-        if(showVersion) {
-            ResourceFinder.findResourceAsStringList(VERSION_FILE).forEach(System.out::println);
+        getThePropertyMap()
+                .keySet()
+                .stream()
+                .filter(EnumProperty::exists)
+                .sorted((o1, o2) -> o1.name().compareTo(o2.name()))
+                .forEach(e -> System.out.println(e.getKeyValue()));
+
+        if (showVersion) {
+            ResourceFinder.findResourceAsStringList(VERSION_FILE)
+                          .forEach(System.out::println);
             return;
         }
         LOG.info("Using properties" + listAllProperties());
-        if(isNotBlank(nodePath)) {
+        if (isNotBlank(nodePath)) {
             final String urlForNode = nodePathToUrl(nodePath);
             EaDiagram.updateDiagramUrlFile(urlForNode);
             return;
@@ -128,8 +140,8 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     }
 
     private void executeTasks() {
-        if(list) {
-            if(isBlank(pack)) {
+        if (list) {
+            if (isBlank(pack)) {
                 usageHelper.terminateWithHelp(-2, "No package to list elements in");
             }
             final EaPackage eaPackage = new EaPackage(pack, eaRepo);
@@ -137,12 +149,19 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             return;
         }
 
+        if (isNotBlank(packageForList)) {
+            System.out.println("Listing components in package: [" + packageForList + "]");
+            final EaPackage eaPackage = new EaPackage(packageForList, eaRepo);
+            eaPackage.listComponents();
+            return;
+        }
+
         if (connectorType != null) {
             adjustConnectors();
         }
 
-        if(! taggedValues.isEmpty()) {
-            if(EA_TOP_LEVEL_PACKAGE.exists()) {
+        if (!taggedValues.isEmpty()) {
+            if (EA_TOP_LEVEL_PACKAGE.exists()) {
                 final EaPackage eaPackage = new EaPackage(EA_TOP_LEVEL_PACKAGE.value(), eaRepo);
                 eaPackage.setTaggedValues(taggedValues);
                 return;
@@ -159,8 +178,8 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         if (isNotBlank(elementCreationPackage)) {
             createElementFile();
             return;
-    }
-        if(htmlOutputPath != null) {
+        }
+        if (htmlOutputPath != null) {
             eaRepo.generateHtml(htmlOutputPath);
             return;
         }
