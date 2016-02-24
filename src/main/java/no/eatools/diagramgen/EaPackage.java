@@ -39,6 +39,8 @@ public class EaPackage {
     final Package me;
     final Map<Connector, String> connectorMap = new HashMap<>();
     final Set<String> allConnectors = new HashSet<>();
+    EaPackage parent;
+    int id;
 
     public EaPackage(final String name, final EaRepo repos) {
         this.name = name;
@@ -46,7 +48,16 @@ public class EaPackage {
         this.me = repos.findPackageByName(name, true);
         if (me == null) {
             LOG.error("Package [{}] not found", name);
+        } else {
+            id = me.GetPackageID();
         }
+    }
+
+    public EaPackage(final Package pkg, final EaRepo repos) {
+        this.repos = repos;
+        me = pkg;
+        name = pkg.GetName();
+        id = pkg.GetPackageID();
     }
 
     /**
@@ -111,7 +122,7 @@ public class EaPackage {
                             booleanToYesNo(attribute.GetIsID()), ATTRIBUTE, emptyList());
 
         for (final AttributeTag attributeTag : attribute.GetTaggedValuesEx()) {
-            System.out.println(elementName + "." + attribute.GetName() + ":" + attributeTag.GetName() + "=" + attributeTag.GetValue());
+            LOG.info(elementName + "." + attribute.GetName() + ":" + attributeTag.GetName() + "=" + attributeTag.GetValue());
             ddEntry.addTaggedValue(attributeTag.GetName(), attributeTag.GetValue());
         }
         for (final AttributeTag attributeTag : attribute.GetTaggedValues()) {
@@ -144,7 +155,7 @@ public class EaPackage {
      * @param pkg
      */
     private void generateRelationships(final Package pkg) {
-        System.out.println("***********" + pkg.GetName());
+        LOG.debug("***********" + pkg.GetName());
 
         for (final Package aPackage : pkg.GetPackages()) {
             generateRelationships(aPackage);
@@ -165,7 +176,7 @@ public class EaPackage {
         final String connType = connector.GetType();
         LOG.debug("ConnType : " + connType);
 
-        System.out.println("Other end: " + other.getName());
+        LOG.debug("Other end: " + other.getName());
 
         final int otherPackageId = other.getPackageID();
         if (otherPackageId != pkg.GetPackageID()) {
@@ -179,8 +190,8 @@ public class EaPackage {
             } else {
                 addPackageConnector(pkg, packageConnectorType, otherPkg, connectorId);
             }
-            System.out.println("Update pack 1 " + pkg.Update() + " " + pkg.GetName());
-            System.out.println("Update pack 2 " + otherPkg.Update() + " " + otherPkg.GetName());
+            LOG.debug("Update pack 1 " + pkg.Update() + " " + pkg.GetName());
+            LOG.debug("Update pack 2 " + otherPkg.Update() + " " + otherPkg.GetName());
         }
     }
 
@@ -197,7 +208,7 @@ public class EaPackage {
         newConn.SetDirection("Unspecified");
         newConn.SetStereotype("xref");
 
-        System.out.println("Update connector " + newConn.Update());
+        LOG.debug("Update connector " + newConn.Update());
         pkg.GetConnectors()
            .Refresh();
 
@@ -217,7 +228,7 @@ public class EaPackage {
     }
 
     private void setTaggedValuesInPackage(final Package pkg, final List<String> taggedValues) {
-        System.out.println("************** Setting tagged values in package " + pkg.GetName() + " id:" + pkg.GetPackageID());
+        LOG.debug("************** Setting tagged values in package " + pkg.GetName() + " id:" + pkg.GetPackageID());
 
         for (final Package aPackage : pkg.GetPackages()) {
             setTaggedValuesInPackage(aPackage, taggedValues);
@@ -234,7 +245,7 @@ public class EaPackage {
             }
             pkg.Update();
         } else {
-            System.out.println("************** Skipping package " + pkg.GetName() + " id:" + pkg.GetPackageID());
+            LOG.info("************** Skipping package " + pkg.GetName() + " id:" + pkg.GetPackageID());
         }
     }
 
@@ -255,7 +266,7 @@ public class EaPackage {
         final Collection<AttributeTag> oldValues = attribute.GetTaggedValues();
         final Set<String> existingTags = new HashSet<>();
         for (final AttributeTag oldValue : oldValues) {
-            System.out.println("Existing tag ############## " + oldValue.GetName());
+            LOG.debug("Existing tag ############## " + oldValue.GetName());
             existingTags.add(oldValue.GetName());
         }
         for (final String taggedValue : taggedValues) {
@@ -270,49 +281,52 @@ public class EaPackage {
                         .AddNew(taggedValue, "abx");
                 attributeTags.Refresh();
                 attribute.Update();
-                System.out.println("************** Set tag " + taggedValue + " for attribute " + attribute.GetName());
+                LOG.debug("************** Set tag " + taggedValue + " for attribute " + attribute.GetName());
             }
 //            if(oldValues.GetByName(taggedValue) == null) {
 //                oldValues.AddNew(taggedValue, "");
 //                attribute.Update();
 //            }
             for (final AttributeTag oldValue : attribute.GetTaggedValues()) {
-                System.out.println("############## After update " + oldValue.GetName());
+                LOG.debug("############## After update " + oldValue.GetName());
             }
         }
 //        attribute.Update();
     }
 
-    public void listComponents() {
+    public void listElements(EaMetaType metaType) {
         final List<String> components = new ArrayList<>();
-        components.add(new StringJoiner(";").add("Component name")
+        components.add(new StringJoiner(";").add(metaType.toString())
+                                            .add(" name")
                                             .add("StereoTypes")
                                             .add("Description")
                                             .add("Component type (for instances)")
                                             .add("Created by")
                                             .toString());
-        listComponents(me, components);
+        listElements(me, components, metaType);
+        final File file = new File(me.GetName() + "_" + metaType + ".csv");
         try {
-            FileUtils.writeLines(new File(me.GetName() + "_components.csv"), components);
+            FileUtils.writeLines(file, components);
         } catch (final IOException e) {
-            e.printStackTrace();
+            LOG.error("Unable to create file {} {}", file.getAbsoluteFile(), e);
         }
     }
 
-    private void listComponents(final Package pkg, final List<String> components) {
-        System.out.println("************** Listing components in package " + pkg.GetName() + " id:" + pkg.GetPackageID());
+    private void listElements(final Package pkg, final List<String> result, final EaMetaType metaType) {
+        System.out.println("************** Listing result in package " + pkg.GetName() + " id:" + pkg.GetPackageID());
 
         for (final Package aPackage : pkg.GetPackages()) {
-            listComponents(aPackage, components);
+            listElements(aPackage, result, metaType);
         }
         if (repos.packageMatch(pkg)) {
             for (final Element element : pkg.GetElements()) {
-                if (EaMetaType.COMPONENT.equals(element.GetType())
-                        || EaMetaType.COMPONENT.equals(element.GetClassifierType())) {
-                    System.out.println("Found Component: " + element.GetName() + " Classifier name :" + element.GetClassifierName() + " type " +
-                                               element.GetClassifierType() + " classfierId " + element.GetClassfierID() + " classifierId " + element.GetClassifierID());
+                if (metaType.equals(element.GetType())
+                        || metaType.equals(element.GetClassifierType())) {
+                    System.out.println("Found  " + metaType + ": " + element.GetName() + " Classifier name :" + element.GetClassifierName() + " type " +
+                                               element.GetClassifierType() + " classfierId " + element.GetClassfierID() + " classifierId " +
+                                               element.GetClassifierID());
                     System.out.println(element.GetAssociationClassConnectorID());
-                    components.add(new StringJoiner(";").add(element.GetName())
+                    result.add(new StringJoiner(";").add(element.GetName())
                                                         .add(element.GetStereotypeList())
                                                         .add(element.GetNotes())
                                                         .add(element.GetClassifierName())

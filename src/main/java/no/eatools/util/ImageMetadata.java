@@ -134,7 +134,7 @@ public class ImageMetadata {
         return null;
     }
 
-    public byte[] writeCustomData(final BufferedImage buffImg, final File file, final String key, final String value) throws Exception {
+    public void writeCustomData(final BufferedImage buffImg, final File file, final String key, final String value) throws Exception {
         final ImageWriter writer = ImageIO.getImageWritersByFormatName(ImageFileFormat.PNG.toString().toLowerCase()).next();
 
         final ImageWriteParam writeParam = writer.getDefaultWriteParam();
@@ -175,12 +175,12 @@ public class ImageMetadata {
         stream.close();
         fios.flush();
         fios.close();
-
-        return baos.toByteArray();
+        baos.flush();
+        baos.close();
     }
 
     void displayMetadata(final Node root) {
-        System.out.println(formatXML(root));
+//        System.out.println(formatXML(root));
     }
 
     public String formatXML(final Node input) {
@@ -202,7 +202,7 @@ public class ImageMetadata {
     }
 
     public void writeCustomMetaData(final File file, final String key, final String value) {
-        LOG.debug("Opening file {}", file.getAbsolutePath());
+        System.out.println("Opening file " +  file.getAbsolutePath());
         LOG.debug("*** Meta before modification ***");
         readAndDisplayMetadata(file);
         LOG.debug("*** / ***");
@@ -210,7 +210,7 @@ public class ImageMetadata {
         final ImageReader reader = openImageFile(file);
         try {
             final File tmpFile = File.createTempFile("metaTmp", ImageFileFormat.PNG.getFileExtension(), file.getParentFile());
-            tmpFile.deleteOnExit();
+//            tmpFile.deleteOnExit();
             LOG.debug("Created tmp file {}", tmpFile.getAbsolutePath());
             writeCustomData(reader.read(0), tmpFile, key, value);
             LOG.debug("*** Meta after modification ***");
@@ -218,6 +218,12 @@ public class ImageMetadata {
             LOG.debug("*** / ***");
             file.delete();
             FileUtils.copyFile(tmpFile, file);
+
+            final boolean wasDeleted = tmpFile.delete();
+            if(! wasDeleted) {
+                System.out.println("Unable to delete " + tmpFile.getAbsolutePath());
+                tmpFile.deleteOnExit();
+            }
         } catch (final Exception e) {
             LOG.error("Error on creating metadata", e);
         }
