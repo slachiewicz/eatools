@@ -13,7 +13,7 @@
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
         <!-- encoders are assigned the type
              ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
-        <file>logFile.log</file>
+        <file>logFileX.log</file>
         <encoder>
             <pattern>%d{dd.MM.yy HH:mm:ss.SSS} [%thread] %-5level %logger{36} --- %msg%n</pattern>
         </encoder>
@@ -31,24 +31,26 @@
                 <maxFileSize>5MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
             <!-- keep 30 days' worth of history -->
-            <maxHistory>30</maxHistory>
+            <maxHistory>15</maxHistory>
         </rollingPolicy>
         <encoder>
             <pattern>%d{dd.MM.yy HH:mm:ss.SSS} [%thread] %-5level %logger{36} *** %msg%n</pattern>
         </encoder>
     </appender>
 
-    <root level="WARN">
+    <root level="ERROR">
         <appender-ref ref="STDOUT"/>
+        <!--<appender-ref ref="RollFile" />-->
     </root>
 
-    <logger name="fileLogger" level="ALL" additivity="false">
+    <!-- Logger name must match loggers in code -->
+    <logger name="no" level="DEBUG" additivity="false">
         <appender-ref ref="FILE"/>
         <appender-ref ref="RollFile" />
     </logger>
 
-    <root level="WARN">
-        <appender-ref ref="STDOUT"/>
-    </root>
+    <!--<root level="WARN">-->
+        <!--<appender-ref ref="STDOUT"/>-->
+    <!--</root>-->
 
 </configuration>

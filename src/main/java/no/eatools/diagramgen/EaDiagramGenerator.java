@@ -86,6 +86,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         try {
             eaDiagramGenerator.initMain(args);
         } catch (final Throwable e) {
+            LOG.error("\nTerminated with error: ", e);
             System.out.println("\nTerminated with error: " + e);
         } finally {
             eaDiagramGenerator.stopProgress();
@@ -108,12 +109,13 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
                 .keySet()
                 .stream()
                 .filter(EnumProperty::exists)
-                .sorted((o1, o2) -> o1.name().compareTo(o2.name()))
+                .sorted((o1, o2) -> o1.name()
+                                      .compareTo(o2.name()))
                 .forEach(e -> System.out.println(e.getKeyValue()));
 
         if (showVersion) {
             ResourceFinder.findResourceAsStringList(VERSION_FILE)
-                          .forEach(System.out::println);
+                          .forEach(x -> System.out.println(x));
             return;
         }
         LOG.info("Using properties" + listAllProperties());
@@ -152,7 +154,8 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         if (isNotBlank(packageForList)) {
             System.out.println("Listing components in package: [" + packageForList + "]");
             final EaPackage eaPackage = new EaPackage(packageForList, eaRepo);
-            eaPackage.listComponents();
+            eaPackage.listElements(EaMetaType.COMPONENT);
+            eaPackage.listElements(EaMetaType.INTERFACE);
             return;
         }
 
@@ -187,8 +190,9 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             generateSpecificDiagram();
         } else {
             // generate all diagrams
-            final int count = EaDiagram.generateAll(eaRepo);
-            LOG.info("Generated " + count + " diagrams");
+            final int count = eaRepo.generateAllDiagramsFromRoot();
+            LOG.info("Generated {} diagrams", count);
+            System.out.println("Generated " + count + " diagrams");
         }
     }
 

@@ -19,12 +19,12 @@ public class EaDiagramTest extends AbtractEaTestCase {
         Package thePkg = eaRepo.findPackageByName("Domain Model", rootPkg, EaRepo.RECURSIVE);
         assertNotNull(thePkg);
 
-        List<EaDiagram> diagrams = EaDiagram.findDiagramsInPackage(eaRepo, thePkg);
+        List<EaDiagram> diagrams = eaRepo.findDiagramsInPackage(thePkg);
         assertNotNull(diagrams);
     }
 
     public void testLogicalPathName() throws Exception {
-        EaDiagram diagram = EaDiagram.findDiagram(eaRepo, "Domain Model");
+        EaDiagram diagram = eaRepo.findDiagram("Domain Model");
         assertNotNull(diagram);
         String filename = diagram.getPathname();
         assertEquals("\\Model\\Domain Model", filename);
@@ -34,7 +34,7 @@ public class EaDiagramTest extends AbtractEaTestCase {
         //EaDiagram diagram = EaDiagram.findDiagram(eaRepo, "Domain Model");
         String diagramName = EaApplicationProperties.EA_DIAGRAM_TO_GENERATE.value();
         if (diagramName.equals("")) diagramName = "Domain Model";
-        EaDiagram diagram = EaDiagram.findDiagram(eaRepo, diagramName);
+        EaDiagram diagram = eaRepo.findDiagram(diagramName);
         if (diagram != null) {
             boolean didCreate = diagram.writeImageToFile(false);
             assertTrue(didCreate);
@@ -47,7 +47,7 @@ public class EaDiagramTest extends AbtractEaTestCase {
         Package pkg = eaRepo.findPackageByName("Klasser", EaRepo.RECURSIVE);
 
         for (ImageFileFormat imageFileFormat : ImageFileFormat.values()) {
-            List<EaDiagram> diagrams = EaDiagram.findDiagramsInPackage(eaRepo, pkg);
+            List<EaDiagram> diagrams = eaRepo.findDiagramsInPackage(pkg);
             for (EaDiagram d : diagrams) {
                 boolean didCreate = d.writeImageToFile(imageFileFormat, false);
                 assertTrue(didCreate);
@@ -56,7 +56,7 @@ public class EaDiagramTest extends AbtractEaTestCase {
     }
 
     public void testGenerateAllDiagramsInProject() throws Exception {
-        int count = EaDiagram.generateAll(eaRepo);
+        int count = eaRepo.generateAllDiagramsFromRoot();
         log.debug("Generated " + count + " diagrams");
         assertTrue(count > 0);
     }

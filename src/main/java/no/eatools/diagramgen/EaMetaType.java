@@ -24,7 +24,8 @@ public enum EaMetaType {
     GENERALIZATION,
     REALIZATION,
     LINK,
-    DIAGRAM;
+    DIAGRAM,
+    INTERFACE;
     // etc.
     // todo complete the set
 
@@ -35,7 +36,7 @@ public enum EaMetaType {
      * @param metaType
      * @return never null
      */
-    public static EaMetaType fromString(String metaType) {
+    public static EaMetaType fromString(final String metaType) {
         return Enums.valueOf(EaMetaType.class, Camel.toConstantString(metaType), NULL);
     }
 
@@ -43,7 +44,7 @@ public enum EaMetaType {
         return Camel.toCamelCaseString(super.toString());
     }
 
-    public boolean equals(String stringType) {
+    public boolean equals(final String stringType) {
         return toString().equals(stringType);
     }
 }
