@@ -31,6 +31,7 @@ public class EaDiagram {
     private final Diagram eaDiagram;
     private final EaRepo eaRepo;
     private final String logicalPathname;
+    private final int diagramID;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
@@ -38,6 +39,7 @@ public class EaDiagram {
         eaDiagram = diagram;
         eaRepo = repository;
         logicalPathname = pathName;
+        diagramID = eaDiagram != null? eaDiagram.GetDiagramID() : 0;
         System.out.println("Found diagram :" + pathName + ":" + diagram.GetName() + " " + diagram.GetDiagramGUID());
     }
 
@@ -182,5 +184,9 @@ public class EaDiagram {
         } catch (final IOException e) {
             LOG.error("Unable to write url to file " + urlFile.getAbsolutePath());
         }
+    }
+
+    public int getDiagramID() {
+        return diagramID;
     }
 }

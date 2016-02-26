@@ -10,14 +10,14 @@
     </appender>
 
 
-    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <!-- encoders are assigned the type
-             ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
-        <file>logFileX.log</file>
-        <encoder>
-            <pattern>%d{dd.MM.yy HH:mm:ss.SSS} [%thread] %-5level %logger{36} --- %msg%n</pattern>
-        </encoder>
-    </appender>
+    <!--<appender name="FILE" class="ch.qos.logback.core.FileAppender">-->
+        <!--&lt;!&ndash; encoders are assigned the type-->
+             <!--ch.qos.logback.classic.encoder.PatternLayoutEncoder by default &ndash;&gt;-->
+        <!--<file>logFileX.log</file>-->
+        <!--<encoder>-->
+            <!--<pattern>%d{dd.MM.yy HH:mm:ss.SSS} [%thread] %-5level %logger{36} -&#45;&#45; %msg%n</pattern>-->
+        <!--</encoder>-->
+    <!--</appender>-->
 
     <appender name="RollFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <!-- encoders are assigned the type
@@ -45,7 +45,7 @@
 
     <!-- Logger name must match loggers in code -->
     <logger name="no" level="DEBUG" additivity="false">
-        <appender-ref ref="FILE"/>
+        <!--<appender-ref ref="FILE"/>-->
         <appender-ref ref="RollFile" />
     </logger>
 

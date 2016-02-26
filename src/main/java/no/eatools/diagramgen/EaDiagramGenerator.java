@@ -88,6 +88,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         } catch (final Throwable e) {
             LOG.error("\nTerminated with error: ", e);
             System.out.println("\nTerminated with error: " + e);
+            e.printStackTrace();
         } finally {
             eaDiagramGenerator.stopProgress();
         }
