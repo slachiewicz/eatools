@@ -763,6 +763,7 @@ public class EaRepo {
             for (final EaDiagram d : diagrams) {
                 LOG.debug("Generating diagrams: " + d.getFilename());
                 d.writeImageToFile(false);
+                repository.CloseDiagram(d.getDiagramID()); // Try to avoid the 226 bug.
             }
         }
     }
@@ -848,7 +849,7 @@ public class EaRepo {
     }
 
     public Package findParentPackage(final Package pack) {
-        if (pack == null) {
+        if (pack == null || pack.GetParentID() == 0) {
             return null;
         }
         final int key = pack.GetParentID();

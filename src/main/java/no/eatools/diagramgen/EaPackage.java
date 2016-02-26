@@ -295,12 +295,12 @@ public class EaPackage {
     }
 
     public void listElements(EaMetaType metaType) {
-        final List<String> components = new ArrayList<>();
-        components.add(new StringJoiner(";").add(metaType.toString())
-                                            .add(" name")
-                                            .add("StereoTypes")
-                                            .add("Description")
-                                            .add("Component type (for instances)")
+            final List<String> components = new ArrayList<>();
+            components.add(new StringJoiner(";").add(metaType.toString())
+                                                .add(" name")
+                                                .add("StereoTypes")
+                                                .add("Description")
+                                                .add("Component type (for instances)")
                                             .add("Created by")
                                             .toString());
         listElements(me, components, metaType);
@@ -320,23 +320,40 @@ public class EaPackage {
         }
         if (repos.packageMatch(pkg)) {
             for (final Element element : pkg.GetElements()) {
-                if (metaType.equals(element.GetType())
-                        || metaType.equals(element.GetClassifierType())) {
-                    System.out.println("Found  " + metaType + ": " + element.GetName() + " Classifier name :" + element.GetClassifierName() + " type " +
-                                               element.GetClassifierType() + " classfierId " + element.GetClassfierID() + " classifierId " +
-                                               element.GetClassifierID());
-                    System.out.println(element.GetAssociationClassConnectorID());
-                    result.add(new StringJoiner(";").add(element.GetName())
-                                                        .add(element.GetStereotypeList())
-                                                        .add(element.GetNotes())
-                                                        .add(element.GetClassifierName())
-                                                        .add(element.GetAuthor())
-                                                        .toString());
-                }
+                listElementAttributes(result, metaType, element);
             }
         } else {
             System.out.println("************** Skipping package " + pkg.GetName() + " id:" + pkg.GetPackageID());
         }
+    }
+
+    private void listElementAttributes(List<String> result, EaMetaType metaType, Element element) {
+        for (Element element1 : element.GetElements()) {
+            listElementAttributes(result, metaType, element1);
+        }
+        if (metaType.equals(element.GetType())
+                || metaType.equals(element.GetClassifierType())) {
+            System.out.println("Found  " + metaType + ": " + element.GetName() + " Classifier name :" + element.GetClassifierName() + " type " +
+                                       element.GetClassifierType() + " classfierId " + element.GetClassfierID() + " classifierId " +
+                                       element.GetClassifierID());
+            System.out.println(element.GetAssociationClassConnectorID());
+            Element classifier = repos.findElementByID(element.GetClassfierID());
+
+            final StringJoiner stringJoiner = new StringJoiner(";");
+            addToJoiner(element, stringJoiner);
+            if(classifier != null) {
+                addToJoiner(classifier, stringJoiner);
+            }
+            result.add(stringJoiner.toString());
+        }
+    }
+
+    private void addToJoiner(Element element, StringJoiner stringJoiner) {
+        stringJoiner.add(element.GetName())
+                                        .add(element.GetStereotypeList())
+                                        .add(element.GetNotes())
+                                        .add(element.GetClassifierName())
+                                        .add(element.GetAuthor());
     }
 
     /**
