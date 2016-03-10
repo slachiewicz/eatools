@@ -25,7 +25,9 @@ public enum EaMetaType {
     REALIZATION,
     LINK,
     DIAGRAM,
-    INTERFACE;
+    INTERFACE,
+    NOTE,
+    TEXT;
     // etc.
     // todo complete the set
 

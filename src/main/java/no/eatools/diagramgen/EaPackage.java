@@ -86,7 +86,9 @@ public class EaPackage {
         }
         for (final Element element : pkg.GetElements()) {
             final EaElement eaElement = new EaElement(element, repos);
-            System.out.println(eaElement.getName());
+            String msg = "Processing " + eaElement.toString();
+            LOG.info(msg);
+            System.out.println(msg);
             attributes.add(createElementLine(eaElement));
             for (final Attribute attribute : eaElement.getAttributes()) {
                 attributes.add(createAttributeLine(eaElement.getName(), attribute, eaElement.getVersion()));
@@ -113,13 +115,14 @@ public class EaPackage {
     }
 
     private DDEntry createAttributeLine(final String elementName, final Attribute attribute, final String version) {
-        final String description = attribute.GetNotes();//.replaceAll("\n", "\\\\n").replaceAll("\r", "");
+        final String description = attribute.GetNotes(); //.replaceAll("\n", "\\\\n").replaceAll("\r", "");
 
         final DDEntry ddEntry =
                 new DDEntry(elementName + ATTRIBUTE_DELIMITER + attribute.GetName(), description, attribute.GetLowerBound() +
                         UML_MULTIPLICITY_DELIMITER + attribute.GetUpperBound(),
                             attribute.GetType(), attribute.GetStereotypeEx(), attribute.GetAttributeGUID(), version,
                             booleanToYesNo(attribute.GetIsID()), ATTRIBUTE, emptyList());
+        LOG.debug("DD Entry created {}", ddEntry);
 
         for (final AttributeTag attributeTag : attribute.GetTaggedValuesEx()) {
             LOG.info(elementName + "." + attribute.GetName() + ":" + attributeTag.GetName() + "=" + attributeTag.GetValue());
@@ -294,7 +297,7 @@ public class EaPackage {
 //        attribute.Update();
     }
 
-    public void listElements(EaMetaType metaType) {
+    public void listElements(final EaMetaType metaType) {
             final List<String> components = new ArrayList<>();
             components.add(new StringJoiner(";").add(metaType.toString())
                                                 .add(" name")
@@ -327,8 +330,8 @@ public class EaPackage {
         }
     }
 
-    private void listElementAttributes(List<String> result, EaMetaType metaType, Element element) {
-        for (Element element1 : element.GetElements()) {
+    private void listElementAttributes(final List<String> result, final EaMetaType metaType, final Element element) {
+        for (final Element element1 : element.GetElements()) {
             listElementAttributes(result, metaType, element1);
         }
         if (metaType.equals(element.GetType())
@@ -337,7 +340,7 @@ public class EaPackage {
                                        element.GetClassifierType() + " classfierId " + element.GetClassfierID() + " classifierId " +
                                        element.GetClassifierID());
             System.out.println(element.GetAssociationClassConnectorID());
-            Element classifier = repos.findElementByID(element.GetClassfierID());
+            final Element classifier = repos.findElementByID(element.GetClassfierID());
 
             final StringJoiner stringJoiner = new StringJoiner(";");
             addToJoiner(element, stringJoiner);
@@ -348,7 +351,7 @@ public class EaPackage {
         }
     }
 
-    private void addToJoiner(Element element, StringJoiner stringJoiner) {
+    private void addToJoiner(final Element element, final StringJoiner stringJoiner) {
         stringJoiner.add(element.GetName())
                                         .add(element.GetStereotypeList())
                                         .add(element.GetNotes())
