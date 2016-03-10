@@ -14,8 +14,9 @@ public class EaDiagramBasicTest extends TestCase {
 
     public void testGetAbsolutePathName() throws Exception {
         EaDiagram subject = new EaDiagram(null, null, "HeiHopp");
+        assertNotNull(subject);
 
-        log.debug(subject.getAbsolutePathName("a.b"));
+//        log.debug(subject.createAbsoluteFileName("a.b"));
 
     }
 }

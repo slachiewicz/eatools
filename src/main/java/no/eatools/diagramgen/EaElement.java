@@ -20,14 +20,14 @@ public class EaElement {
     private final Element theElement;
     final EaRepo repos;
 
-    public EaElement(Element theElement, EaRepo repos) {
+    public EaElement(final Element theElement, final EaRepo repos) {
         this.theElement = theElement;
         this.repos = repos;
     }
 
     public List<EaElement> findParents() {
-        List<EaElement> result = new ArrayList<>();
-        for (Connector connector : getConnectors()) {
+        final List<EaElement> result = new ArrayList<>();
+        for (final Connector connector : getConnectors()) {
             LOG.debug("Element {} has connector of type {}", getName(), connector.GetType());
             if (EaMetaType.GENERALIZATION.toString()
                                          .equals(connector.GetType())
@@ -43,6 +43,9 @@ public class EaElement {
     }
 
     public String getName() {
+        if(EaMetaType.NOTE.equals(getType()) || EaMetaType.TEXT.equals(getType())) {
+            return theElement.GetNotes();
+        }
         return theElement.GetName();
     }
 
@@ -50,7 +53,7 @@ public class EaElement {
         return theElement.GetNotes();
     }
 
-    public EaElement findConnectedElement(Connector connector) {
+    public EaElement findConnectedElement(final Connector connector) {
         if (connector.GetClientID() == theElement.GetElementID()) {
             return new EaElement(repos.findElementByID(connector.GetSupplierID()), repos);
         } else {
@@ -72,27 +75,27 @@ public class EaElement {
 
     public void listProperties() {
         System.out.println("Element " + theElement.GetName());
-        for (EaElement eaElement : findParents()) {
-            System.out.printf("Element %s has parent %s\n", getName(), eaElement.getName());
+        for (final EaElement eaElement : findParents()) {
+            System.out.printf("Element %s has parent %s%n", getName(), eaElement.getName());
         }
         listAttributes();
     }
 
     private void listAttributes() {
-        for (Attribute attribute : theElement.GetAttributesEx()) {
+        for (final Attribute attribute : theElement.GetAttributesEx()) {
             listTaggedValues(attribute, " (Ex) ");
         }
-        for (Attribute attribute : theElement.GetAttributes()) {
+        for (final Attribute attribute : theElement.GetAttributes()) {
             listTaggedValues(attribute, " (regular) ");
         }
     }
 
-    private void listTaggedValues(Attribute attribute, String prefix) {
+    private void listTaggedValues(final Attribute attribute, final String prefix) {
         System.out.println("Attribute : " + prefix + attribute.GetName());
-        for (AttributeTag attributeTag : attribute.GetTaggedValuesEx()) {
+        for (final AttributeTag attributeTag : attribute.GetTaggedValuesEx()) {
             System.out.println("Tag (Ex): " + attributeTag.GetName() + " : [" + attributeTag.GetValue() + "]");
         }
-        for (AttributeTag attributeTag : attribute.GetTaggedValues()) {
+        for (final AttributeTag attributeTag : attribute.GetTaggedValues()) {
             System.out.println("Tag : " + attributeTag.GetName() + " : [" + attributeTag.GetValue() + "]");
         }
     }
@@ -116,5 +119,11 @@ public class EaElement {
 
     public Collection<TaggedValue> getTaggedValuesEx() {
         return theElement.GetTaggedValuesEx();
+    }
+
+    @Override
+    public String toString() {
+        return getType() +
+                ": " + getName();
     }
 }

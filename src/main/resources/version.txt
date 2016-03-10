@@ -2,3 +2,8 @@
 application.name=${pom.name}
 application.version=${pom.version}
 application.build=${buildNumber}
+
+Tip: override logging preferences by:
+
+java -jar -Dlogback.configurationFile=/full_path/logback.xml diagramgen.jar ...
+

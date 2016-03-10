@@ -16,6 +16,7 @@ public class EaDiagramTest extends AbtractEaTestCase {
 
     public void testFindDiagramsInPackage() throws Exception {
         Package rootPkg = eaRepo.getRootPackage();
+        assertNotNull(rootPkg);
         Package thePkg = eaRepo.findPackageByName("Domain Model", rootPkg, EaRepo.RECURSIVE);
         assertNotNull(thePkg);
 

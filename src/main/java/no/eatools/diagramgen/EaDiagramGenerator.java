@@ -91,6 +91,10 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             e.printStackTrace();
         } finally {
             eaDiagramGenerator.stopProgress();
+            final EaRepo repos = eaDiagramGenerator.eaRepo;
+            if(repos != null) {
+                repos.close();
+            }
         }
     }
 
@@ -101,7 +105,10 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     protected void doMain(final String[] args) {
         setDiagram();
         ResourceFinder.findResourceAsStringList(VERSION_FILE)
-                      .forEach(LOG::info);
+                      .forEach(e -> {
+                          LOG.info(e);
+                          System.out.println(e);
+                      });
         usageHelper.parse(args);
         LOG.debug(propertyMap.toString());
         LOG.info(taggedValues.toString());
@@ -116,7 +123,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
 
         if (showVersion) {
             ResourceFinder.findResourceAsStringList(VERSION_FILE)
-                          .forEach(x -> System.out.println(x));
+                          .forEach(System.out::println);
             return;
         }
         LOG.info("Using properties" + listAllProperties());
@@ -192,8 +199,9 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         } else {
             // generate all diagrams
             final int count = eaRepo.generateAllDiagramsFromRoot();
-            LOG.info("Generated {} diagrams", count);
-            System.out.println("Generated " + count + " diagrams");
+            final String msg = String.format("Generated %d diagrams", count);
+            LOG.info(msg);
+            System.out.println(msg);
         }
     }
 
@@ -221,10 +229,6 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         final EaPackage eaPackage = new EaPackage(elementCreationPackage, eaRepo);
         eaPackage.generateAttributesFile();
     }
-
-//    Function create = () -> {
-//        return this::createElementFile;
-//    }
 
     private void generateSpecificDiagram() {
         final EaDiagram eaDiagram = EaDiagram.findEaDiagram(eaRepo, diagram);

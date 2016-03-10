@@ -1,7 +1,6 @@
 package no.eatools.util;
 
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.StringWriter;
@@ -108,11 +107,11 @@ public class ImageMetadata {
     }
 
     Node findTextNode(final IIOMetadata metadata) {
-        metadata.getNativeMetadataFormatName();
+//        metadata.getNativeMetadataFormatName();
         for (final String formatName : metadata.getMetadataFormatNames()) {
             final Node asTree = metadata.getAsTree(formatName);
             final Node textNode = findTextNode(asTree);
-            if(textNode != null) {
+            if (textNode != null) {
                 return textNode;
             }
         }
@@ -127,7 +126,7 @@ public class ImageMetadata {
                 return child;
             }
             final Node candidate = findTextNode(child);
-            if(candidate != null) {
+            if (candidate != null) {
                 return candidate;
             }
         }
@@ -135,7 +134,9 @@ public class ImageMetadata {
     }
 
     public void writeCustomData(final BufferedImage buffImg, final File file, final String key, final String value) throws Exception {
-        final ImageWriter writer = ImageIO.getImageWritersByFormatName(ImageFileFormat.PNG.toString().toLowerCase()).next();
+        final ImageWriter writer = ImageIO.getImageWritersByFormatName(ImageFileFormat.PNG.toString()
+                                                                                          .toLowerCase())
+                                          .next();
 
         final ImageWriteParam writeParam = writer.getDefaultWriteParam();
         final ImageTypeSpecifier typeSpecifier = ImageTypeSpecifier.createFromBufferedImageType(BufferedImage.TYPE_INT_RGB);
@@ -144,7 +145,7 @@ public class ImageMetadata {
         final IIOMetadata metadata = writer.getDefaultImageMetadata(typeSpecifier, writeParam);
 
         Node textNode = findTextNode(metadata);
-        if(textNode == null) {
+        if (textNode == null) {
             textNode = new IIOMetadataNode(TEXT_NODE_NAME);
 //            final Node root = metadata.getAsTree(metadata.getNativeMetadataFormatName());
 //            root.appendChild(textNode);
@@ -158,25 +159,40 @@ public class ImageMetadata {
 
         textNode.appendChild(textEntry);
 
-//        metadata.mergeTree();
-        final IIOMetadataNode root = new IIOMetadataNode(DEFAULT_FORMAT_NAME);
-        root.appendChild(textNode);
+////        metadata.mergeTree();
+//        final IIOMetadataNode root = new IIOMetadataNode(DEFAULT_FORMAT_NAME);
+//        root.appendChild(textNode);
+//
+//        metadata.mergeTree(DEFAULT_FORMAT_NAME, root);
+//
+////        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//        final FileOutputStream fios = new FileOutputStream(file);
+//        final ImageOutputStream stream = ImageIO.createImageOutputStream(fios);
+//        writer.setOutput(stream);
+//        writer.write(metadata, new IIOImage(buffImg, null, metadata), writeParam);
+//
+//        stream.flush();
+//        stream.close();
+//        fios.flush();
+//        fios.close();
+////        baos.flush();
+////        baos.close();
+//
 
-        metadata.mergeTree(DEFAULT_FORMAT_NAME, root);
+//        //writing the data
+//        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (final FileOutputStream fios = new FileOutputStream(file);
+             final ImageOutputStream stream = ImageIO.createImageOutputStream(fios)) {
+            writer.setOutput(stream);
+            writer.write(metadata, new IIOImage(buffImg, null, metadata), writeParam);
 
-        //writing the data
-        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        final FileOutputStream fios = new FileOutputStream(file);
-        final ImageOutputStream stream = ImageIO.createImageOutputStream(fios);
-        writer.setOutput(stream);
-        writer.write(metadata, new IIOImage(buffImg, null, metadata), writeParam);
-
-        stream.flush();
-        stream.close();
-        fios.flush();
-        fios.close();
-        baos.flush();
-        baos.close();
+//            stream.flush();
+//            stream.close();
+//            fios.flush();
+//            fios.close();
+//        baos.flush();
+//        baos.close();
+        }
     }
 
     void displayMetadata(final Node root) {
@@ -202,7 +218,7 @@ public class ImageMetadata {
     }
 
     public void writeCustomMetaData(final File file, final String key, final String value) {
-        System.out.println("Opening file " +  file.getAbsolutePath());
+        System.out.println("Opening file " + file.getAbsolutePath());
         LOG.debug("*** Meta before modification ***");
         readAndDisplayMetadata(file);
         LOG.debug("*** / ***");
@@ -220,7 +236,7 @@ public class ImageMetadata {
             FileUtils.copyFile(tmpFile, file);
 
             final boolean wasDeleted = tmpFile.delete();
-            if(! wasDeleted) {
+            if (!wasDeleted) {
                 System.out.println("Unable to delete " + tmpFile.getAbsolutePath());
                 tmpFile.deleteOnExit();
             }

@@ -1,9 +1,12 @@
 package no.eatools.util;
 
+import java.io.File;
+
 import no.bouvet.ohs.jops.Description;
 import no.bouvet.ohs.jops.EnumProperty;
 import no.bouvet.ohs.jops.PropertyMap;
 
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +40,17 @@ public enum EaApplicationProperties implements EnumProperty {
 
     @Description(text = "The directory root to place diagrams in when generating the diagrams.\nNB! Must be given as an absolute pathname or "
             + "relative to cwd.")
-    EA_DOC_ROOT_DIR(),
+    EA_DOC_ROOT_DIR() {
+
+        public boolean isAbsolute() {
+            return new File(value()).isAbsolute();
+        }
+
+        @Override
+        public String value() {
+            return FilenameUtils.normalize(super.value());
+        }
+    },
 
     @Description(text = "The loglevel when running the utility.", defaultValue = "INFO")
     EA_LOGLEVEL(),
@@ -65,8 +78,32 @@ public enum EaApplicationProperties implements EnumProperty {
     EA_ADD_VERSION(),
 
     @Description(text = "For -m option, generate HTML to this path")
-    EA_HTML_OUTPUT();
+    EA_HTML_OUTPUT(),
+
+    @Description(text = "Base URL for shared store of diagram files. Used for generating list of files. E.g. 'http://images.mysite.org/'")
+    EA_URL_BASE(),
+
+    @Description(text = "How to name diagram paths")
+    EA_DIAGRAM_NAME_MODE() {
+        @Override
+        public Class getType() {
+            return DiagramNameMode.class;
+        }
+
+        @Override
+        public void setValue(String value) {
+            setValue(DiagramNameMode.class, value);
+        }
+
+        @Override
+        public DiagramNameMode valueAsEnum() {
+            return (DiagramNameMode) valueAs(DiagramNameMode.class);
+        }
+    };
+
+
     private static final transient Logger log = LoggerFactory.getLogger(EaApplicationProperties.class);
+
 
     private static PropertyMap<EaApplicationProperties> propsMap = new PropertyMap<>(EaApplicationProperties.class);
     private final String message;

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -302,10 +303,11 @@ public class EaRepo {
     public Element findOrCreateClassInPackage(final Package definedPackage, final String className) {
         ensureRepoIsOpen();
 
-        Element theClass = findNamedElementOnList(findClassesInPackage(definedPackage), className);
+        Element theClass;
+        Optional<Element> candidate = findNamedElementOnList(findClassesInPackage(definedPackage), className);
 
-        if (theClass != null) {
-            return theClass;
+        if (candidate.isPresent()) {
+            return candidate.get();
         }
 
         theClass = definedPackage.GetElements()
@@ -316,17 +318,12 @@ public class EaRepo {
         return theClass;
     }
 
-    private Element findNamedElementOnList(final List<Element> elementList, final String elementName) {
+    private Optional<Element> findNamedElementOnList(final List<Element> elementList, final String elementName) {
         ensureRepoIsOpen();
-
-        for (final Element element : elementList) {
-            if (element.GetName()
-                       .equals(elementName)) {
-                return element;
-            }
-        }
-
-        return null;
+        return elementList.stream()
+                          .filter(e -> e.GetName()
+                                        .equals(elementName))
+                          .findFirst();
     }
 
     /**
@@ -358,10 +355,10 @@ public class EaRepo {
     public Element findOrCreateComponentInPackage(final Package definedPackage, final String componentName) {
         ensureRepoIsOpen();
 
-        final Element theComponent = findNamedElementOnList(findComponentsInPackage(definedPackage), componentName);
+        Optional<Element> candidate = findNamedElementOnList(findComponentsInPackage(definedPackage), componentName);
 
-        if (theComponent != null) {
-            return theComponent;
+        if (candidate.isPresent()) {
+            return candidate.get();
         }
 
         return addElementInPackage(definedPackage, componentName, EaMetaType.COMPONENT, null);
@@ -757,11 +754,11 @@ public class EaRepo {
         }
 
         final List<EaDiagram> diagrams = findDiagramsInPackage(pkg);
-        if (diagrams.size() > 0) {
+        if (! diagrams.isEmpty()) {
             LOG.debug("Generating diagrams in package: " + pkg.GetName());
             diagramCount.count = diagramCount.count + diagrams.size();
             for (final EaDiagram d : diagrams) {
-                LOG.debug("Generating diagrams: " + d.getFilename());
+                LOG.debug("Generating diagram: " + d.getName());
                 d.writeImageToFile(false);
                 repository.CloseDiagram(d.getDiagramID()); // Try to avoid the 226 bug.
             }
@@ -840,7 +837,7 @@ public class EaRepo {
             // id=0 means this is the root
             return null;
         }
-        if(packageCache.isEmpty()) {
+        if (packageCache.isEmpty()) {
             ensureRepoIsOpen();
             return repository.GetPackageByID(packageID);
         } else {
@@ -854,7 +851,7 @@ public class EaRepo {
         }
         final int key = pack.GetParentID();
         LOG.info("Looking for package with id {} ", key);
-        if(packageCache.isEmpty()) {
+        if (packageCache.isEmpty()) {
             ensureRepoIsOpen();
             return repository.GetPackageByID(key);
         } else {
