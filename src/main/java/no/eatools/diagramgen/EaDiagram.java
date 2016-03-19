@@ -3,10 +3,12 @@ package no.eatools.diagramgen;
 import java.io.File;
 import java.io.IOException;
 
+import no.bouvet.ohs.futil.ImageFileFormat;
+import no.bouvet.ohs.futil.ImageMetadata;
 import no.eatools.util.DiagramNameMode;
-import no.eatools.util.ImageMetadata;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sparx.Diagram;
@@ -107,17 +109,18 @@ public class EaDiagram {
         // make sure the directory exists
         final String diagramGUID = eaDiagram.GetDiagramGUID();
 
-        final String urlPart =  createUrlPart(logicalPathname, eaDiagram.GetName(), eaDiagram.GetDiagramGUID(), eaDiagram
+        final int level = NumberUtils.toInt(EA_DIAGRAM_NAME_LEVEL.value("0"));
+        final String urlPart =  createUrlPart(level, logicalPathname, eaDiagram.GetName(), eaDiagram.GetDiagramGUID(), eaDiagram
                 .GetVersion(), diagramNameMode, imageFileFormat.getFileExtension());
 
-        final File file = createFile(EA_DOC_ROOT_DIR.value(), logicalPathname, eaDiagram.GetName(), eaDiagram.GetDiagramGUID(), eaDiagram
+        final File file = createFile(level, EA_DOC_ROOT_DIR.value(), logicalPathname, eaDiagram.GetName(), eaDiagram.GetDiagramGUID(), eaDiagram
                 .GetVersion(), diagramNameMode, imageFileFormat.getFileExtension());
         file.getParentFile()
             .mkdirs();
 
 //        final String diagramUrlPart = createUrlPartForFile(file, EA_DOC_ROOT_DIR.value());
         DIAGRAM_LOG.info("{}, {}, {}, {}, {}, {}", eaDiagram.GetName(), logicalPathname, diagramGUID, eaDiagram.GetVersion(), file.getAbsolutePath
-                (), EA_URL_BASE.value(EMPTY) + urlPart);
+                (), EA_URL_BASE.value() + urlPart);
 
         updateDiagramUrlFile(urlPart);
         if (urlForFileOnly) {
@@ -132,8 +135,8 @@ public class EaDiagram {
                 LOG.error("Unable to read file [{}] Make sure the drive [{}] is properly mounted ", file.getAbsolutePath(), EA_DOC_ROOT_DIR.value());
                 return false;
             }
-            LOG.info("Adding metadata");
             new ImageMetadata().writeCustomMetaData(file, "EA_GUID", diagramGUID);
+            LOG.info("Adding metadata [{}] to [{}]",diagramGUID, file.getAbsolutePath());
             return true;
         } else {
             LOG.error("Unable to create diagram:" + file.getAbsolutePath());
@@ -141,11 +144,11 @@ public class EaDiagram {
         }
     }
 
-    public String createAbsoluteFileName(final String logicalPathname) {
-        final File file = createFile(EA_DOC_ROOT_DIR.value(), logicalPathname, eaDiagram.GetName(), eaDiagram.GetDiagramGUID(), eaDiagram
-                .GetVersion(), diagramNameMode, defaultImageFormat.getFileExtension());
-        return file.getAbsolutePath();
-    }
+//    public String createAbsoluteFileName(final String logicalPathname) {
+//        final File file = createFile(1, EA_DOC_ROOT_DIR.value(), logicalPathname, eaDiagram.GetName(), eaDiagram.GetDiagramGUID(), eaDiagram
+//                .GetVersion(), diagramNameMode, defaultImageFormat.getFileExtension());
+//        return file.getAbsolutePath();
+//    }
 
     /**
      * Write the urlBase to a specified file at current directory.

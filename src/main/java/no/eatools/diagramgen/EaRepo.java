@@ -13,8 +13,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import no.bouvet.ohs.jops.SystemPropertySet;
 import no.eatools.util.IntCounter;
+import no.eatools.util.NameNormalizer;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -813,13 +813,19 @@ public class EaRepo {
         return result;
     }
 
+    /**
+     * Creates path on the form /a/b/c
+     *
+     * @param pkg
+     * @return
+     */
     public String getPackagePath(final Package pkg) {
         final ArrayList<Package> ancestorPackages = new ArrayList<>();
         getAncestorPackages(ancestorPackages, pkg);
         final StringBuilder pathName = new StringBuilder();
         Collections.reverse(ancestorPackages);
         for (final Package p : ancestorPackages) {
-            pathName.append(SystemPropertySet.FILE_SEPARATOR.value())
+            pathName.append(NameNormalizer.URL_SEPARATOR)
                     .append(p.GetName());
         }
         return pathName.toString();

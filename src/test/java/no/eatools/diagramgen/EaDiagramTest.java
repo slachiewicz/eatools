@@ -2,6 +2,7 @@ package no.eatools.diagramgen;
 
 import java.util.List;
 
+import no.bouvet.ohs.futil.ImageFileFormat;
 import no.eatools.util.EaApplicationProperties;
 
 import org.slf4j.Logger;

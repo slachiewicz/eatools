@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.padual.com/java/logback.xsd">
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://enricopulatzo/logback.xsd">
+
+    <property name="LOG_DIR" value="./log"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <!-- encoders are assigned the type
@@ -19,53 +21,103 @@
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- daily rollover. Make sure the path matches the one in the file element or else
                          the rollover logs are placed in the working directory. -->
-            <fileNamePattern>logFile_%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>${LOG_DIR}/logFile_%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>5MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
             <!-- keep 15 days' worth of history -->
-            <maxHistory>15</maxHistory>
+            <maxHistory>5</maxHistory>
         </rollingPolicy>
         <encoder>
             <pattern>%d{dd.MM.yy HH:mm:ss.SSS} [%thread] %-5level %logger{36} +++ %msg%n</pattern>
         </encoder>
     </appender>
 
-    <appender name="DiagramFile" class="ch.qos.logback.core.FileAppender">
-        <file>diagrams.log</file>
-        <append>false</append>
-        <!-- encoders are assigned the type
-             ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+    <property name="DIAGRAM_FILE" value="diagrams"/>
+
+    <!--&lt;!&ndash; Daily rollover appender that also appends timestamp and rolls over on startup &ndash;&gt;-->
+    <!--<appender name="startupDailyRolloverAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">-->
+        <!--<file>${LOG_FILE}</file>-->
+        <!--<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">-->
+            <!--<fileNamePattern>${LOG_FILE}.%d{yyyyMMdd}_%d{HHmmss,aux}</fileNamePattern>-->
+            <!--<timeBasedFileNamingAndTriggeringPolicy class="no.eatools.logging.StartupTimeBasedTriggeringPolicy" />-->
+        <!--</rollingPolicy>-->
+        <!--<encoder>-->
+            <!--<pattern>%msg%n</pattern>-->
+        <!--</encoder>-->
+    <!--</appender>-->
+
+    <appender name="DiagramCSVFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/${DIAGRAM_FILE}.csv</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/${DIAGRAM_FILE}.%i.csv</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>4</maxIndex>
+        </rollingPolicy>
+
+        <triggeringPolicy class="no.eatools.logging.RollOncePerSessionTriggeringPolicy"/>
+
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+
+    </appender>
+
+    <appender name="DiagramFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/${DIAGRAM_FILE}.log</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/${DIAGRAM_FILE}.%i.log</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>5</maxIndex>
+        </rollingPolicy>
+
+        <triggeringPolicy class="no.eatools.logging.RollOncePerSessionTriggeringPolicy"/>
+
         <encoder>
             <pattern>%d{HH:mm:ss.SSS} %-5level - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <appender name="DiagramCSVFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <timestamp key="byMinute" datePattern="yyyyMMdd'T'HHmm"/>
+
+    <!--<appender name="DiagramCSVFile" class="ch.qos.logback.core.FileAppender">-->
+        <!--&lt;!&ndash;<append>false</append>&ndash;&gt;-->
+
+        <!--<file>${LOG_DIR}/diagrams-${byMinute}.csv</file>-->
         <!--<append>false</append>-->
-        <file>diagrams___.log</file>
-        <append>false</append>
-        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <!-- daily rollover. Make sure the path matches the one in the file element or else
-                         the rollover logs are placed in the working directory. -->
-            <!--<fileNamePattern>diagrams%d{yyyy-MM-dd}.%i.csv</fileNamePattern>-->
-            <fileNamePattern>diagrams_%i.csv</fileNamePattern>
-            <minIndex>1</minIndex>
-            <maxIndex>3</maxIndex>
-        </rollingPolicy>
 
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <maxFileSize>5MB</maxFileSize>
-        </triggeringPolicy>
+        <!--<encoder>-->
+            <!--<pattern>%msg%n</pattern>-->
+        <!--</encoder>-->
+    <!--</appender>-->
 
-        <encoder>
-            <pattern>%msg%n</pattern>
-        </encoder>
-    </appender>
+    <!--<appender name="DiagramCSVFile" class="ch.qos.logback.core.rolling.RollingFileAppender">-->
+        <!--&lt;!&ndash;<append>false</append>&ndash;&gt;-->
+        <!--<file>diagrams___.log</file>-->
+        <!--<append>false</append>-->
+        <!--<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">-->
+            <!--&lt;!&ndash; daily rollover. Make sure the path matches the one in the file element or else-->
+                         <!--the rollover logs are placed in the working directory. &ndash;&gt;-->
+            <!--&lt;!&ndash;<fileNamePattern>diagrams%d{yyyy-MM-dd}.%i.csv</fileNamePattern>&ndash;&gt;-->
+            <!--<fileNamePattern>diagrams_%i.csv</fileNamePattern>-->
+            <!--<minIndex>1</minIndex>-->
+            <!--<maxIndex>3</maxIndex>-->
+        <!--</rollingPolicy>-->
+
+        <!--<triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">-->
+            <!--<maxFileSize>5MB</maxFileSize>-->
+        <!--</triggeringPolicy>-->
+
+        <!--<encoder>-->
+            <!--<pattern>%msg%n</pattern>-->
+        <!--</encoder>-->
+    <!--</appender>-->
 
     <!-- ********************************* Loggers *************************** -->
 
-    <!-- Logger name must match loggers in code -->
+     <!--Logger name must match loggers in code -->
     <logger name="no.eatools.diagramgen.EaDiagram" level="INFO" additivity="true">
         <!--<logger name="no" level="DEBUG">-->
         <!--<appender-ref ref="FILE"/>-->
@@ -76,6 +128,7 @@
     <logger name="no" level="DEBUG" additivity="true">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="RollFile"/>
+        <!--<appender-ref ref="DiagramCSVFile"/>-->
     </logger>
 
     <!-- Logger name must match loggers in code -->
