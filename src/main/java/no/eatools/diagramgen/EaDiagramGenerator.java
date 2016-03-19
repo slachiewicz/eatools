@@ -147,6 +147,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         executeTasks();
         eaRepo.close();
         stopProgress();
+        LOG.info("Finished");
     }
 
     private void executeTasks() {

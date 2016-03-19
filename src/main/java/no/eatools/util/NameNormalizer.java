@@ -29,25 +29,29 @@ public class NameNormalizer {
      * The Windows separator character.
      */
     public static final String WINDOWS_SEPARATOR = "\\";
+    public static final String ILLEGAL_CHARS_REGEX = "[#%&<>$!^~'\"@\\+`|=:;\\?\\*\\(\\)]";
 
 
     private NameNormalizer() {
     }
 
     /**
-     * Leading
+     * Leading separator is removed.
      *
-     * @param input
+     * @param input path-like in put on the form "abc\def/ghi", i.e. both kind of separators may be present.
+     * @param substitutePathSeparators eg true, non OS-specific file-separator is substituted with a "-"
+     * @param urlStyle if true, return will have all "/" (URL_SEPARATORS), if false, OS-specific separators are used.
      * @return null, if input==null
      */
-    public static String makeWebFriendlyFilename(final String input, final boolean replaceSeparators) {
+    public static String makeWebFriendlyName(final String input, final boolean substitutePathSeparators, final boolean urlStyle) {
         String result = input;
 
         result = trimToEmpty(replaceChars(result, ' ', '_'));
 
         final boolean unix = FILE_SEPARATOR.value()
                                            .equals(UNIX_SEPARATOR);
-        if(replaceSeparators) {
+
+        if (substitutePathSeparators) {
             if (unix) {
                 result = replaceChars(result, WINDOWS_SEPARATOR, "-");
             } else {
@@ -55,9 +59,13 @@ public class NameNormalizer {
             }
         }
 
-        result = trimToEmpty(FilenameUtils.normalize(result, !replaceSeparators || unix));
+        // Remove repeating separators as they will make the normalization fail
+        result = result.replaceAll("[\\\\]+", "\\\\");
+        result = result.replaceAll("[" + UNIX_SEPARATOR + "]+", UNIX_SEPARATOR);
 
-        result = result.replaceAll("[:;\\?\\*]", "");
+        result = trimToEmpty(FilenameUtils.normalize(result, urlStyle || unix));
+
+        result = result.replaceAll(ILLEGAL_CHARS_REGEX, "_");
         /* Replace Norwegian characters with alternatives */
         result = replace(result, "Æ", "ae");
         result = replace(result, "Ø", "oe");
@@ -70,99 +78,34 @@ public class NameNormalizer {
         result = lowerCase(result);
         LOG.debug("Input [{}] Web-friendly [{}]", input, result);
 
-        return result.replaceFirst("^[\\" + FILE_SEPARATOR.value() + "]+", "");
+        // Remove leading separator
+        return result.replaceFirst("^[\\" + FILE_SEPARATOR.value() + "\\" + URL_SEPARATOR + "]+", "");
     }
 
     public static String nodePathToUrl(final String nodePath) {
-        return URL_SEPARATOR + replace(makeWebFriendlyFilename(nodePath, false), ".", URL_SEPARATOR) + EaDiagram.defaultImageFormat.getFileExtension();
+        return URL_SEPARATOR + replace(makeWebFriendlyName(nodePath, false, true), ".", URL_SEPARATOR) + EaDiagram.defaultImageFormat
+                .getFileExtension();
     }
 
     public static boolean isAbsoluteFileName(final String fileName) {
         return new File(fileName).isAbsolute();
     }
 
-    /**
-     * Create a partial URL string for a file. The string is suited for prepending protocol and base address to make up a complete URL.
-     *
-     * @param fileIn  The file
-     * @param rootDir root directory will be removed from the resulting partial URL
-     * @return partial URL for the give file, no leading "/"
-     * @deprecated
-     */
-    public static String createUrlPartForFile(final File fileIn, final String rootDir) {
-        // remove directory root prefix
-//        String adjustedFileName;
-//        if (isAbsoluteFileName(rootDir)) {
-//            adjustedFileName = makeWebFriendlyFilename(FILE_SEPARATOR.value() + fileIn.getAbsolutePath());
-//            final String prefix = makeWebFriendlyFilename(FILE_SEPARATOR.value() + rootDir);
-//
-//            adjustedFileName = removeStart(adjustedFileName, prefix);
-//        } else {
-//            adjustedFileName = makeWebFriendlyFilename(FILE_SEPARATOR.value() + fileIn.getPath());
-//        }
-
-        return replace("", FILE_SEPARATOR.value(), URL_SEPARATOR);
-//        final File baseFile = new File(adjustedFileName);
-//
-//        String urlBase = "";
-//        try {
-//            final URL diagramUrl = baseFile.toURI()
-//                                           .toURL();
-//            LOG.info("Diagram url " + diagramUrl);
-//            urlBase = diagramUrl.toString()
-//                                .replace(diagramUrl.getProtocol(), "")
-//                                .replace(rootDir, "")
-//                                .replace(":", "");
-//            LOG.info("-> URLBase: " + urlBase);
-//        } catch (final MalformedURLException e) {
-//            LOG.error("Unable to create url from file " + urlBase);
-//        }
-//        return urlBase;
-    }
-
-    public static File createFile(final String rootDirName, final String logicalPathname, final String diagramName, final String diagramGUID, final String
+    public static File createFile(final int level, final String rootDirName, final String logicalPathname, final String diagramName, final String
+            diagramGUID, final String
             diagramVersion, final DiagramNameMode diagramNameMode, final String fileExtension) {
-        final StringBuilder fileName = new StringBuilder();
 
         final File rootDir;
         if (!isAbsoluteFileName(rootDirName)) {
             final File cwd = new File(USER_DIR.value());
             LOG.info("{} is not a root directory. Using {}", rootDirName, cwd);
-//            fileName.append(cwd)
-//                    .append(FILE_SEPARATOR.value())
-//                    .append(rootDirName);
             rootDir = new File(cwd.getAbsolutePath() + FILE_SEPARATOR.value() + rootDirName);
         } else {
-//            fileName.append(rootDirName);
             rootDir = new File(rootDirName);
         }
-//
-//        switch (diagramNameMode) {
-//            case GUID_AT_START:
-//                fileName.append(FILE_SEPARATOR.value())
-//                        .append(diagramGUID)
-//                        .append(diagramName);
-//                break;
-//            case GUID_AT_END:
-//                fileName.append(FILE_SEPARATOR.value())
-//                        .append(diagramName)
-//                        .append(diagramGUID);
-//                break;
-//            case FULL_PATH:
-//            default:
-//                fileName.append(logicalPathname)
-//                        .append(FILE_SEPARATOR.value())
-//                        .append(diagramName);
-//                break;
-//        }
-//
-//        if (EA_ADD_VERSION.exists()) {
-//            fileName.append(diagramVersion);
-//        }
-//        fileName.append(fileExtension);
 
         final String absolutePath = appendIfMissing(rootDir.getAbsolutePath(), FILE_SEPARATOR.value());
-        final String urlPart = createUrlPart(logicalPathname, diagramName, diagramGUID, diagramVersion, diagramNameMode, fileExtension);
+        final String urlPart = createUrlPart(level, logicalPathname, diagramName, diagramGUID, diagramVersion, diagramNameMode, fileExtension);
 
 
         final File file = new File(FilenameUtils.normalize(absolutePath + urlPart));
@@ -172,8 +115,8 @@ public class NameNormalizer {
     }
 
     /**
-     *
-     * @param logicalPathname
+     * @param level
+     * @param logicalPathname path on the form "/a/b/c"
      * @param diagramName
      * @param diagramGUID
      * @param diagramVersion
@@ -181,26 +124,30 @@ public class NameNormalizer {
      * @param fileExtension
      * @return
      */
-    public static String createUrlPart(final String logicalPathname, final String diagramName, final String diagramGUID, final String
+    public static String createUrlPart(final int level, final String logicalPathname, final String diagramName, final String diagramGUID, final String
             diagramVersion, final DiagramNameMode diagramNameMode, final String fileExtension) {
         final StringBuilder urlPart = new StringBuilder();
 
         switch (diagramNameMode) {
             case GUID_AT_START:
                 urlPart.append(FILE_SEPARATOR.value())
-                        .append(diagramGUID)
-                        .append(diagramName);
+                       .append(createPath(logicalPathname, level))
+                       .append(FILE_SEPARATOR.value())
+                       .append(diagramGUID)
+                       .append(diagramName);
                 break;
             case GUID_AT_END:
                 urlPart.append(FILE_SEPARATOR.value())
-                        .append(diagramName)
-                        .append(diagramGUID);
+                       .append(createPath(logicalPathname, level))
+                       .append(FILE_SEPARATOR.value())
+                       .append(diagramName)
+                       .append(diagramGUID);
                 break;
             case FULL_PATH:
             default:
                 urlPart.append(logicalPathname)
-                        .append(FILE_SEPARATOR.value())
-                        .append(diagramName);
+                       .append(FILE_SEPARATOR.value())
+                       .append(diagramName);
                 break;
         }
 
@@ -209,8 +156,23 @@ public class NameNormalizer {
         }
         urlPart.append(fileExtension);
 
-        return makeWebFriendlyFilename(urlPart.toString(), false);
-//        return makeWebFriendlyFilename(prependIfMissing(urlPart.toString(), URL_SEPARATOR), false);
+        return makeWebFriendlyName(urlPart.toString(), false, true);
     }
 
+    /**
+     *
+     * @param logicalPathname, expected to be on the form "/a/b/c"
+     * @param level
+     * @return path on the form level==0 ? "", level==1 ? "/a", level==2 ? "/a/b"
+     */
+    public static String createPath(final String logicalPathname, final int level) {
+        String result = EMPTY;
+        final String[] paths = logicalPathname.split("\\" + URL_SEPARATOR);
+        int index = 1;
+        while ((index <= level) && (index < paths.length)) {
+            result +=  URL_SEPARATOR + paths[index];
+            ++index;
+        }
+        return result;
+    }
 }

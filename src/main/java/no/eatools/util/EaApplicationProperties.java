@@ -5,10 +5,13 @@ import java.io.File;
 import no.bouvet.ohs.jops.Description;
 import no.bouvet.ohs.jops.EnumProperty;
 import no.bouvet.ohs.jops.PropertyMap;
+import no.bouvet.ohs.jops.SystemPropertySet;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.apache.commons.lang3.StringUtils.*;
 
 /**
  * This class handles the properties that can be used to configure the EA utilities. The property file can:
@@ -48,7 +51,7 @@ public enum EaApplicationProperties implements EnumProperty {
 
         @Override
         public String value() {
-            return FilenameUtils.normalize(super.value());
+            return FilenameUtils.normalize(appendIfMissing(super.value(), SystemPropertySet.FILE_SEPARATOR.value()));
         }
     },
 
@@ -81,7 +84,16 @@ public enum EaApplicationProperties implements EnumProperty {
     EA_HTML_OUTPUT(),
 
     @Description(text = "Base URL for shared store of diagram files. Used for generating list of files. E.g. 'http://images.mysite.org/'")
-    EA_URL_BASE(),
+    EA_URL_BASE() {
+        @Override
+        public String value() {
+            final String value = super.value();
+            return isBlank(value) ? EMPTY : appendIfMissing(value, NameNormalizer.URL_SEPARATOR);
+        }
+    },
+
+    @Description(text = "Depth of diagram hierarchy")
+    EA_DIAGRAM_NAME_LEVEL(),
 
     @Description(text = "How to name diagram paths")
     EA_DIAGRAM_NAME_MODE() {

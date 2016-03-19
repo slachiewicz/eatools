@@ -9,5 +9,5 @@ public enum DiagramNameMode {
     @Default
     FULL_PATH,
     GUID_AT_START,
-    diagramNameMode, GUID_AT_END
+    GUID_AT_END
 }
