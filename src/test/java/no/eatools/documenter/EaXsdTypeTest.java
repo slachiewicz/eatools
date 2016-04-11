@@ -2,7 +2,7 @@ package no.eatools.documenter;
 
 import java.util.Date;
 
-import no.eatools.diagramgen.AbtractEaTestCase;
+import no.eatools.diagramgen.AbstractEaTestCase;
 
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -10,7 +10,7 @@ import org.junit.experimental.categories.Category;
 /**
  * @author ohs
  */
-public class EaXsdTypeTest extends AbtractEaTestCase {
+public class EaXsdTypeTest extends AbstractEaTestCase {
 
     @Test
     @Category(no.eatools.documenter.EaXsdTypeTest.class)

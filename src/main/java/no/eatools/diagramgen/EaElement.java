@@ -9,6 +9,7 @@ import org.sparx.Attribute;
 import org.sparx.AttributeTag;
 import org.sparx.Collection;
 import org.sparx.Connector;
+import org.sparx.Diagram;
 import org.sparx.Element;
 import org.sparx.TaggedValue;
 
@@ -19,10 +20,12 @@ public class EaElement {
     private static final transient Logger LOG = LoggerFactory.getLogger(EaElement.class);
     private final Element theElement;
     final EaRepo repos;
+    final EaMetaType eaMetaType;
 
     public EaElement(final Element theElement, final EaRepo repos) {
         this.theElement = theElement;
         this.repos = repos;
+        eaMetaType = EaMetaType.fromString(theElement.GetMetaType());
     }
 
     public List<EaElement> findParents() {
@@ -59,6 +62,14 @@ public class EaElement {
         } else {
             return new EaElement(repos.findElementByID(connector.GetClientID()), repos);
         }
+    }
+
+    public List<EaElement> findConnectedElements() {
+        List<EaElement> result = new ArrayList<>();
+        for (final Connector connector : getConnectors()) {
+            result.add(findConnectedElement(connector));
+        }
+        return result;
     }
 
     public int getPackageID() {
@@ -125,5 +136,36 @@ public class EaElement {
     public String toString() {
         return getType() +
                 ": " + getName();
+    }
+
+    public String getClassifierType() {
+        return theElement.GetClassifierType();
+    }
+
+    public String getAuthor() {
+        return theElement.GetAuthor();
+    }
+
+    public EaMetaType getMetaType() {
+        return eaMetaType;
+    }
+
+    public int getId() {
+        return theElement.GetElementID();
+    }
+
+    public EaDiagram findDiagram(String diagramName) {
+        for (Diagram diagram : theElement.GetDiagrams()) {
+            if(diagram.GetName().equals(diagramName)) {
+                final EaDiagram eaDiagram = new EaDiagram(repos, diagram, repos.getPackagePath(repos.findPackageByID(theElement.GetPackageID())));
+                LOG.info("Found element diagram for {}: {}:{}", getName(), eaDiagram.getPathname(), eaDiagram.getName());
+                return eaDiagram;
+            }
+        }
+        return null;
+    }
+
+    public String getEaMetaType() {
+        return theElement.GetMetaType();
     }
 }

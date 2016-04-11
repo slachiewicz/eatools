@@ -95,6 +95,18 @@ public enum EaApplicationProperties implements EnumProperty {
     @Description(text = "Depth of diagram hierarchy")
     EA_DIAGRAM_NAME_LEVEL(),
 
+    @Description(text = "Or together the desired flags, See http://www.sparxsystems.com/enterprise_architect_user_guide/9.3/automation/project_2.html", defaultValue = "0xFFFFFFFF")
+    EA_AUTO_DIAGRAM_OPTIONS(),
+
+    @Description(text = "See http://www.sparxsystems.com/enterprise_architect_user_guide/9.3/automation/project_2.html", defaultValue = "4")
+    EA_AUTO_DIAGRAM_ITERATIONS(),
+
+    @Description(text = "See http://www.sparxsystems.com/enterprise_architect_user_guide/9.3/automation/project_2.html", defaultValue = "20")
+    EA_AUTO_DIAGRAM_LAYER_SPACING(),
+
+    @Description(text = "See http://www.sparxsystems.com/enterprise_architect_user_guide/9.3/automation/project_2.html", defaultValue = "20")
+    EA_AUTO_DIAGRAM_COLUMN_SPACING(),
+
     @Description(text = "How to name diagram paths")
     EA_DIAGRAM_NAME_MODE() {
         @Override

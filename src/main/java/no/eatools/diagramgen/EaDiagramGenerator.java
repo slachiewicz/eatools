@@ -71,6 +71,9 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     @Option(name = "-cl", usage = "List all components recursively in given package", metaVar = "Package root")
     private String packageForList = "";
 
+    @Option(name = "-ad", usage = "Auto generate diagrams for elemnts in given package", metaVar = "Package root")
+    private String packageForAutoDiagrams = "";
+
 //    @Argument(metaVar = PROPERTY_FILE, usage = "property file. If omitted standard file is looked for ", index = 0, required = true)
 //    private String propertyFilename;
 
@@ -191,6 +194,10 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             createElementFile();
             return;
         }
+        if (isNotBlank(packageForAutoDiagrams)) {
+            createAutoDiagrams();
+            return;
+        }
         if (htmlOutputPath != null) {
             eaRepo.generateHtml(htmlOutputPath);
             return;
@@ -231,10 +238,16 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         eaPackage.generateAttributesFile();
     }
 
+    private void createAutoDiagrams() {
+        final EaPackage eaPackage = new EaPackage(eaRepo.findPackageByName(packageForAutoDiagrams, true), eaRepo);
+        eaPackage.generateAutoDiagrams();
+    }
+
     private void generateSpecificDiagram() {
         final EaDiagram eaDiagram = EaDiagram.findEaDiagram(eaRepo, diagram);
         if (eaDiagram != null) {
-            eaDiagram.writeImageToFile(urlForFileOnly);
+            final String diagramUrl = eaDiagram.writeImageToFile(urlForFileOnly);
+            LOG.info("Diagram created {}",diagramUrl);
         } else {
             LOG.info("diagram '{}' not found", diagram);
         }

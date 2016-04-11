@@ -26,7 +26,7 @@
                 <maxFileSize>5MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
             <!-- keep 15 days' worth of history -->
-            <maxHistory>5</maxHistory>
+            <maxHistory>2</maxHistory>
         </rollingPolicy>
         <encoder>
             <pattern>%d{dd.MM.yy HH:mm:ss.SSS} [%thread] %-5level %logger{36} +++ %msg%n</pattern>
@@ -47,23 +47,6 @@
         <!--</encoder>-->
     <!--</appender>-->
 
-    <appender name="DiagramCSVFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_DIR}/${DIAGRAM_FILE}.csv</file>
-
-        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <fileNamePattern>${LOG_DIR}/${DIAGRAM_FILE}.%i.csv</fileNamePattern>
-            <minIndex>1</minIndex>
-            <maxIndex>4</maxIndex>
-        </rollingPolicy>
-
-        <triggeringPolicy class="no.eatools.logging.RollOncePerSessionTriggeringPolicy"/>
-
-        <encoder>
-            <pattern>%msg%n</pattern>
-        </encoder>
-
-    </appender>
-
     <appender name="DiagramFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_DIR}/${DIAGRAM_FILE}.log</file>
 
@@ -79,6 +62,24 @@
             <pattern>%d{HH:mm:ss.SSS} %-5level - %msg%n</pattern>
         </encoder>
     </appender>
+
+    <appender name="DiagramCSVFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/${DIAGRAM_FILE}.csv</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/${DIAGRAM_FILE}.%i.csv</fileNamePattern>
+            <minIndex>1</minIndex>
+            <maxIndex>5</maxIndex>
+        </rollingPolicy>
+
+        <triggeringPolicy class="no.eatools.logging.RollOncePerSessionTriggeringPolicy"/>
+
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+
+    </appender>
+
 
     <timestamp key="byMinute" datePattern="yyyyMMdd'T'HHmm"/>
 
