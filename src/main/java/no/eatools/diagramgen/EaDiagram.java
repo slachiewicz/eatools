@@ -11,8 +11,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sparx.Collection;
 import org.sparx.Diagram;
 import org.sparx.DiagramLink;
+import org.sparx.DiagramObject;
 
 import static no.eatools.util.EaApplicationProperties.*;
 import static no.eatools.util.NameNormalizer.*;
@@ -43,10 +45,6 @@ public class EaDiagram {
         logicalPathname = pathName;
         diagramID = eaDiagram != null ? eaDiagram.GetDiagramID() : 0;
         diagramNameMode = (DiagramNameMode) EA_DIAGRAM_NAME_MODE.valueAsEnum();
-        final String msg = "Found diagram :" + pathName + ":" + (diagram != null ? diagram.GetName() + " " + diagram.GetDiagramGUID() : " No " +
-                "diagram ");
-        System.out.println(msg);
-        LOG.info(msg);
     }
 
 // -------------------------- STATIC METHODS --------------------------
@@ -59,7 +57,18 @@ public class EaDiagram {
         } else {
             diagram = eaRepo.findDiagram(diagramName);
         }
+        if(diagram != null) {
+            final String msg = "Found diagram :" + diagram.getPathname() + ":" + diagram.getName() + " " + diagram.getGuid();
+            System.out.println(msg);
+            LOG.info(msg);
+        } else {
+            LOG.warn("No diagram with name [{}] found", diagramName);
+        }
         return diagram;
+    }
+
+    public String getGuid() {
+        return eaDiagram.GetDiagramGUID();
     }
 
 // -------------------------- OTHER METHODS --------------------------
@@ -96,16 +105,16 @@ public class EaDiagram {
         eaDiagram.Update();
     }
 
-    public boolean writeImageToFile(final boolean urlForFileOnly) {
+    public String writeImageToFile(final boolean urlForFileOnly) {
         try {
             return writeImageToFile(defaultImageFormat, urlForFileOnly);
         } catch (final Exception e) {
             LOG.error("Unable to write to file", e);
-            return false;
+            return EMPTY;
         }
     }
 
-    public boolean writeImageToFile(final ImageFileFormat imageFileFormat, final boolean urlForFileOnly) {
+    public String writeImageToFile(final ImageFileFormat imageFileFormat, final boolean urlForFileOnly) {
         // make sure the directory exists
         final String diagramGUID = eaDiagram.GetDiagramGUID();
 
@@ -119,12 +128,13 @@ public class EaDiagram {
             .mkdirs();
 
 //        final String diagramUrlPart = createUrlPartForFile(file, EA_DOC_ROOT_DIR.value());
+        final String completeUrl = EA_URL_BASE.value() + urlPart;
         DIAGRAM_LOG.info("{}, {}, {}, {}, {}, {}", eaDiagram.GetName(), logicalPathname, diagramGUID, eaDiagram.GetVersion(), file.getAbsolutePath
-                (), EA_URL_BASE.value() + urlPart);
+                (), completeUrl);
 
         updateDiagramUrlFile(urlPart);
         if (urlForFileOnly) {
-            return true;
+            return completeUrl;
         }
 
         LOG.info("diagramguid {}, diagramfilename {}, imagefileformat {}", diagramGUID, file.getAbsolutePath(), imageFileFormat);
@@ -133,14 +143,14 @@ public class EaDiagram {
             LOG.info("Diagram generated at: " + file.getAbsolutePath());
             if (!file.canRead()) {
                 LOG.error("Unable to read file [{}] Make sure the drive [{}] is properly mounted ", file.getAbsolutePath(), EA_DOC_ROOT_DIR.value());
-                return false;
+                return EMPTY;
             }
             new ImageMetadata().writeCustomMetaData(file, "EA_GUID", diagramGUID);
             LOG.info("Adding metadata [{}] to [{}]",diagramGUID, file.getAbsolutePath());
-            return true;
+            return completeUrl;
         } else {
             LOG.error("Unable to create diagram:" + file.getAbsolutePath());
-            return false;
+            return EMPTY;
         }
     }
 
@@ -171,5 +181,39 @@ public class EaDiagram {
 
     public String getName() {
         return eaDiagram.GetName();
+    }
+
+    public static String createStandardDiagramName(final EaElement centralElement) {
+        return centralElement.getName() + "_AUTO";
+    }
+
+    public void removeAllElements() {
+        final Collection<DiagramObject> diagramObjects = eaDiagram.GetDiagramObjects();
+        for (short i = 0; i < diagramObjects.GetCount(); i++) {
+            diagramObjects.Delete(i);
+        }
+        eaDiagram.Update();
+        diagramObjects.Refresh();
+    }
+
+    public void add(final EaElement element) {
+        final Collection<DiagramObject> diagramObjects = eaDiagram.GetDiagramObjects();
+        final DiagramObject diagramObject = diagramObjects
+                .AddNew(element.getName(), element.getMetaType().toString());
+        diagramObject.SetElementID(element.getId());
+        diagramObject.Update();
+        eaDiagram.Update();
+        diagramObjects.Refresh();
+        LOG.info("Added ({}, {} {}) [{}] to diagram {}", element.getMetaType(), element.getType(), element.getEaMetaType(),  element.getName(), getName());
+    }
+
+    public void setParentId(final int id) {
+        eaDiagram.SetParentID(id);
+        eaDiagram.Update();
+    }
+
+    public void hideDetails() {
+        eaDiagram.SetShowDetails(0);
+        eaDiagram.Update();
     }
 }

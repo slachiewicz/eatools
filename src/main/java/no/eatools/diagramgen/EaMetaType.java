@@ -27,7 +27,11 @@ public enum EaMetaType {
     DIAGRAM,
     INTERFACE,
     NOTE,
-    TEXT;
+    TEXT,
+    ACTOR,
+    DATA_STORE,
+    QUEUE,
+    PROVIDED_INTERFACE;
     // etc.
     // todo complete the set
 

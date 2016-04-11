@@ -124,6 +124,7 @@ public class EaRepo {
         if (pkg == null) {
             return null;
         }
+        LOG.info("Looking for diagram [{}] in package [{}]", diagramName, pkg.GetName());
 //        for (Element element : pkg.GetElements()) {
 //            element.GetAttributes()
 //        }pkg.GetElements()
@@ -303,8 +304,8 @@ public class EaRepo {
     public Element findOrCreateClassInPackage(final Package definedPackage, final String className) {
         ensureRepoIsOpen();
 
-        Element theClass;
-        Optional<Element> candidate = findNamedElementOnList(findClassesInPackage(definedPackage), className);
+        final Element theClass;
+        final Optional<Element> candidate = findNamedElementOnList(findClassesInPackage(definedPackage), className);
 
         if (candidate.isPresent()) {
             return candidate.get();
@@ -355,7 +356,7 @@ public class EaRepo {
     public Element findOrCreateComponentInPackage(final Package definedPackage, final String componentName) {
         ensureRepoIsOpen();
 
-        Optional<Element> candidate = findNamedElementOnList(findComponentsInPackage(definedPackage), componentName);
+        final Optional<Element> candidate = findNamedElementOnList(findComponentsInPackage(definedPackage), componentName);
 
         if (candidate.isPresent()) {
             return candidate.get();
@@ -754,13 +755,13 @@ public class EaRepo {
         }
 
         final List<EaDiagram> diagrams = findDiagramsInPackage(pkg);
-        if (! diagrams.isEmpty()) {
+        if (!diagrams.isEmpty()) {
             LOG.debug("Generating diagrams in package: " + pkg.GetName());
             diagramCount.count = diagramCount.count + diagrams.size();
-            for (final EaDiagram d : diagrams) {
-                LOG.debug("Generating diagram: " + d.getName());
-                d.writeImageToFile(false);
-                repository.CloseDiagram(d.getDiagramID()); // Try to avoid the 226 bug.
+            for (final EaDiagram eaDiagram : diagrams) {
+                final String diagramUrl = eaDiagram.writeImageToFile(false);
+                LOG.debug("Generated diagram: [{}] with url: [{}]", eaDiagram.getName(), diagramUrl);
+                repository.CloseDiagram(eaDiagram.getDiagramID()); // Try to avoid the 226 bug.
             }
         }
     }
@@ -963,5 +964,67 @@ public class EaRepo {
         // @VAR;Variable=name;Value=mittNavnPaaObjekt;Op==;@ENDVAR;@VAR;Variable=attribEn;Value=enverdi;Op==;@ENDVAR;
         object.SetRunState("@VAR;Variable=name;Value=dittnavn;Op==;@ENDVAR;");
         object.Update();
+    }
+
+    public EaDiagram createOrUpdateStandardDiagram(final EaElement centralElement) {
+
+        final String diagramName = EaDiagram.createStandardDiagramName(centralElement);
+
+        EaDiagram eaDiagram = centralElement.findDiagram(diagramName);
+
+        if (eaDiagram == null) {
+            final Package pack = findPackageByID(centralElement.getPackageID());
+            final Collection<Diagram> diagrams = pack.GetDiagrams();
+            final Diagram diagram = diagrams.AddNew(diagramName, EaDiagramType.COMPONENT.toString());
+            pack.Update();
+            repository.SaveAllDiagrams();
+            diagrams.Refresh();
+            eaDiagram = new EaDiagram(this, diagram, getPackagePath(pack));
+            eaDiagram.setParentId(centralElement.getId());
+            LOG.info("Created diagram {} below {}", diagramName, centralElement.getName());
+        } else {
+            eaDiagram.removeAllElements();
+            LOG.info("Removed elements from {}", eaDiagram.getName());
+        }
+        eaDiagram.hideDetails();
+
+        eaDiagram.add(centralElement);
+
+        for (final EaElement eaElement : centralElement.findConnectedElements()) {
+            if (eaElement.getMetaType() != EaMetaType.NOTE) {
+                eaDiagram.add(eaElement);
+            }
+        }
+
+        final Project project = getProject();
+        boolean layoutResult = doLayout(eaDiagram, project.GUIDtoXML(eaDiagram.getGuid()),
+                                        EA_AUTO_DIAGRAM_OPTIONS.toInt(),
+                                        EA_AUTO_DIAGRAM_ITERATIONS.toInt(),
+                                        EA_AUTO_DIAGRAM_LAYER_SPACING.toInt(),
+                                        EA_AUTO_DIAGRAM_COLUMN_SPACING.toInt());
+
+        layoutResult = doLayout(eaDiagram, eaDiagram.getGuid(),
+                                EA_AUTO_DIAGRAM_OPTIONS.toInt(),
+                                EA_AUTO_DIAGRAM_ITERATIONS.toInt(),
+                                EA_AUTO_DIAGRAM_LAYER_SPACING.toInt(),
+                                EA_AUTO_DIAGRAM_COLUMN_SPACING.toInt());
+
+        repository.SaveAllDiagrams();
+        return eaDiagram;
+    }
+
+    private boolean doLayout(final EaDiagram eaDiagram, final String guid, final int options, final int iterations, final int layerSpacing, final
+    int columnSpacing) {
+        final Project project = getProject();
+        final boolean result = project.LayoutDiagramEx(guid,
+                                                       options,
+                                                       iterations,
+                                                       layerSpacing,
+                                                       columnSpacing,
+                                                       false);
+
+        LOG.info("Applied autolayout to {} [{}] result {} with options [{}], iterations {} layerSpacing {} columnSpacing {}",
+                 eaDiagram.getName(), guid, result, String.format("%x", iterations), layerSpacing, columnSpacing);
+        return result;
     }
 }

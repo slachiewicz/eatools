@@ -32,9 +32,9 @@ public enum EaDiagramType {
      * @return never null
      */
     public static EaDiagramType fromString(String diagramType) {
-        EaDiagramType theType = EaDiagramType.NULL;
+        EaDiagramType theType = NULL;
         try {
-            theType = EaDiagramType.valueOf(Camel.toConstantString(diagramType));
+            theType = valueOf(Camel.toConstantString(diagramType));
         } catch (IllegalArgumentException iae) {
             // Default to the safe instance
         }

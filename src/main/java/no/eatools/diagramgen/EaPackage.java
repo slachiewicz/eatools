@@ -27,6 +27,7 @@ import org.sparx.TaggedValue;
 
 import static java.util.Collections.*;
 import static no.bouvet.ohs.ea.dd.DDType.*;
+import static org.apache.commons.lang3.StringUtils.*;
 
 /**
  * @author ohs
@@ -58,6 +59,7 @@ public class EaPackage {
         me = pkg;
         name = pkg.GetName();
         id = pkg.GetPackageID();
+//        me.GetDiagrams().AddNew()
     }
 
     /**
@@ -86,53 +88,88 @@ public class EaPackage {
         }
         for (final Element element : pkg.GetElements()) {
             final EaElement eaElement = new EaElement(element, repos);
-            String msg = "Processing " + eaElement.toString();
+            final String msg = "Processing " + eaElement.toString();
             LOG.info(msg);
             System.out.println(msg);
-            attributes.add(createElementLine(eaElement));
+            final DDEntry elementLine = createElementLine(eaElement);
+            attributes.add(elementLine);
             for (final Attribute attribute : eaElement.getAttributes()) {
-                attributes.add(createAttributeLine(eaElement.getName(), attribute, eaElement.getVersion()));
+                attributes.add(createAttributeLine(eaElement, attribute));
             }
         }
     }
 
-    private DDEntry createElementLine(final EaElement element) {
-        final String description = element.getNotes();//.replaceAll("\n", "\\\\n").replaceAll("\r", "");
+    private DDEntry createElementLine(final EaElement eaElement) {
+        final EaMetaType metaType = eaElement.getMetaType();
+        final EaDiagram eaDiagram;
+        if(metaType == EaMetaType.COMPONENT || metaType == EaMetaType.INTERFACE) {
+            eaDiagram = repos.createOrUpdateStandardDiagram(eaElement);
+        } else {
+            eaDiagram = new EaDiagram(repos, null, "");
+        }
 
-        final List<String> parents = element.findParents()
+        final String description = eaElement.getNotes();//.replaceAll("\n", "\\\\n").replaceAll("\r", "");
+
+        final List<String> parents = eaElement.findParents()
                                             .stream()
                                             .map(e -> e.getPackageName() + UML_PACKAGE_DELIMITER + e.getName())
                                             .collect(Collectors.toList());
         final DDEntry ddEntry =
-                new DDEntry(element.getName(), description, null,
-                            element.getType(), element.getStereotypeEx(), element.getElementGUID(), element.getVersion(), booleanToYesNo(false),
-                            ELEMENT, parents);
+                new DDEntry(eaElement.getName(), description, null,
+                            eaElement.getType(), eaElement.getStereotypeEx(), eaElement.getElementGUID(), eaElement.getVersion(), booleanToYesNo(false),
+                            eaElement.getClassifierType(),
+                            ELEMENT, parents, eaElement.getAuthor(), eaDiagram.writeImageToFile(true));
 
-        for (final TaggedValue attributeTag : element.getTaggedValuesEx()) {
+        for (final TaggedValue attributeTag : eaElement.getTaggedValuesEx()) {
             ddEntry.addTaggedValue(attributeTag.GetName(), attributeTag.GetValue());
         }
         return ddEntry;
     }
 
-    private DDEntry createAttributeLine(final String elementName, final Attribute attribute, final String version) {
+    private DDEntry createAttributeLine(final EaElement element, final Attribute attribute) {
         final String description = attribute.GetNotes(); //.replaceAll("\n", "\\\\n").replaceAll("\r", "");
 
+        final String elementName = element.getName();
         final DDEntry ddEntry =
                 new DDEntry(elementName + ATTRIBUTE_DELIMITER + attribute.GetName(), description, attribute.GetLowerBound() +
                         UML_MULTIPLICITY_DELIMITER + attribute.GetUpperBound(),
-                            attribute.GetType(), attribute.GetStereotypeEx(), attribute.GetAttributeGUID(), version,
-                            booleanToYesNo(attribute.GetIsID()), ATTRIBUTE, emptyList());
+                            attribute.GetType(), attribute.GetStereotypeEx(), attribute.GetAttributeGUID(), element.getVersion(),
+                            booleanToYesNo(attribute.GetIsID()), EMPTY, ATTRIBUTE, emptyList(), element.getAuthor(), EMPTY);
         LOG.debug("DD Entry created {}", ddEntry);
 
-        for (final AttributeTag attributeTag : attribute.GetTaggedValuesEx()) {
-            LOG.info(elementName + "." + attribute.GetName() + ":" + attributeTag.GetName() + "=" + attributeTag.GetValue());
-            ddEntry.addTaggedValue(attributeTag.GetName(), attributeTag.GetValue());
+        if (!checkTaggedValues(attribute.GetTaggedValuesEx(), elementName, ddEntry)) {
+            for (final AttributeTag attributeTag : attribute.GetTaggedValuesEx()) {
+                LOG.info("TaggedValueEx {}.{}:{}={}", elementName, attribute.GetName(), attributeTag.GetName(), attributeTag.GetValue());
+                ddEntry.addTaggedValue(attributeTag.GetName(), attributeTag.GetValue());
+            }
         }
-        for (final AttributeTag attributeTag : attribute.GetTaggedValues()) {
-//            System.out.println(attributeTag.GetName() + attributeTag.GetValue());
-            ddEntry.addTaggedValue(attributeTag.GetName(), attributeTag.GetValue());
+        if (!checkTaggedValues(attribute.GetTaggedValues(), elementName, ddEntry)) {
+            for (final AttributeTag attributeTag : attribute.GetTaggedValues()) {
+                LOG.info("TaggedValue {}.{}:{}={}", elementName, attribute.GetName(), attributeTag.GetName(), attributeTag.GetValue());
+                ddEntry.addTaggedValue(attributeTag.GetName(), attributeTag.GetValue());
+            }
         }
         return ddEntry;
+    }
+
+    /**
+     * Hack in order to detect wrong tags which causes a ClassCastException.
+     * Sometimes it is a "TaggedValue" instead
+     *
+     * @param attributeTags
+     * @param elementName
+     * @param ddEntry
+     */
+    private boolean checkTaggedValues(final Collection<AttributeTag> attributeTags, final String elementName, final DDEntry ddEntry) {
+        boolean hasErrors = false;
+        for (final Object attributeTag : attributeTags) {
+            if (!(attributeTag instanceof AttributeTag)) {
+                LOG.error("Illegal tag [{}] of [{}] {}", attributeTag.getClass()
+                                                                     .getName(), elementName, ddEntry);
+                hasErrors = true;
+            }
+        }
+        return hasErrors;
     }
 
     private String booleanToYesNo(final boolean b) {
@@ -298,12 +335,12 @@ public class EaPackage {
     }
 
     public void listElements(final EaMetaType metaType) {
-            final List<String> components = new ArrayList<>();
-            components.add(new StringJoiner(";").add(metaType.toString())
-                                                .add(" name")
-                                                .add("StereoTypes")
-                                                .add("Description")
-                                                .add("Component type (for instances)")
+        final List<String> components = new ArrayList<>();
+        components.add(new StringJoiner(";").add(metaType.toString())
+                                            .add(" name")
+                                            .add("StereoTypes")
+                                            .add("Description")
+                                            .add("Component type (for instances)")
                                             .add("Created by")
                                             .toString());
         listElements(me, components, metaType);
@@ -344,7 +381,7 @@ public class EaPackage {
 
             final StringJoiner stringJoiner = new StringJoiner(";");
             addToJoiner(element, stringJoiner);
-            if(classifier != null) {
+            if (classifier != null) {
                 addToJoiner(classifier, stringJoiner);
             }
             result.add(stringJoiner.toString());
@@ -353,10 +390,16 @@ public class EaPackage {
 
     private void addToJoiner(final Element element, final StringJoiner stringJoiner) {
         stringJoiner.add(element.GetName())
-                                        .add(element.GetStereotypeList())
-                                        .add(element.GetNotes())
-                                        .add(element.GetClassifierName())
-                                        .add(element.GetAuthor());
+                    .add(element.GetStereotypeList())
+                    .add(element.GetNotes())
+                    .add(element.GetClassifierName())
+                    .add(element.GetAuthor());
+    }
+
+    public void generateAutoDiagrams() {
+        for (final Element element : me.GetElements()) {
+            final EaDiagram eaDiagram = repos.createOrUpdateStandardDiagram(new EaElement(element, repos));
+        }
     }
 
     /**

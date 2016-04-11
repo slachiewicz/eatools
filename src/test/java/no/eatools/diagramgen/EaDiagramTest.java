@@ -9,26 +9,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sparx.Package;
 
+import static org.junit.Assert.*;
+
 /**
  * Unit tests for the EaDiagram class. Note that these tests rely on the model defined in the
  */
-public class EaDiagramTest extends AbtractEaTestCase {
+public class EaDiagramTest extends AbstractEaTestCase {
     private static final transient Logger log = LoggerFactory.getLogger(EaDiagramTest.class);
 
     public void testFindDiagramsInPackage() throws Exception {
-        Package rootPkg = eaRepo.getRootPackage();
+        final Package rootPkg = eaRepo.getRootPackage();
         assertNotNull(rootPkg);
-        Package thePkg = eaRepo.findPackageByName("Domain Model", rootPkg, EaRepo.RECURSIVE);
+        final Package thePkg = eaRepo.findPackageByName("Domain Model", rootPkg, EaRepo.RECURSIVE);
         assertNotNull(thePkg);
 
-        List<EaDiagram> diagrams = eaRepo.findDiagramsInPackage(thePkg);
+        final List<EaDiagram> diagrams = eaRepo.findDiagramsInPackage(thePkg);
         assertNotNull(diagrams);
     }
 
     public void testLogicalPathName() throws Exception {
-        EaDiagram diagram = eaRepo.findDiagram("Domain Model");
+        final EaDiagram diagram = eaRepo.findDiagram("Domain Model");
         assertNotNull(diagram);
-        String filename = diagram.getPathname();
+        final String filename = diagram.getPathname();
         assertEquals("\\Model\\Domain Model", filename);
     }
 
@@ -36,29 +38,29 @@ public class EaDiagramTest extends AbtractEaTestCase {
         //EaDiagram diagram = EaDiagram.findDiagram(eaRepo, "Domain Model");
         String diagramName = EaApplicationProperties.EA_DIAGRAM_TO_GENERATE.value();
         if (diagramName.equals("")) diagramName = "Domain Model";
-        EaDiagram diagram = eaRepo.findDiagram(diagramName);
+        final EaDiagram diagram = eaRepo.findDiagram(diagramName);
         if (diagram != null) {
-            boolean didCreate = diagram.writeImageToFile(false);
-            assertTrue(didCreate);
+            final String diagramUrl = diagram.writeImageToFile(false);
+            assertTrue(! diagramUrl.isEmpty());
         } else {
             fail();
         }
     }
 
     public void testGenerateAllDiagramsInPackage() throws Exception {
-        Package pkg = eaRepo.findPackageByName("Klasser", EaRepo.RECURSIVE);
+        final Package pkg = eaRepo.findPackageByName("Klasser", EaRepo.RECURSIVE);
 
-        for (ImageFileFormat imageFileFormat : ImageFileFormat.values()) {
-            List<EaDiagram> diagrams = eaRepo.findDiagramsInPackage(pkg);
-            for (EaDiagram d : diagrams) {
-                boolean didCreate = d.writeImageToFile(imageFileFormat, false);
-                assertTrue(didCreate);
+        for (final ImageFileFormat imageFileFormat : ImageFileFormat.values()) {
+            final List<EaDiagram> diagrams = eaRepo.findDiagramsInPackage(pkg);
+            for (final EaDiagram d : diagrams) {
+                final String diagramUrl = d.writeImageToFile(imageFileFormat, false);
+                assertTrue(! diagramUrl.isEmpty());
             }
         }
     }
 
     public void testGenerateAllDiagramsInProject() throws Exception {
-        int count = eaRepo.generateAllDiagramsFromRoot();
+        final int count = eaRepo.generateAllDiagramsFromRoot();
         log.debug("Generated " + count + " diagrams");
         assertTrue(count > 0);
     }

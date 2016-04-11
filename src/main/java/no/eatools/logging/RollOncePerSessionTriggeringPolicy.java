@@ -9,7 +9,7 @@ import java.io.File;
 import ch.qos.logback.core.rolling.TriggeringPolicyBase;
 
 public class RollOncePerSessionTriggeringPolicy<E> extends TriggeringPolicyBase<E> {
-    private static boolean doRolling = true;
+    private boolean doRolling = true;
 
     @Override
     public boolean isTriggeringEvent(final File activeFile, final E event) {
