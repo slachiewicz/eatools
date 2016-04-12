@@ -1024,7 +1024,7 @@ public class EaRepo {
                                                        false);
 
         LOG.info("Applied autolayout to {} [{}] result {} with options [{}], iterations {} layerSpacing {} columnSpacing {}",
-                 eaDiagram.getName(), guid, result, String.format("%x", iterations), layerSpacing, columnSpacing);
+                 eaDiagram.getName(), guid, result, String.format("%08X", options), iterations, layerSpacing, columnSpacing);
         return result;
     }
 }
