@@ -3,6 +3,9 @@ package no.eatools.diagramgen;
 import no.bouvet.ohs.jops.Camel;
 import no.bouvet.ohs.jops.Enums;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * The set of EA Meta types (should correspond to UML meta types).
  *
@@ -11,29 +14,32 @@ import no.bouvet.ohs.jops.Enums;
  * @since 23.okt.2008 14:12:40
  */
 public enum EaMetaType {
-    NULL,
+    ACTOR,
+    ASSOCIATION,
     CLASS,
     COMPONENT,
-    NODE,
-    OBJECT,
-    TAGGED_VALUE,
-    PACKAGE,
-    RELATIONSHIP,
-    ASSOCIATION,
-    DEPENDENCY,
-    GENERALIZATION,
-    REALIZATION,
-    LINK,
-    DIAGRAM,
-    INTERFACE,
-    NOTE,
-    TEXT,
-    ACTOR,
     DATA_STORE,
+    DEPENDENCY,
+    DIAGRAM,
+    GENERALIZATION,
+    INTERFACE,
+    LINK,
+    NODE,
+    NOTE,
+    OBJECT,
+    PACKAGE,
+    PROCESS,
+    PROVIDED_INTERFACE,
     QUEUE,
-    PROVIDED_INTERFACE;
+    REALIZATION,
+    RELATIONSHIP,
+    TAGGED_VALUE,
+    TEXT,
+    NULL;
     // etc.
     // todo complete the set
+
+    private static final transient Logger LOG = LoggerFactory.getLogger(EaMetaType.class);
 
 
     /**
@@ -43,6 +49,7 @@ public enum EaMetaType {
      * @return never null
      */
     public static EaMetaType fromString(final String metaType) {
+        LOG.debug("Looking up metatype for [{}]", metaType);
         return Enums.valueOf(EaMetaType.class, Camel.toConstantString(metaType), NULL);
     }
 

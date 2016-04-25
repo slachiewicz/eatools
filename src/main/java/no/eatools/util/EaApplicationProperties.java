@@ -107,6 +107,9 @@ public enum EaApplicationProperties implements EnumProperty {
     @Description(text = "See http://www.sparxsystems.com/enterprise_architect_user_guide/9.3/automation/project_2.html", defaultValue = "20")
     EA_AUTO_DIAGRAM_COLUMN_SPACING(),
 
+    @Description(text = "Size of the interface (Lollipop) symbol on auto diagrams (px)", defaultValue = "100")
+    EA_AUTO_DIAGRAM_INTERFACE_SIZE(),
+
     @Description(text = "How to name diagram paths")
     EA_DIAGRAM_NAME_MODE() {
         @Override

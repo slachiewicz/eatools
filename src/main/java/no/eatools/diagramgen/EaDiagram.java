@@ -2,6 +2,8 @@ package no.eatools.diagramgen;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import no.bouvet.ohs.futil.ImageFileFormat;
 import no.bouvet.ohs.futil.ImageMetadata;
@@ -36,6 +38,7 @@ public class EaDiagram {
     private final String logicalPathname;
     private final int diagramID;
     private final DiagramNameMode diagramNameMode;
+    private final Map<Integer, EaElement> diagramElements = new HashMap<>();
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
@@ -115,6 +118,10 @@ public class EaDiagram {
     }
 
     public String writeImageToFile(final ImageFileFormat imageFileFormat, final boolean urlForFileOnly) {
+        if(eaDiagram == null) {
+            LOG.info("No diagram to generate");
+            return "";
+        }
         // make sure the directory exists
         final String diagramGUID = eaDiagram.GetDiagramGUID();
 
@@ -196,7 +203,7 @@ public class EaDiagram {
         diagramObjects.Refresh();
     }
 
-    public void add(final EaElement element) {
+    public DiagramObject add(final EaElement element) {
         final Collection<DiagramObject> diagramObjects = eaDiagram.GetDiagramObjects();
         final DiagramObject diagramObject = diagramObjects
                 .AddNew(element.getName(), element.getMetaType().toString());
@@ -205,6 +212,9 @@ public class EaDiagram {
         eaDiagram.Update();
         diagramObjects.Refresh();
         LOG.info("Added ({}, {} {}) [{}] to diagram {}", element.getMetaType(), element.getType(), element.getEaMetaType(),  element.getName(), getName());
+
+        diagramElements.put(diagramObject.GetInstanceID(), element);
+        return diagramObject;
     }
 
     public void setParentId(final int id) {
@@ -214,6 +224,27 @@ public class EaDiagram {
 
     public void hideDetails() {
         eaDiagram.SetShowDetails(0);
+        eaDiagram.Update();
+    }
+
+    public void adjustElementAppearances() {
+        final Collection<DiagramObject> diagramObjects = eaDiagram.GetDiagramObjects();
+        diagramObjects.Refresh();
+        for (final DiagramObject diagramObject : diagramObjects) {
+            final EaElement eaElement = diagramElements.get(diagramObject.GetInstanceID());
+            if (eaElement.getMetaType() == EaMetaType.INTERFACE) {
+                final String oldStyle = diagramObject.GetStyle();
+                final String newStyle = "Lollipop=1;" + oldStyle.replaceAll("Lollipop=.;", "");
+                diagramObject.SetStyle(newStyle);
+                final int left = diagramObject.GetLeft();
+                final int top = diagramObject.GetTop();
+                LOG.info("Style [{}] Left {} Top {}", oldStyle, left, top);
+                diagramObject.SetRight(left + EA_AUTO_DIAGRAM_INTERFACE_SIZE.toInt());
+                diagramObject.SetBottom(top - EA_AUTO_DIAGRAM_INTERFACE_SIZE.toInt());
+                diagramObject.Update();
+            }
+            diagramObjects.Refresh();
+        }
         eaDiagram.Update();
     }
 }

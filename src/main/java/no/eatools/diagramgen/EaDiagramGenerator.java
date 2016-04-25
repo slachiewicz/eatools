@@ -235,7 +235,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
 
     private void createElementFile() {
         final EaPackage eaPackage = new EaPackage(elementCreationPackage, eaRepo);
-        eaPackage.generateAttributesFile();
+        eaPackage.generateDDEntryFile();
     }
 
     private void createAutoDiagrams() {
@@ -247,7 +247,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         final EaDiagram eaDiagram = EaDiagram.findEaDiagram(eaRepo, diagram);
         if (eaDiagram != null) {
             final String diagramUrl = eaDiagram.writeImageToFile(urlForFileOnly);
-            LOG.info("Diagram created {}",diagramUrl);
+            LOG.info("Diagram created {}", defaultIfBlank(diagramUrl, "-- No diagram --"));
         } else {
             LOG.info("diagram '{}' not found", diagram);
         }

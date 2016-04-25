@@ -990,9 +990,10 @@ public class EaRepo {
 
         eaDiagram.add(centralElement);
 
+        List<DiagramObject> diagramObjects = new ArrayList<>();
         for (final EaElement eaElement : centralElement.findConnectedElements()) {
             if (eaElement.getMetaType() != EaMetaType.NOTE) {
-                eaDiagram.add(eaElement);
+                diagramObjects.add(eaDiagram.add(eaElement));
             }
         }
 
@@ -1010,6 +1011,10 @@ public class EaRepo {
                                 EA_AUTO_DIAGRAM_COLUMN_SPACING.toInt());
 
         repository.SaveAllDiagrams();
+
+        eaDiagram.adjustElementAppearances();
+
+        repository.SaveAllDiagrams();
         return eaDiagram;
     }
 
@@ -1023,8 +1028,8 @@ public class EaRepo {
                                                        columnSpacing,
                                                        false);
 
-        LOG.info("Applied autolayout to {} [{}] result {} with options [{}], iterations {} layerSpacing {} columnSpacing {}",
-                 eaDiagram.getName(), guid, result, String.format("%08X", options), iterations, layerSpacing, columnSpacing);
+        LOG.info("Applied autolayout to [{}] [{}] result: [{}]. Ran with options [{}], iterations {} layerSpacing {} columnSpacing {}",
+                 eaDiagram.getName(), guid, result, String.format("%#010x", options), iterations, layerSpacing, columnSpacing);
         return result;
     }
 }
