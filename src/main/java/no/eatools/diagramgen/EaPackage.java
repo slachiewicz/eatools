@@ -3,6 +3,7 @@ package no.eatools.diagramgen;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -27,6 +28,7 @@ import org.sparx.TaggedValue;
 
 import static java.util.Collections.*;
 import static no.bouvet.ohs.ea.dd.DDType.*;
+import static no.eatools.diagramgen.EaMetaType.*;
 import static org.apache.commons.lang3.StringUtils.*;
 
 /**
@@ -74,10 +76,10 @@ public class EaPackage {
         generateRelationships(me);
     }
 
-    public void generateAttributesFile() {
+    public void generateDDEntryFile() {
         final DDEntryList attributes = new DDEntryList();
         generateAttributesInPackage(this.me, attributes);
-        attributes.writeToFile(name);
+        attributes.writeToFile(name, true);
     }
 
     private void generateAttributesInPackage(final Package pkg, final DDEntryList attributes) {
@@ -86,25 +88,37 @@ public class EaPackage {
         for (final Package aPackage : pkg.GetPackages()) {
             generateAttributesInPackage(aPackage, attributes);
         }
-        for (final Element element : pkg.GetElements()) {
-            final EaElement eaElement = new EaElement(element, repos);
-            final String msg = "Processing " + eaElement.toString();
-            LOG.info(msg);
-            System.out.println(msg);
-            final DDEntry elementLine = createElementLine(eaElement);
-            attributes.add(elementLine);
-            for (final Attribute attribute : eaElement.getAttributes()) {
-                attributes.add(createAttributeLine(eaElement, attribute));
+        final Collection<Element> elements = pkg.GetElements();
+        generateAttributesForElements(attributes, elements);
+    }
+
+    private void generateAttributesForElements(DDEntryList attributes, Collection<Element> elements) {
+        for (final Element element : elements) {
+            generateAttributesForElements(attributes, element.GetElements());
+            // Skip instances
+            if(isBlank(element.GetClassifierType())) {
+                final EaElement eaElement = new EaElement(element, repos);
+                final String msg = "Processing " + eaElement.toString();
+                LOG.info(msg);
+                System.out.println(msg);
+                final DDEntry elementLine = createElementAutoDiagramAndLine(eaElement);
+                attributes.add(elementLine);
+                for (final Attribute attribute : eaElement.getAttributes()) {
+                    attributes.add(createAttributeLine(eaElement, attribute));
+                }
             }
         }
     }
 
-    private DDEntry createElementLine(final EaElement eaElement) {
+    private DDEntry createElementAutoDiagramAndLine(final EaElement eaElement) {
         final EaMetaType metaType = eaElement.getMetaType();
         final EaDiagram eaDiagram;
-        if(metaType == EaMetaType.COMPONENT || metaType == EaMetaType.INTERFACE) {
+        final List<EaMetaType> metaTypesThatHasDiagrams = Arrays.asList(COMPONENT, INTERFACE, QUEUE, PROCESS, DATA_STORE);
+        if(metaTypesThatHasDiagrams
+                 .contains(metaType)) {
             eaDiagram = repos.createOrUpdateStandardDiagram(eaElement);
         } else {
+            LOG.warn("No diagram is generated for [{}] of metaType [{}]. Has to be one of [{}]", eaElement.getName(), metaType, metaTypesThatHasDiagrams);
             eaDiagram = new EaDiagram(repos, null, "");
         }
 
@@ -212,7 +226,7 @@ public class EaPackage {
 
     private void connectPackages(final Package pkg, final EaElement element, final Connector connector) {
         final EaElement other = element.findConnectedElement(connector);
-        final String packageConnectorType = EaMetaType.DEPENDENCY.toString();
+        final String packageConnectorType = DEPENDENCY.toString();
         final String connType = connector.GetType();
         LOG.debug("ConnType : " + connType);
 
