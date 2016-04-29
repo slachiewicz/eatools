@@ -7,7 +7,6 @@ import no.eatools.util.EaApplicationProperties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sparx.Package;
 
 import static org.junit.Assert.*;
 
@@ -18,9 +17,9 @@ public class EaDiagramTest extends AbstractEaTestCase {
     private static final transient Logger log = LoggerFactory.getLogger(EaDiagramTest.class);
 
     public void testFindDiagramsInPackage() throws Exception {
-        final Package rootPkg = eaRepo.getRootPackage();
+        final EaPackage rootPkg = eaRepo.getRootPackage();
         assertNotNull(rootPkg);
-        final Package thePkg = eaRepo.findPackageByName("Domain Model", rootPkg, EaRepo.RECURSIVE);
+        final EaPackage thePkg = eaRepo.findPackageByName("Domain Model", rootPkg, EaRepo.RECURSIVE);
         assertNotNull(thePkg);
 
         final List<EaDiagram> diagrams = eaRepo.findDiagramsInPackage(thePkg);
@@ -28,7 +27,7 @@ public class EaDiagramTest extends AbstractEaTestCase {
     }
 
     public void testLogicalPathName() throws Exception {
-        final EaDiagram diagram = eaRepo.findDiagram("Domain Model");
+        final EaDiagram diagram = eaRepo.findDiagramByName("Domain Model");
         assertNotNull(diagram);
         final String filename = diagram.getPathname();
         assertEquals("\\Model\\Domain Model", filename);
@@ -38,7 +37,7 @@ public class EaDiagramTest extends AbstractEaTestCase {
         //EaDiagram diagram = EaDiagram.findDiagram(eaRepo, "Domain Model");
         String diagramName = EaApplicationProperties.EA_DIAGRAM_TO_GENERATE.value();
         if (diagramName.equals("")) diagramName = "Domain Model";
-        final EaDiagram diagram = eaRepo.findDiagram(diagramName);
+        final EaDiagram diagram = eaRepo.findDiagramByName(diagramName);
         if (diagram != null) {
             final String diagramUrl = diagram.writeImageToFile(false);
             assertTrue(! diagramUrl.isEmpty());
@@ -48,7 +47,7 @@ public class EaDiagramTest extends AbstractEaTestCase {
     }
 
     public void testGenerateAllDiagramsInPackage() throws Exception {
-        final Package pkg = eaRepo.findPackageByName("Klasser", EaRepo.RECURSIVE);
+        final EaPackage pkg = eaRepo.findPackageByName("Klasser", EaRepo.RECURSIVE);
 
         for (final ImageFileFormat imageFileFormat : ImageFileFormat.values()) {
             final List<EaDiagram> diagrams = eaRepo.findDiagramsInPackage(pkg);

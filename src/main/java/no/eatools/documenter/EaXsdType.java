@@ -22,7 +22,7 @@ public class EaXsdType {
     }
 
     public void setNewDocumentation(final String s) {
-        final Element xsdType = eaRepo.findXsdType(eaRepo.getRootPackage(), "ComplexType1");
+        final Element xsdType = eaRepo.findXsdType(eaRepo.getRootPackage().unwrap(), "ComplexType1");
 
         final ObjectGraph objectGraph = new ObjectGraph();
         LOG.debug(objectGraph.createDotGraph(xsdType));

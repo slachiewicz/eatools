@@ -68,6 +68,9 @@ public enum EaApplicationProperties implements EnumProperty {
     @Description(text = "Only include packages which matches given regexp")
     EA_PACKAGE_FILTER(),
 
+    @Description(text = "Only include elements which matches given regexp")
+    EA_ELEMENT_FILTER(),
+
     @Description(text = "Top level package for commands that require a starting package")
     EA_TOP_LEVEL_PACKAGE("Must be set"),
 
@@ -95,6 +98,9 @@ public enum EaApplicationProperties implements EnumProperty {
     @Description(text = "Depth of diagram hierarchy")
     EA_DIAGRAM_NAME_LEVEL(),
 
+    @Description(text = "Set to 'true' if AUTO diagrams for exported entities shall be generated", defaultValue = "false")
+    EA_AUTO_DIAGRAM_GENERATE(),
+
     @Description(text = "Or together the desired flags, See http://www.sparxsystems.com/enterprise_architect_user_guide/9.3/automation/project_2.html", defaultValue = "0xFFFFFFFF")
     EA_AUTO_DIAGRAM_OPTIONS(),
 
@@ -109,6 +115,9 @@ public enum EaApplicationProperties implements EnumProperty {
 
     @Description(text = "Size of the interface (Lollipop) symbol on auto diagrams (px)", defaultValue = "100")
     EA_AUTO_DIAGRAM_INTERFACE_SIZE(),
+
+    @Description(text = "Name of a Json file that contains elements to exclude from export", defaultValue = "")
+    EA_EXCLUDE_FILE(),
 
     @Description(text = "How to name diagram paths")
     EA_DIAGRAM_NAME_MODE() {
@@ -127,6 +136,7 @@ public enum EaApplicationProperties implements EnumProperty {
             return (DiagramNameMode) valueAs(DiagramNameMode.class);
         }
     };
+
 
 
     private static final transient Logger log = LoggerFactory.getLogger(EaApplicationProperties.class);

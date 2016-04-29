@@ -35,6 +35,7 @@ public enum EaMetaType {
     RELATIONSHIP,
     TAGGED_VALUE,
     TEXT,
+    SEQUENCE,
     NULL;
     // etc.
     // todo complete the set
@@ -43,7 +44,7 @@ public enum EaMetaType {
 
 
     /**
-     * Simple factory for getting safe EAmetType.
+     * Simple factory for getting safe EaMetaType.
      *
      * @param metaType
      * @return never null

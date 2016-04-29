@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import no.bouvet.ohs.ea.dd.DDEntry;
 import no.bouvet.ohs.ea.dd.DDEntryList;
+import no.eatools.util.EaApplicationProperties;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -42,25 +43,36 @@ public class EaPackage {
     final Package me;
     final Map<Connector, String> connectorMap = new HashMap<>();
     final Set<String> allConnectors = new HashSet<>();
-    EaPackage parent;
-    int id;
+    final EaPackage parent;
+    final int id;
+    private final List<EaMetaType> metaTypesThatHasDiagrams = Arrays.asList(COMPONENT, INTERFACE, QUEUE, PROCESS, DATA_STORE);
+    private final int parentId;
 
     public EaPackage(final String name, final EaRepo repos) {
-        this.name = name;
+        this.name = trimToEmpty(name);
         this.repos = repos;
-        this.me = repos.findPackageByName(name, true);
-        if (me == null) {
+        final EaPackage cachedPkg = repos.findPackageByName(name, true);
+        if (cachedPkg == null) {
             LOG.error("Package [{}] not found", name);
+            me = null;
+            id = 0;
+            parentId = 0;
         } else {
+            this.me = cachedPkg
+                    .unwrap();
             id = me.GetPackageID();
+            parentId = me.GetParentID();
         }
+        parent = null;
     }
 
-    public EaPackage(final Package pkg, final EaRepo repos) {
+    public EaPackage(final Package pkg, final EaRepo repos, final EaPackage parent) {
         this.repos = repos;
         me = pkg;
-        name = pkg.GetName();
+        this.parent = parent;
+        name = trimToEmpty(pkg.GetName());
         id = pkg.GetPackageID();
+        parentId = parent != null ? parent.getId() : 0;
 //        me.GetDiagrams().AddNew()
     }
 
@@ -77,26 +89,26 @@ public class EaPackage {
     }
 
     public void generateDDEntryFile() {
-        final DDEntryList attributes = new DDEntryList();
-        generateAttributesInPackage(this.me, attributes);
+        final DDEntryList attributes = new DDEntryList(true, name);
+        generateAttributesInPackage(this, attributes);
         attributes.writeToFile(name, true);
     }
 
-    private void generateAttributesInPackage(final Package pkg, final DDEntryList attributes) {
-        System.out.println("Exporting Attributes in package " + pkg.GetName() + " id:" + pkg.GetPackageID());
+    private void generateAttributesInPackage(final EaPackage pkg, final DDEntryList attributes) {
+        System.out.println("Exporting Attributes in package " + pkg.getName() + " id:" + pkg.getId());
 
-        for (final Package aPackage : pkg.GetPackages()) {
-            generateAttributesInPackage(aPackage, attributes);
+        for (EaPackage eaPackage : repos.findPackages(pkg)) {
+            generateAttributesInPackage(eaPackage, attributes);
         }
-        final Collection<Element> elements = pkg.GetElements();
+        final Collection<Element> elements = pkg.unwrap().GetElements();
         generateAttributesForElements(attributes, elements);
     }
 
-    private void generateAttributesForElements(DDEntryList attributes, Collection<Element> elements) {
+    private void generateAttributesForElements(final DDEntryList attributes, final Collection<Element> elements) {
         for (final Element element : elements) {
             generateAttributesForElements(attributes, element.GetElements());
             // Skip instances
-            if(isBlank(element.GetClassifierType())) {
+            if (repos.doGenerate(element)) {
                 final EaElement eaElement = new EaElement(element, repos);
                 final String msg = "Processing " + eaElement.toString();
                 LOG.info(msg);
@@ -113,26 +125,35 @@ public class EaPackage {
     private DDEntry createElementAutoDiagramAndLine(final EaElement eaElement) {
         final EaMetaType metaType = eaElement.getMetaType();
         final EaDiagram eaDiagram;
-        final List<EaMetaType> metaTypesThatHasDiagrams = Arrays.asList(COMPONENT, INTERFACE, QUEUE, PROCESS, DATA_STORE);
-        if(metaTypesThatHasDiagrams
-                 .contains(metaType)) {
-            eaDiagram = repos.createOrUpdateStandardDiagram(eaElement);
+        final String imageUrl;
+        if(EaApplicationProperties.EA_AUTO_DIAGRAM_GENERATE.toBoolean()) {
+            if (metaTypesThatHasDiagrams.contains(metaType)) {
+                eaDiagram = repos.createOrUpdateStandardDiagram(eaElement);
+            } else {
+                LOG.warn("No diagram is generated for [{}] of metaType [{}]. Has to be one of {}", eaElement.getName(), metaType,
+                         metaTypesThatHasDiagrams);
+
+
+                eaDiagram = eaElement.findDiagram(EaDiagram.createStandardDiagramName(eaElement));
+            }
+            imageUrl = eaDiagram != null ? eaDiagram.writeImageToFile(true) : EMPTY;
         } else {
-            LOG.warn("No diagram is generated for [{}] of metaType [{}]. Has to be one of [{}]", eaElement.getName(), metaType, metaTypesThatHasDiagrams);
-            eaDiagram = new EaDiagram(repos, null, "");
+            imageUrl = EMPTY;
         }
 
         final String description = eaElement.getNotes();//.replaceAll("\n", "\\\\n").replaceAll("\r", "");
 
         final List<String> parents = eaElement.findParents()
-                                            .stream()
-                                            .map(e -> e.getPackageName() + UML_PACKAGE_DELIMITER + e.getName())
-                                            .collect(Collectors.toList());
+                                              .stream()
+                                              .map(e -> e.getPackageName() + UML_PACKAGE_DELIMITER + e.getName())
+                                              .collect(Collectors.toList());
         final DDEntry ddEntry =
                 new DDEntry(eaElement.getName(), description, null,
-                            eaElement.getType(), eaElement.getStereotypeEx(), eaElement.getElementGUID(), eaElement.getVersion(), booleanToYesNo(false),
+                            eaElement.getType()
+                                     .toString(), eaElement.getStereotypeEx(), eaElement.getElementGUID(), eaElement.getVersion(), booleanToYesNo
+                                    (false),
                             eaElement.getClassifierType(),
-                            ELEMENT, parents, eaElement.getAuthor(), eaDiagram.writeImageToFile(true));
+                            ELEMENT, parents, eaElement.getAuthor(), imageUrl);
 
         for (final TaggedValue attributeTag : eaElement.getTaggedValuesEx()) {
             ddEntry.addTaggedValue(attributeTag.GetName(), attributeTag.GetValue());
@@ -456,4 +477,32 @@ public class EaPackage {
      }
      **/
 
+    public String getName() {
+        return name;
+    }
+
+    public EaPackage getParent() {
+        return parent;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public Package unwrap() {
+        return me;
+    }
+
+    public int getParentId() {
+        return parentId;
+    }
+
+    @Override
+    public String toString() {
+        return "EaPackage{" +
+                "name='" + name + '\'' +
+                ", id=" + id +
+                ", parentId=" + parentId +
+                '}';
+    }
 }
