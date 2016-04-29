@@ -2,6 +2,7 @@ package no.eatools.diagramgen;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import no.bouvet.ohs.args4j.CliApp;
@@ -129,7 +130,10 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
                           .forEach(System.out::println);
             return;
         }
-        LOG.info("Using properties" + listAllProperties());
+        final List<String> allProperties = Arrays.asList(listAllProperties().toString().split(","));
+        allProperties.sort(String::compareTo);
+
+        LOG.info("Using properties" + allProperties.toString().replaceAll(",", "\n"));
         if (isNotBlank(nodePath)) {
             final String urlForNode = nodePathToUrl(nodePath);
             EaDiagram.updateDiagramUrlFile(urlForNode);
@@ -234,12 +238,12 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     }
 
     private void createElementFile() {
-        final EaPackage eaPackage = new EaPackage(elementCreationPackage, eaRepo);
+        final EaPackage eaPackage = eaRepo.populatePackageCache(elementCreationPackage);
         eaPackage.generateDDEntryFile();
     }
 
     private void createAutoDiagrams() {
-        final EaPackage eaPackage = new EaPackage(eaRepo.findPackageByName(packageForAutoDiagrams, true), eaRepo);
+        final EaPackage eaPackage = eaRepo.populatePackageCache(packageForAutoDiagrams);
         eaPackage.generateAutoDiagrams();
     }
 

@@ -58,7 +58,7 @@ public class EaDiagram {
             final int diagramId = Integer.parseInt(diagramName);
             diagram = eaRepo.findDiagramById(diagramId);
         } else {
-            diagram = eaRepo.findDiagram(diagramName);
+            diagram = eaRepo.findDiagramByName(diagramName);
         }
         if(diagram != null) {
             final String msg = "Found diagram :" + diagram.getPathname() + ":" + diagram.getName() + " " + diagram.getGuid();
@@ -211,7 +211,7 @@ public class EaDiagram {
         diagramObject.Update();
         eaDiagram.Update();
         diagramObjects.Refresh();
-        LOG.info("Added ({}, {} {}) [{}] to diagram {}", element.getMetaType(), element.getType(), element.getEaMetaType(),  element.getName(), getName());
+        LOG.info("Added ({}, {}, {}) [{}] to diagram {}", element.getMetaType(), element.getType(), element.getEaMetaType(),  element.getName(), getName());
 
         diagramElements.put(diagramObject.GetInstanceID(), element);
         return diagramObject;
@@ -245,6 +245,10 @@ public class EaDiagram {
             }
             diagramObjects.Refresh();
         }
+        eaDiagram.Update();
+    }
+
+    public void update() {
         eaDiagram.Update();
     }
 }
