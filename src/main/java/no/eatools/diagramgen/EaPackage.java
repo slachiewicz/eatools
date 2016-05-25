@@ -45,7 +45,7 @@ public class EaPackage {
     final Set<String> allConnectors = new HashSet<>();
     final EaPackage parent;
     final int id;
-    private final List<EaMetaType> metaTypesThatHasDiagrams = Arrays.asList(COMPONENT, INTERFACE, QUEUE, PROCESS, DATA_STORE);
+    private final List<EaMetaType> metaTypesThatHasDiagrams = Arrays.asList(COMPONENT, INTERFACE, QUEUE, PROCESS, DATA_STORE, WEB_PAGE, CLIENT_PAGE);
     private final int parentId;
 
     public EaPackage(final String name, final EaRepo repos) {
@@ -97,7 +97,7 @@ public class EaPackage {
     private void generateAttributesInPackage(final EaPackage pkg, final DDEntryList attributes) {
         System.out.println("Exporting Attributes in package " + pkg.getName() + " id:" + pkg.getId());
 
-        for (EaPackage eaPackage : repos.findPackages(pkg)) {
+        for (final EaPackage eaPackage : repos.findPackages(pkg)) {
             generateAttributesInPackage(eaPackage, attributes);
         }
         final Collection<Element> elements = pkg.unwrap().GetElements();
@@ -108,8 +108,8 @@ public class EaPackage {
         for (final Element element : elements) {
             generateAttributesForElements(attributes, element.GetElements());
             // Skip instances
-            if (repos.doGenerate(element)) {
-                final EaElement eaElement = new EaElement(element, repos);
+            final EaElement eaElement = new EaElement(element, repos);
+            if (repos.doGenerate(eaElement)) {
                 final String msg = "Processing " + eaElement.toString();
                 LOG.info(msg);
                 System.out.println(msg);
@@ -140,7 +140,7 @@ public class EaPackage {
         } else {
             imageUrl = EMPTY;
         }
-
+        eaElement.setImageUrl(imageUrl);
         final String description = eaElement.getNotes();//.replaceAll("\n", "\\\\n").replaceAll("\r", "");
 
         final List<String> parents = eaElement.findParents()
@@ -504,5 +504,26 @@ public class EaPackage {
                 ", id=" + id +
                 ", parentId=" + parentId +
                 '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        final EaPackage eaPackage = (EaPackage) o;
+
+        if (id != eaPackage.id) return false;
+        if (parentId != eaPackage.parentId) return false;
+        return name.equals(eaPackage.name);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + id;
+        result = 31 * result + parentId;
+        return result;
     }
 }

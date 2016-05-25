@@ -3,6 +3,7 @@ package no.eatools.diagramgen;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sparx.Attribute;
@@ -20,6 +21,7 @@ import static no.eatools.diagramgen.EaType.*;
  */
 public class EaElement {
     private static final transient Logger LOG = LoggerFactory.getLogger(EaElement.class);
+    public static final String IMAGE_URL_TAG = "imageUrl";
     private final Element theElement;
     final EaRepo repos;
     final EaMetaType eaMetaType;
@@ -49,7 +51,7 @@ public class EaElement {
 
     public String getName() {
         final EaType type = getType();
-        if(type == Note || type == Text) {
+        if (type == Note || type == Text) {
             return theElement.GetNotes();
         }
         return theElement.GetName();
@@ -80,7 +82,8 @@ public class EaElement {
     }
 
     public String getPackageName() {
-        return repos.findPackageByID(getPackageID()).GetName();
+        return repos.findPackageByID(getPackageID())
+                    .GetName();
     }
 
     public Collection<Connector> getConnectors() {
@@ -115,84 +118,84 @@ public class EaElement {
     }
 
     /**
-                                                Action
-     Action                                     ActionPin
-     ActionPin                                  Activity
-     Activity                                   ActivityParameter
-     ActivityPartition                          ActivityPartition
-     Actor                                      ActivityRegion
-     Artifact                                   Actor
-     Boundary                                   Artifact
-     Class                                      Association
-     Collaboration                              Boundary
-     Component                                  CentralBufferNode
-     Constraint                                 Change
-     DataType                                   Class
-     Decision                                   Collaboration
-     Device                                     CollaborationOccurrence
-     Entity                                     Comment
-     Enumeration                                Component
-     Event                                      ConditionalNode
-     ExecutionEnvironment                       Constraint
-     Interaction                                DataStore
-     InteractionFragment                        DataType
-     InteractionOccurrence                      Decision
-     Interface                                  DeploymentSpecification
-     Issue                                      Device
-     LoopNode                                   DiagramFrame
-     MessageEndpoint                            Entity
-     Node                                       EntryPoint
-     Note                                       Enumeration
-     Object                                     Event
-     ObjectNode                                 ExceptionHandler
-     Package                                    ExecutionEnvironment
-     Port                                       ExitPoint
-     PrimitiveType                              ExpansionNode
-     ProvidedInterface                          ExpansionRegion
-     RequiredInterface                          Feature
-     Requirement                                GUIElement
-     Sequence                                   InformationItem
-     State                                      Interaction
-     StateNode                                  InteractionFragment
-     StructuredActivityNode                     InteractionOccurrence
-     Synchronization                            InteractionState
-     Text                                       Interface
-     TimeLine                                   InterruptibleActivityRegion
-     Trigger                                    Issue
-     UMLDiagram                                 Label
-     UseCase                                    LoopNode
-                                                MergeNode
-                                                MessageEndpoint
-                                                Node
-                                                Note
-                                                Object
-                                                ObjectNode
-                                                Package
-                                                Parameter
-                                                Part
-                                                Port
-                                                PrimitiveType
-                                                ProtocolStateMachine
-                                                ProvidedInterface
-                                                Region
-                                                Report
-                                                RequiredInterface
-                                                Requirement
-                                                Risk
-                                                Screen
-                                                Sequence
-                                                Signal
-                                                State
-                                                StateMachine
-                                                StateNode
-                                                Synchronization
-                                                Task
-                                                Text
-                                                TimeLine
-                                                Trigger
-                                                UMLDiagram
-                                                UseCase
-                                                User
+     * Action
+     * Action                                     ActionPin
+     * ActionPin                                  Activity
+     * Activity                                   ActivityParameter
+     * ActivityPartition                          ActivityPartition
+     * Actor                                      ActivityRegion
+     * Artifact                                   Actor
+     * Boundary                                   Artifact
+     * Class                                      Association
+     * Collaboration                              Boundary
+     * Component                                  CentralBufferNode
+     * Constraint                                 Change
+     * DataType                                   Class
+     * Decision                                   Collaboration
+     * Device                                     CollaborationOccurrence
+     * Entity                                     Comment
+     * Enumeration                                Component
+     * Event                                      ConditionalNode
+     * ExecutionEnvironment                       Constraint
+     * Interaction                                DataStore
+     * InteractionFragment                        DataType
+     * InteractionOccurrence                      Decision
+     * Interface                                  DeploymentSpecification
+     * Issue                                      Device
+     * LoopNode                                   DiagramFrame
+     * MessageEndpoint                            Entity
+     * Node                                       EntryPoint
+     * Note                                       Enumeration
+     * Object                                     Event
+     * ObjectNode                                 ExceptionHandler
+     * Package                                    ExecutionEnvironment
+     * Port                                       ExitPoint
+     * PrimitiveType                              ExpansionNode
+     * ProvidedInterface                          ExpansionRegion
+     * RequiredInterface                          Feature
+     * Requirement                                GUIElement
+     * Sequence                                   InformationItem
+     * State                                      Interaction
+     * StateNode                                  InteractionFragment
+     * StructuredActivityNode                     InteractionOccurrence
+     * Synchronization                            InteractionState
+     * Text                                       Interface
+     * TimeLine                                   InterruptibleActivityRegion
+     * Trigger                                    Issue
+     * UMLDiagram                                 Label
+     * UseCase                                    LoopNode
+     * MergeNode
+     * MessageEndpoint
+     * Node
+     * Note
+     * Object
+     * ObjectNode
+     * Package
+     * Parameter
+     * Part
+     * Port
+     * PrimitiveType
+     * ProtocolStateMachine
+     * ProvidedInterface
+     * Region
+     * Report
+     * RequiredInterface
+     * Requirement
+     * Risk
+     * Screen
+     * Sequence
+     * Signal
+     * State
+     * StateMachine
+     * StateNode
+     * Synchronization
+     * Task
+     * Text
+     * TimeLine
+     * Trigger
+     * UMLDiagram
+     * UseCase
+     * User
      *
      * @return
      */
@@ -232,7 +235,6 @@ public class EaElement {
     }
 
     /**
-     *
      * @return The EA MetaType transformed to internal enumeration, may differ from unfiltered type for esoteric types not yet discovered.
      */
     public EaMetaType getMetaType() {
@@ -245,7 +247,8 @@ public class EaElement {
 
     public EaDiagram findDiagram(final String diagramName) {
         for (final Diagram diagram : theElement.GetDiagrams()) {
-            if(diagram.GetName().equals(diagramName)) {
+            if (diagram.GetName()
+                       .equals(diagramName)) {
                 final EaDiagram eaDiagram = new EaDiagram(repos, diagram, repos.getPackagePath(repos.findPackageByID(theElement.GetPackageID())));
                 LOG.info("Found element diagram for {}: {}:{}", getName(), eaDiagram.getPathname(), eaDiagram.getName());
                 return eaDiagram;
@@ -255,10 +258,47 @@ public class EaElement {
     }
 
     /**
-     *
      * @return the unfiltered EA MetaType as a String
      */
     public String getEaMetaType() {
         return theElement.GetMetaType();
+    }
+
+    public void setImageUrl(final String imageUrl) {
+        if (StringUtils.isNotBlank(imageUrl)) {
+            updateImageTag(imageUrl);
+            updateTaggedValue(IMAGE_URL_TAG, imageUrl);
+            LOG.info("Added auto image url as tag [{}]", imageUrl);
+        }
+    }
+
+    private void updateTaggedValue(final String tageName, final String tagValue) {
+        final Collection<TaggedValue> taggedValues = theElement.GetTaggedValuesEx();
+        boolean hasOld = false;
+        for (final TaggedValue taggedValue : taggedValues) {
+            if(tageName.equalsIgnoreCase(taggedValue.GetName())) {
+                hasOld = true;
+                taggedValue.SetValue(tageName);
+                taggedValue.Update();
+                taggedValues.Refresh();
+                theElement.Refresh();
+                theElement.Update();
+            }
+        }
+        if(! hasOld) {
+            TaggedValue taggedValue = taggedValues.AddNew(tageName, tagValue);
+            taggedValue.Update();
+            taggedValues.Refresh();
+            theElement.Refresh();
+            theElement.Update();
+        }
+    }
+
+    private void updateImageTag(final String imageUrl) {
+        final String oldTag = StringUtils.trimToEmpty(theElement.GetTag()).replaceAll(IMAGE_URL_TAG + ".*\\.png", "");
+        final String newTag = StringUtils.trimToEmpty(oldTag) + " " + IMAGE_URL_TAG + "=" + imageUrl;
+        theElement.SetTag(newTag);
+        theElement.Refresh();
+        theElement.Update();
     }
 }

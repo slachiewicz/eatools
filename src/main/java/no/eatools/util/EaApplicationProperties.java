@@ -1,7 +1,5 @@
 package no.eatools.util;
 
-import java.io.File;
-
 import no.bouvet.ohs.jops.Description;
 import no.bouvet.ohs.jops.EnumProperty;
 import no.bouvet.ohs.jops.PropertyMap;
@@ -44,11 +42,6 @@ public enum EaApplicationProperties implements EnumProperty {
     @Description(text = "The directory root to place diagrams in when generating the diagrams.\nNB! Must be given as an absolute pathname or "
             + "relative to cwd.")
     EA_DOC_ROOT_DIR() {
-
-        public boolean isAbsolute() {
-            return new File(value()).isAbsolute();
-        }
-
         @Override
         public String value() {
             return FilenameUtils.normalize(appendIfMissing(super.value(), SystemPropertySet.FILE_SEPARATOR.value()));
@@ -70,6 +63,9 @@ public enum EaApplicationProperties implements EnumProperty {
 
     @Description(text = "Only include elements which matches given regexp")
     EA_ELEMENT_FILTER(),
+
+    @Description(text = "Only include elements has a stereotype mathcing given regexp")
+    EA_STEREOTYPE_FILTER(),
 
     @Description(text = "Top level package for commands that require a starting package")
     EA_TOP_LEVEL_PACKAGE("Must be set"),

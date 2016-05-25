@@ -68,6 +68,7 @@ public class EaRepo {
     private static final String xmlEncoding = "UTF-8";
     private final Project project;
     private final Pattern elementPattern;
+    private final Pattern stereotypeFilter;
     private File reposFile;
     private Repository repository = null;
     private boolean isOpen = false;
@@ -89,6 +90,7 @@ public class EaRepo {
         reposFile = repositoryFile;
         packagePattern = establishFilter(EA_PACKAGE_FILTER);
         elementPattern = establishFilter(EA_ELEMENT_FILTER);
+        stereotypeFilter = establishFilter(EA_STEREOTYPE_FILTER);
         establishExcludeMap();
         bannedElementTypes = EnumSet.of(Note, Sequence, Text);
         LOG.info("Types not included in auto-diagrams: {}", bannedElementTypes);
@@ -141,10 +143,11 @@ public class EaRepo {
 
     /**
      * Lazy init
+     *
      * @return
      */
     public EaPackage getRootPackage() {
-        if(rootPackage == null) {
+        if (rootPackage == null) {
             rootPackage = findRootPackage();
         }
         return rootPackage;
@@ -285,6 +288,20 @@ public class EaRepo {
             return new EaDiagram(this, diagram, packagePath);
         } catch (final Exception e) {
             LOG.error("Could not find diagram with id {} in repos {}", diagramId, this);
+            return null;
+        }
+    }
+
+    public EaDiagram findDiagramByGUID(final String diagramGuid) {
+        try {
+            final Diagram diagram = repository.GetDiagramByGuid(diagramGuid);
+            if (diagram == null) {
+                return null;
+            }
+            final String packagePath = getPackagePath(findPackageByID(diagram.GetPackageID()));
+            return new EaDiagram(this, diagram, packagePath);
+        } catch (final Exception e) {
+            LOG.error("Could not find diagram with guid {} in repos {}", diagramGuid, this);
             return null;
         }
     }
@@ -646,8 +663,8 @@ public class EaRepo {
         }
 
         if (!packageCache.isEmpty()) {
-            EaPackage result = packageCache.findPackageByName(rootPkg, theName, recursive);
-            if(result != null && packageMatch(result.unwrap())) {
+            final EaPackage result = packageCache.findPackageByName(rootPkg, theName, recursive);
+            if (result != null && packageMatch(result.unwrap())) {
                 return result;
             }
             return null;
@@ -887,7 +904,7 @@ public class EaRepo {
     }
 
     private void getAncestorPackages(final ArrayList<Package> ancestorPackages, final Package pkg) {
-        if(pkg == null) {
+        if (pkg == null) {
             return;
         }
         ancestorPackages.add(pkg);
@@ -946,7 +963,8 @@ public class EaRepo {
     public void generateHtml(final String path) {
         System.out.println("Generating HTML doc for package " + getRootPackage().getName() + " to " + path);
         repository.GetProjectInterface()
-                  .RunHTMLReport(getRootPackage().unwrap().GetPackageGUID(), path, "PNG", "<default>", ".html");
+                  .RunHTMLReport(getRootPackage().unwrap()
+                                                 .GetPackageGUID(), path, "PNG", "<default>", ".html");
     }
 
     /**
@@ -1013,6 +1031,7 @@ public class EaRepo {
      * @param object
      * @param name
      * @param value
+     *
      */
     public void setAttributeValue(final Element object, final String name, final String value) {
         ensureRepoIsOpen();
@@ -1062,11 +1081,11 @@ public class EaRepo {
 
         final Project project = getProject();
         // todo, find out which one actually does the job:
-        final boolean layoutResult = doLayout(finalDiagram, project.GUIDtoXML(finalDiagram.getGuid()),
-                                              EA_AUTO_DIAGRAM_OPTIONS.toInt(),
-                                              EA_AUTO_DIAGRAM_ITERATIONS.toInt(),
-                                              EA_AUTO_DIAGRAM_LAYER_SPACING.toInt(),
-                                              EA_AUTO_DIAGRAM_COLUMN_SPACING.toInt());
+        doLayout(finalDiagram, project.GUIDtoXML(finalDiagram.getGuid()),
+                 EA_AUTO_DIAGRAM_OPTIONS.toInt(),
+                 EA_AUTO_DIAGRAM_ITERATIONS.toInt(),
+                 EA_AUTO_DIAGRAM_LAYER_SPACING.toInt(),
+                 EA_AUTO_DIAGRAM_COLUMN_SPACING.toInt());
 
 //        layoutResult = doLayout(eaDiagram, eaDiagram.getGuid(),
 //                                EA_AUTO_DIAGRAM_OPTIONS.toInt(),
@@ -1099,11 +1118,16 @@ public class EaRepo {
     }
 
     // Check if element shall be exported to file
-    public boolean doGenerate(final Element element) {
-        return isBlank(element.GetClassifierType())
-                && (previousElements.get(element.GetElementGUID()) == null)
-                && (elementPattern == null || elementPattern.matcher(element.GetName())
-                                                            .matches());
+    public boolean doGenerate(final EaElement eaElement) {
+        return ((eaElement.getMetaType() == EaMetaType.QUEUE) || isBlank(eaElement.getClassifierType()))
+                && (previousElements.get(eaElement.getElementGUID()) == null)
+                && filterMatches(elementPattern, eaElement.getName())
+                && filterMatches(stereotypeFilter, eaElement.getStereotypeEx());
+    }
+
+    private boolean filterMatches(final Pattern pattern, final String paramToMatch) {
+        return pattern == null || pattern.matcher(paramToMatch)
+                                         .matches();
     }
 
     public EaPackage populatePackageCache(final String elementCreationPackage) {
@@ -1117,9 +1141,10 @@ public class EaRepo {
 
     public List<EaPackage> findPackages(final EaPackage pkg) {
         final List<EaPackage> result = new ArrayList<>();
-        if(packageCache.isEmpty()) {
-            for (final Package aPackage : pkg.unwrap().GetPackages()) {
-                result.add(new EaPackage(aPackage,this,pkg));
+        if (packageCache.isEmpty()) {
+            for (final Package aPackage : pkg.unwrap()
+                                             .GetPackages()) {
+                result.add(new EaPackage(aPackage, this, pkg));
             }
             return result;
         }

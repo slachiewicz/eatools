@@ -36,6 +36,8 @@ public enum EaMetaType {
     TAGGED_VALUE,
     TEXT,
     SEQUENCE,
+    WEB_PAGE,
+    CLIENT_PAGE,
     NULL;
     // etc.
     // todo complete the set
@@ -51,7 +53,11 @@ public enum EaMetaType {
      */
     public static EaMetaType fromString(final String metaType) {
         LOG.debug("Looking up metatype for [{}]", metaType);
-        return Enums.valueOf(EaMetaType.class, Camel.toConstantString(metaType), NULL);
+        EaMetaType result = Enums.valueOf(EaMetaType.class, Camel.toConstantString(metaType), NULL);
+        if(result == NULL) {
+            LOG.warn("Unknown metaType for {}", metaType);
+        }
+        return result;
     }
 
     public String toString() {
@@ -61,4 +67,6 @@ public enum EaMetaType {
     public boolean equals(final String stringType) {
         return toString().equals(stringType);
     }
+
+
 }

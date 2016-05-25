@@ -166,13 +166,14 @@ public class NameNormalizer {
      * @return path on the form level==0 ? "", level==1 ? "/a", level==2 ? "/a/b"
      */
     public static String createPath(final String logicalPathname, final int level) {
-        String result = EMPTY;
         final String[] paths = logicalPathname.split("\\" + URL_SEPARATOR);
         int index = 1;
+        final StringBuilder stringBuilder = new StringBuilder();
         while ((index <= level) && (index < paths.length)) {
-            result +=  URL_SEPARATOR + paths[index];
+            stringBuilder.append(URL_SEPARATOR)
+                                         .append(paths[index]);
             ++index;
         }
-        return result;
+        return stringBuilder.toString();
     }
 }
