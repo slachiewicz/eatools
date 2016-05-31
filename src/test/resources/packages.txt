@@ -1,0 +1,477 @@
+ EaPackage{name='Elhub Architecture', id=1334, parentId=0}
+ EaPackage{name='Business Architecture', id=1353, parentId=1334}
+ EaPackage{name='User Roles', id=616, parentId=1353}
+ EaPackage{name='Business Processes', id=997, parentId=1353}
+ EaPackage{name='BRS-NO-101 Start of supply - change of supplier', id=998, parentId=997}
+ EaPackage{name='BRS-NO-102 Start of supply - move in - in the future', id=999, parentId=997}
+ EaPackage{name='BRS-NO-103 Start of supply - move in - back in time', id=1000, parentId=997}
+ EaPackage{name='BRS-NO-104 Change of Supplier from last resort', id=1001, parentId=997}
+ EaPackage{name='BRS-NO-111 Rollback - start of supply', id=1002, parentId=997}
+ EaPackage{name='BRS-NO-121 New metering point', id=1003, parentId=997}
+ EaPackage{name='BRS-NO-122 Activation of metering point', id=1004, parentId=997}
+ EaPackage{name='BRS-NO-123 Start-up in metering point - move in', id=1005, parentId=997}
+ EaPackage{name='BRS-NO-131 Rollback of new metering point', id=1006, parentId=997}
+ EaPackage{name='BRS-NO-132 Rollback of activation of metering point', id=1007, parentId=997}
+ EaPackage{name='BRS-NO-133 Rollback of Start-up in metering point', id=1008, parentId=997}
+ EaPackage{name='BRS-NO-201 End of supply due to move out', id=1009, parentId=997}
+ EaPackage{name='BRS-NO-202 End of supply', id=1010, parentId=997}
+ EaPackage{name='BRS-NO-211 Move out from metering point - from grid owner', id=1011, parentId=997}
+ EaPackage{name='BRS-NO-212 Deactivation of metering point', id=1012, parentId=997}
+ EaPackage{name='BRS-NO-213 Removal of metering point', id=1013, parentId=997}
+ EaPackage{name='BRS-NO-221 Rollback of end of supply', id=1014, parentId=997}
+ EaPackage{name='BRS-NO-222 Rollback of move out', id=1015, parentId=997}
+ EaPackage{name='BRS-NO-223 Rollback of deactivation of metering point', id=1016, parentId=997}
+ EaPackage{name='BRS-NO-224 Rollback of removal of metering point', id=1017, parentId=997}
+ EaPackage{name='BRS-NO-301 Update master data - balance supplier', id=1018, parentId=997}
+ EaPackage{name='BRS-NO-302 Update master data - grid owner', id=1019, parentId=997}
+ EaPackage{name='BRS-NO-303 Request master data - balance supplier', id=1020, parentId=997}
+ EaPackage{name='BRS-NO-304 Request master data - grid owner', id=1021, parentId=997}
+ EaPackage{name='BRS-NO-305 Structure data change', id=1022, parentId=997}
+ EaPackage{name='BRS-NO-306 Settlement type change', id=1023, parentId=997}
+ EaPackage{name='BRS-NO-311 Meter reading and estimated annual consumption from Balance Supplier', id=1024, parentId=997}
+ EaPackage{name='BRS-NO-312 Reporting of metering values for profiled metering points', id=1025, parentId=997}
+ EaPackage{name='BRS-NO-313 Reporting of metering values for non-profiled metering points', id=1026, parentId=997}
+ EaPackage{name='BRS-NO-314 Reminders of metering values and estimated annual consumption from grid owner', id=1027, parentId=997    }
+ EaPackage{name='BRS-NO-315 Request for metering values - balance supplier', id=1028, parentId=997}
+ EaPackage{name='BRS-NO-316 Request for metering values - grid owner -UTG▒R', id=1029, parentId=997}
+ EaPackage{name='BRS-NO-317 Update Estimated Annual Consumption', id=1030, parentId=997}
+ EaPackage{name='BRS-NO-318 Update Grid Loss parameters', id=1031, parentId=997}
+ EaPackage{name='BRS-NO-319 Request for metering values - producer UTG▒R', id=1032, parentId=997}
+ EaPackage{name='BRS-NO-321 Quality assurance - grid owner UTG▒R', id=1033, parentId=997}
+ EaPackage{name='BRS-NO-322 Preliminary Profiled Consumption to balance supplier', id=1034, parentId=997}
+ EaPackage{name='BRS-NO-324 Request basis for settlement - balance supplier/responsible', id=1035, parentId=997}
+ EaPackage{name='BRS-NO-325 Request basis for settlement - grid owner', id=1036, parentId=997}
+ EaPackage{name='BRS-NO-332 Withdraw metering values for profiled metering points', id=1037, parentId=997}
+ EaPackage{name='BRS-NO-391 Request for pass-through billing', id=1038, parentId=997}
+ EaPackage{name='BRS-NO-401 Corrections of master data - from balance supplier', id=1039, parentId=997}
+ EaPackage{name='BRS-NO-402 Corrections of master data - from grid owner', id=1040, parentId=997}
+ EaPackage{name='BRS-NO-501 Reporting structure data for Imbalance Settlement', id=1041, parentId=997}
+ EaPackage{name='BRS-NO-502 Reporting data for Imbalance Settlement', id=1042, parentId=997}
+ EaPackage{name='BRS-NO-503 Reporting data for reconciliation', id=1043, parentId=997}
+ EaPackage{name='BRS-NO-511 Reporting Produced Volume to Registry responsible Elcertificates', id=1044, parentId=997}
+ EaPackage{name='BRS-NO-512 Reporting Quota Obliged Consumption Elcertificates', id=1045, parentId=997}
+ EaPackage{name='BRS-NO-601 Request to Grid Owner', id=1046, parentId=997}
+ EaPackage{name='BRS-NO-602 Request to Elhub', id=1047, parentId=997}
+ EaPackage{name='BRS-NO-611 Pre-swich check of Metering Point Characteristics', id=1048, parentId=997}
+ EaPackage{name='BRS-NO-621 Request - 3rd party', id=1049, parentId=997}
+ EaPackage{name='BRS-NO-623 Overview of 3rd party access', id=1051, parentId=997}
+ EaPackage{name='BRS-NO-622 Update 3rd party access', id=1050, parentId=1051}
+ EaPackage{name='BRS-NO-624 Request for metering values - 3rd party', id=1052, parentId=997}
+ EaPackage{name='BRS-NO-701 Data exchange for AMS services', id=1053, parentId=997}
+ EaPackage{name='BRS-NO-711 Price information to end user', id=1054, parentId=997}
+ EaPackage{name='Business Roles', id=622, parentId=1353}
+ EaPackage{name='Markedsguide', id=1502, parentId=1353}
+ EaPackage{name='BRS 111 Reversering av oppstart av kraftleveranse - leverand▒rskifte', id=1577, parentId=1502}
+ EaPackage{name='BRS 221 Reversering av opph▒r kraftleveranse', id=1676, parentId=1502}
+ EaPackage{name='BRS 611 Verifiser grunndata i m▒lepunkt (svar)', id=1573, parentId=1502}
+ EaPackage{name='Prosessoversikt', id=838, parentId=1353}
+ EaPackage{name='BRS-NO-101 Oppstart kraftleveranse - Leverand▒rskifte', id=839, parentId=838}
+ EaPackage{name='BRS-NO-102 Oppstart kraftleveranse - innflytting frem i tid', id=840, parentId=838}
+ EaPackage{name='BRS-NO-103 Oppstart kraftleveranse - innflytting tilbake i tid', id=841, parentId=838}
+ EaPackage{name='BRS-NO-104 Oppstart kraftleveranse - leverand▒rskifte fra leveringsplikt', id=842, parentId=838}
+ EaPackage{name='BRS-NO-111 Reversering av oppstart kraftleveranse', id=843, parentId=838}
+ EaPackage{name='BRS-NO-121 Nytt m▒lepunkt', id=844, parentId=838}
+ EaPackage{name='BRS-NO-122 Aktivering i m▒lepunkt', id=845, parentId=838}
+ EaPackage{name='BRS-NO-123 Oppstart i m▒lepunkt - innflytting', id=846, parentId=838}
+ EaPackage{name='BRS-NO-131 Reversering av nytt m▒lepunkt - UTG▒R', id=847, parentId=838}
+ EaPackage{name='BRS-NO-132 Reversering av aktivering i m▒lepunkt', id=848, parentId=838}
+ EaPackage{name='BRS-NO-133 Reversering av oppstart i m▒lepunkt', id=849, parentId=838}
+ EaPackage{name='BRS-NO-201 Opph▒r p▒ grunn av utflytting', id=850, parentId=838}
+ EaPackage{name='BRS-NO-202 Opph▒r av kraftleveranse', id=851, parentId=838}
+ EaPackage{name='BRS-NO-211 Utflytting fra m▒lepunkt meldt til netteier', id=852, parentId=838}
+ EaPackage{name='BRS-NO-212 Deaktivering i m▒lepunkt', id=853, parentId=838}
+ EaPackage{name='BRS-NO-213 Fjerning av m▒lepunkt', id=854, parentId=838}
+ EaPackage{name='BRS-NO-221 Reversering av opph▒r kraftleveranse', id=855, parentId=838}
+ EaPackage{name='BRS-NO-222 Reversering av utflytting fra m▒lepunkt', id=856, parentId=838}
+ EaPackage{name='BRS-NO-223 Reversering av deaktivering av m▒lepunktet', id=857, parentId=838}
+ EaPackage{name='BRS-NO-224 Reversering av fjerning av m▒lepunkt', id=858, parentId=838}
+ EaPackage{name='BRS-NO-301 Oppdatering av grunndata - kraftleverand▒r', id=859, parentId=838}
+ EaPackage{name='BRS-NO-302 Oppdatering av grunndata - nettselskap', id=860, parentId=838}
+ EaPackage{name='BRS-NO-303 Sp▒rring grunndata', id=861, parentId=838}
+ EaPackage{name='BRS-NO-304 Sp▒rring grunndata - nettselskap-UTG▒R', id=862, parentId=838}
+ EaPackage{name='BRS-NO-305 Endring av strukturdata - m▒ revideres og oversettes n▒r komplettert', id=863, parentId=838}
+ EaPackage{name='BRS-NO-306 Endring i avregningsform', id=864, parentId=838}
+ EaPackage{name='BRS-NO-307 Anmodning om bytte av avregningsform - kan denne slettes?', id=865, parentId=838}
+ EaPackage{name='BRS-NO-311 M▒lerstand og antatt ▒rsvolum fra kraftleverand▒r', id=866, parentId=838}
+ EaPackage{name='BRS-NO-312 M▒leverdier p▒ profilavregnet m▒lepunkt', id=867, parentId=838}
+ EaPackage{name='BRS-NO-313 Oversendelse av volumserier for m▒lepunkt', id=868, parentId=838}
+ EaPackage{name='BRS-NO-324 Sp▒rring avregningsgrunnlag', id=878, parentId=868}
+ EaPackage{name='BRS-NO-314 Purring p▒ m▒leverdier og antatt ▒rsforbruk fra nettselskap', id=869, parentId=838}
+ EaPackage{name='BRS-NO-315 Sp▒rring m▒leverdier', id=870, parentId=838}
+ EaPackage{name='BRS-NO-316 Sp▒rring m▒leverdier - nettselskap - UTG▒R', id=871, parentId=838}
+ EaPackage{name='BRS-NO-317 Oppdatering av antatt ▒rsforbruk', id=872, parentId=838}
+ EaPackage{name='BRS-NO-318 Oppdatering av parametre for nettap', id=873, parentId=838}
+ EaPackage{name='BRS-NO-319 Sp▒rring m▒leverdier - produsent -UTG▒R', id=874, parentId=838}
+ EaPackage{name='BRS-NO-321 Kvalitetssikring avregningsgrunnlag - nettselskap', id=875, parentId=838}
+ EaPackage{name='BRS-NO-322 Prelimin▒rt timesfordelt volum for profilavregnede m▒lepunkt', id=876, parentId=838}
+ EaPackage{name='BRS-NO-323 Avregningsgrunnlag - balanseansvarlig - UTG▒R', id=877, parentId=838}
+ EaPackage{name='BRS-NO-325 Sp▒rring avregningsgrunnlag - nettselskap-UTG▒R', id=879, parentId=838}
+ EaPackage{name='BRS-NO-332 Tilbaketrekking av m▒leverdier for profilavregnede m▒lepunkt', id=880, parentId=838}
+ EaPackage{name='BRS-NO-391 Anmodning om  viderefakturering - UTG▒R', id=881, parentId=838}
+ EaPackage{name='BRS-NO-401 Korrigeringer i grunndata ▒ fra kraftleverand▒r', id=882, parentId=838}
+ EaPackage{name='BRS-NO-402 Korrigeringer i datagrunnlag ▒ fra nettselskap', id=883, parentId=838}
+ EaPackage{name='BRS-NO-501 Rapportering av strukturdata til balanseavregningsansvarlig', id=884, parentId=838}
+ EaPackage{name='BRS-NO-502 Rapportering til balanseavregningsansvarlig', id=885, parentId=838}
+ EaPackage{name='BRS-NO-503 Rapportering grunnlag for avviksoppgj▒r', id=886, parentId=838}
+ EaPackage{name='BRS-NO-511 Rapportering til elsertifikatsansvarlig', id=887, parentId=838}
+ EaPackage{name='BRS-NO-512 Rapportering av forbruk til elsertifikatansvarlig', id=888, parentId=838}
+ EaPackage{name='BRS-NO-601 Foresp▒rsel til nettselskapet', id=889, parentId=838}
+ EaPackage{name='BRS-NO-602 Foresp▒rsel til Elhub', id=890, parentId=838}
+ EaPackage{name='BRS-NO-611 Verifiser grunndata i m▒lepunkt', id=891, parentId=838}
+ EaPackage{name='BRS-NO-621 Sp▒rring - 3.part-UTG▒R', id=892, parentId=838}
+ EaPackage{name='BRS-NO-622 Oppdatering av tredjeparts tilgang', id=893, parentId=838}
+ EaPackage{name='BRS-NO-623 Oversikt over tredjeparts tilgang', id=894, parentId=838}
+ EaPackage{name='BRS-NO-624 Sp▒rring m▒leverdier - 3. part-UTG▒R', id=895, parentId=838}
+ EaPackage{name='BRS-NO-701 Utveksling av AMS-data for tilleggstjenester', id=896, parentId=838}
+ EaPackage{name='BRS-NO-711 Prisinformasjon til sluttbruker', id=897, parentId=838}
+ EaPackage{name='Role Model', id=1056, parentId=1353}
+ EaPackage{name='Roles', id=1057, parentId=1353}
+ EaPackage{name='Rollemodell', id=898, parentId=1353}
+ EaPackage{name='Rollemodell enfaktura', id=899, parentId=1353}
+ EaPackage{name='Roller', id=900, parentId=1353}
+ EaPackage{name='Information Architecture', id=1354, parentId=1334}
+ EaPackage{name='Database Models', id=1730, parentId=1354}
+ EaPackage{name='BIM', id=1359, parentId=1354}
+ EaPackage{name='Logical', id=1360, parentId=1359}
+ EaPackage{name='EndOfSupply', id=199, parentId=1360}
+ EaPackage{name='ConfirmEndOfSupply', id=1130, parentId=199}
+ EaPackage{name='RejectEndOfSupply', id=201, parentId=199}
+ EaPackage{name='RequestEndOfSupply', id=202, parentId=199}
+ EaPackage{name='Notifications', id=146, parentId=1360}
+ EaPackage{name='NotifyEndOfSupply', id=203, parentId=146}
+ EaPackage{name='NotifyStartOfSupply', id=147, parentId=146}
+ EaPackage{name='Process', id=149, parentId=1360}
+ EaPackage{name='StartOfSupply', id=150, parentId=1360}
+ EaPackage{name='ConfirmStartOfSupply', id=1129, parentId=150}
+ EaPackage{name='RejectStartOfSupply', id=152, parentId=150}
+ EaPackage{name='RequestStartOfSupply', id=153, parentId=150}
+ EaPackage{name='ABIE', id=135, parentId=1360}
+ EaPackage{name='Acknowledgement', id=564, parentId=1360}
+ EaPackage{name='Basic', id=144, parentId=1360}
+ EaPackage{name='InfEnvelope', id=156, parentId=144}
+ EaPackage{name='MA', id=154, parentId=144}
+ EaPackage{name='BusinessEntity', id=139, parentId=144}
+ EaPackage{name='NEG Acknowledgement document', id=140, parentId=144}
+ EaPackage{name='BBIE', id=136, parentId=1360}
+ EaPackage{name='bie', id=138, parentId=1360}
+ EaPackage{name='ConsumptionToNECS', id=431, parentId=1360}
+ EaPackage{name='CustomerInformation', id=320, parentId=1360}
+ EaPackage{name='NotifyCustomerInformation', id=322, parentId=320}
+ EaPackage{name='UpdateCustomerInformation', id=293, parentId=320}
+ EaPackage{name='RequestUpdateCustomerInformation', id=300, parentId=293}
+ EaPackage{name='Header', id=133, parentId=1360}
+ EaPackage{name='MeteringPointCharacteristics', id=312, parentId=1360}
+ EaPackage{name='NotifyMeteringPointCharacteristics', id=314, parentId=312}
+ EaPackage{name='RequestUpfrontMeteringPointCharacteristics', id=206, parentId=312}
+ EaPackage{name='ResponseUpfrontMeteringPointCharacteristics', id=242, parentId=312}
+ EaPackage{name='MeteringValues', id=164, parentId=1360}
+ EaPackage{name='Collect', id=332, parentId=164}
+ EaPackage{name='Distribute', id=333, parentId=164}
+ EaPackage{name='NotifyValidatedDataForBillingEnergy', id=269, parentId=333}
+ EaPackage{name='PortfolioOverview - deleted', id=421, parentId=1360}
+ EaPackage{name='ProducedVolumeToNECS', id=426, parentId=1360}
+ EaPackage{name='Query', id=361, parentId=1360}
+ EaPackage{name='RequestDataFromElhub', id=338, parentId=361}
+ EaPackage{name='RequestToElhub', id=383, parentId=361}
+ EaPackage{name='RequestToGridAccessProvider', id=382, parentId=361}
+ EaPackage{name='ResponseFromElhub', id=385, parentId=361}
+ EaPackage{name='ResponseFromGridAccessProvider', id=384, parentId=361}
+ EaPackage{name='Rejection', id=232, parentId=1360}
+ EaPackage{name='Reporting', id=337, parentId=1360}
+ EaPackage{name='Reconciliation', id=340, parentId=337}
+ EaPackage{name='ThirdPartyAccess', id=413, parentId=1360}
+ EaPackage{name='UpdateThirdPartyAccess', id=414, parentId=413}
+ EaPackage{name='UpdateMasterDataMeteringPoint', id=181, parentId=1360}
+ EaPackage{name='RequestUpdateMasterDataMeteringPoint', id=182, parentId=181}
+ EaPackage{name='Physical', id=1361, parentId=1359}
+ EaPackage{name='v1', id=644, parentId=1361}
+ EaPackage{name='Acknowledgement', id=733, parentId=644}
+ EaPackage{name='PollForData', id=1159, parentId=644}
+ EaPackage{name='common', id=645, parentId=644}
+ EaPackage{name='Elhub_AggregatedBusinessInformationEntities', id=646, parentId=645}
+ EaPackage{name='Elhub_BusinessDataType', id=647, parentId=645}
+ EaPackage{name='market', id=691, parentId=644}
+ EaPackage{name='01-RequestStartOfSupply', id=693, parentId=691}
+ EaPackage{name='02-ConfirmStartOfSupply', id=1144, parentId=691}
+ EaPackage{name='04-NotifyStartOfSupply', id=695, parentId=691}
+ EaPackage{name='05-RequestEndOfSupply', id=696, parentId=691}
+ EaPackage{name='06-ConfirmEndOfSupply', id=1147, parentId=691}
+ EaPackage{name='07-RejectEndOfSupply', id=698, parentId=691}
+ EaPackage{name='08-NotifyEndOfSupply', id=699, parentId=691}
+ EaPackage{name='03-RejectStartOfSupply', id=692, parentId=691}
+ EaPackage{name='masterdata', id=700, parentId=644}
+ EaPackage{name='09-NotifyMeteringPointCharacteristics', id=701, parentId=700}
+ EaPackage{name='21-RequestUpdateMasterDataMeteringPoint', id=702, parentId=700}
+ EaPackage{name='24-RequestUpdateCustomerInformation', id=705, parentId=700}
+ EaPackage{name='27-NotifyCustomerInformation', id=708, parentId=700}
+ EaPackage{name='metering', id=709, parentId=644}
+ EaPackage{name='13-RequestCollectedData', id=710, parentId=709}
+ EaPackage{name='14-CollectedData', id=711, parentId=709}
+ EaPackage{name='20-NotifyValidatedDataForBillingEnergy', id=713, parentId=709}
+ EaPackage{name='30-PriceVolumeCombinationForReconciliation', id=714, parentId=709}
+ EaPackage{name='necs', id=715, parentId=644}
+ EaPackage{name='32-ValidatedDataForLabelingForCertificateIssuer', id=716, parentId=715}
+ EaPackage{name='33-ConsumptionToNECS', id=717, parentId=715}
+ EaPackage{name='query', id=718, parentId=644}
+ EaPackage{name='10-PortfolioOverview - to be deleted', id=719, parentId=718}
+ EaPackage{name='11-RequestToGridAccessProvider', id=720, parentId=718}
+ EaPackage{name='12-ResponseFromGridAccessProvider', id=721, parentId=718}
+ EaPackage{name='16-RequestUpfrontMeteringPointCharacteristics', id=722, parentId=718}
+ EaPackage{name='17-ResponseUpfrontMeteringPointCharacteristics', id=723, parentId=718}
+ EaPackage{name='19-RequestDataFromElhub', id=725, parentId=718}
+ EaPackage{name='28-RequestToElhub', id=726, parentId=718}
+ EaPackage{name='29-ResponseFromElhub', id=727, parentId=718}
+ EaPackage{name='thirdpartyaccess', id=729, parentId=644}
+ EaPackage{name='34-UpdateThirdPartyAccess', id=730, parentId=729}
+ EaPackage{name='DSM', id=1453, parentId=1354}
+ EaPackage{name='EIM', id=1358, parentId=1354}
+ EaPackage{name='Logical', id=1362, parentId=1358}
+ EaPackage{name='Common', id=1315, parentId=1362}
+ EaPackage{name='Contract', id=1286, parentId=1362}
+ EaPackage{name='GridModel', id=1285, parentId=1362}
+ EaPackage{name='MeteringPoint', id=1284, parentId=1362}
+ EaPackage{name='VirtualMeteringPoint Templates', id=1770, parentId=1284}
+ EaPackage{name='Gross consumption', id=1807, parentId=1770}
+ EaPackage{name='Gross production', id=1808, parentId=1770}
+ EaPackage{name='Housing association with shared local consumption', id=1810, parentId=1770}
+ EaPackage{name='Metering point group example', id=1815, parentId=1770}
+ EaPackage{name='Net consumption', id=1806, parentId=1770}
+ EaPackage{name='Net consumption for larger customer', id=1812, parentId=1770}
+ EaPackage{name='Housing association with shared local production', id=1771, parentId=1770}
+ EaPackage{name='Net production', id=1772, parentId=1770}
+ EaPackage{name='MeteringValues', id=1258, parentId=1362}
+ EaPackage{name='Party', id=1234, parentId=1362}
+ EaPackage{name='RequestMessage', id=1472, parentId=1362}
+ EaPackage{name='Role', id=1311, parentId=1362}
+ EaPackage{name='Settlement', id=1301, parentId=1362}
+ EaPackage{name='SubDomains', id=600, parentId=1362}
+ EaPackage{name='Market', id=1329, parentId=600}
+ EaPackage{name='MasterData', id=1319, parentId=600}
+ EaPackage{name='Structure', id=1324, parentId=600}
+ EaPackage{name='UserAndRole', id=1328, parentId=600}
+ EaPackage{name='SubscriptionFee', id=1302, parentId=1362}
+ EaPackage{name='ObjectDiagrams', id=1801, parentId=1302}
+ EaPackage{name='BalanceSupplierExample', id=1802, parentId=1801}
+ EaPackage{name='User', id=1310, parentId=1362}
+ EaPackage{name='MarketProcess', id=1320, parentId=1362}
+ EaPackage{name='Security', id=637, parentId=1358}
+ EaPackage{name='Examples', id=1117, parentId=637}
+ EaPackage{name='ExampleAuthorizations', id=1125, parentId=1117}
+ EaPackage{name='ExampleConnections', id=1166, parentId=1117}
+ EaPackage{name='ExampleOnBehalfOf', id=1167, parentId=1117}
+ EaPackage{name='ExampleOrganizations', id=1123, parentId=1117}
+ EaPackage{name='ExamplePartyTypes', id=1168, parentId=1117}
+ EaPackage{name='ExampleRoles', id=1124, parentId=1117}
+ EaPackage{name='ExampleUsers', id=1120, parentId=1117}
+ EaPackage{name='IdentityAndAccessManagement', id=638, parentId=637}
+ EaPackage{name='Connections', id=1137, parentId=637}
+ EaPackage{name='Organizations', id=1118, parentId=637}
+ EaPackage{name='Roles', id=1111, parentId=637}
+ EaPackage{name='Users', id=1110, parentId=637}
+ EaPackage{name='Governance', id=1400, parentId=1358}
+ EaPackage{name='Physical', id=1363, parentId=1358}
+ EaPackage{name='v1', id=1261, parentId=1363}
+ EaPackage{name='role', id=1554, parentId=1261}
+ EaPackage{name='Role', id=1556, parentId=1554}
+ EaPackage{name='settlement', id=1513, parentId=1261}
+ EaPackage{name='FinalGridLossRun', id=1646, parentId=1513}
+ EaPackage{name='ImbalanceSettlement', id=1539, parentId=1513}
+ EaPackage{name='ImbalanceSettlementRun', id=1542, parentId=1513}
+ EaPackage{name='PriceSeries', id=1514, parentId=1513}
+ EaPackage{name='ProductionToNECSRun', id=1714, parentId=1513}
+ EaPackage{name='QuotaObligedConsumptionRun', id=1718, parentId=1513}
+ EaPackage{name='ReconciliationRun', id=1641, parentId=1513}
+ EaPackage{name='common', id=1273, parentId=1261}
+ EaPackage{name='AggregatedInformationEntities', id=1262, parentId=1273}
+ EaPackage{name='DataTypes', id=1264, parentId=1273}
+ EaPackage{name='contract', id=1274, parentId=1261}
+ EaPackage{name='BalanceSupplyContract', id=1263, parentId=1274}
+ EaPackage{name='EndUser', id=1266, parentId=1274}
+ EaPackage{name='GridAccessContract', id=1265, parentId=1274}
+ EaPackage{name='ThirdPartyAccessContract', id=1270, parentId=1274}
+ EaPackage{name='gridmodel', id=1275, parentId=1261}
+ EaPackage{name='BalanceResponsibilityContract', id=1322, parentId=1275}
+ EaPackage{name='MarketBalanceArea', id=1326, parentId=1275}
+ EaPackage{name='MeteringGridArea', id=1268, parentId=1275}
+ EaPackage{name='marketprocess', id=1423, parentId=1261}
+ EaPackage{name='MarketProcess', id=1428, parentId=1423}
+ EaPackage{name='meteringpoint', id=1276, parentId=1261}
+ EaPackage{name='MeteringPoint', id=1267, parentId=1276}
+ EaPackage{name='VirtualMeteringPoint', id=1757, parentId=1276}
+ EaPackage{name='meteringvalues', id=1277, parentId=1261}
+ EaPackage{name='MeteringValueIssue', id=1592, parentId=1277}
+ EaPackage{name='MeteringValues', id=1293, parentId=1277}
+ EaPackage{name='party', id=1278, parentId=1261}
+ EaPackage{name='Party', id=1269, parentId=1278}
+ EaPackage{name='requestmessage', id=1475, parentId=1261}
+ EaPackage{name='RequestCategory', id=1655, parentId=1475}
+ EaPackage{name='RequestMessage', id=1476, parentId=1475}
+ EaPackage{name='user', id=1312, parentId=1261}
+ EaPackage{name='MeteringPointDescription', id=1314, parentId=1312}
+ EaPackage{name='User', id=1445, parentId=1312}
+ EaPackage{name='External Information Models', id=1454, parentId=1354}
+ EaPackage{name='LDAP', id=1911, parentId=1354}
+ EaPackage{name='Classes', id=1912, parentId=1911}
+ EaPackage{name='MIM', id=1368, parentId=1354}
+ EaPackage{name='Logical', id=1081, parentId=1368}
+ EaPackage{name='Physical', id=1375, parentId=1368}
+ EaPackage{name='Application Architecture', id=1355, parentId=1334}
+ EaPackage{name='Archive', id=1907, parentId=1355}
+ EaPackage{name='Security', id=1104, parentId=1907}
+ EaPackage{name='Authentication', id=1163, parentId=1104}
+ EaPackage{name='Authorization - Portal and Plugin', id=1675, parentId=1104}
+ EaPackage{name='Application Services', id=1371, parentId=1907}
+ EaPackage{name='Workups', id=1447, parentId=1371}
+ EaPackage{name='Arbeidsmappe', id=1894, parentId=1907}
+ EaPackage{name='Components', id=1369, parentId=1907}
+ EaPackage{name='Audit', id=1482, parentId=1369}
+ EaPackage{name='BPM Errorhandling', id=1829, parentId=1369}
+ EaPackage{name='Data Stores', id=1095, parentId=1369}
+ EaPackage{name='Developed Components', id=596, parentId=1369}
+ EaPackage{name='EMIF', id=633, parentId=596}
+ EaPackage{name='EQIF', id=636, parentId=596}
+ EaPackage{name='Web Plugin Screens', id=1077, parentId=596}
+ EaPackage{name='Web Portal Screens', id=1071, parentId=596}
+ EaPackage{name='eMeter', id=595, parentId=1369}
+ EaPackage{name='Generic Interaction With Market Party', id=1091, parentId=1369}
+ EaPackage{name='Logging', id=1458, parentId=1369}
+ EaPackage{name='Oracle', id=594, parentId=1369}
+ EaPackage{name='Screens', id=1165, parentId=594}
+ EaPackage{name='OSS Components', id=1072, parentId=1369}
+ EaPackage{name='Security', id=598, parentId=1369}
+ EaPackage{name='CheckCryptAudit', id=1064, parentId=598}
+ EaPackage{name='Supporting infrastructure', id=1080, parentId=1369}
+ EaPackage{name='Diagrams not used in Confluence', id=1748, parentId=1907}
+ EaPackage{name='Gliffy diagrams from Confluence', id=1889, parentId=1907}
+ EaPackage{name='Interfaces', id=1370, parentId=1907}
+ EaPackage{name='BIM Dynamic View', id=1365, parentId=1370}
+ EaPackage{name='Interaction with actors', id=259, parentId=1365}
+ EaPackage{name='End of Metering Point', id=288, parentId=259}
+ EaPackage{name='To Balance Supplier', id=377, parentId=288}
+ EaPackage{name='To Grid Access Provider', id=376, parentId=288}
+ EaPackage{name='End of Supply', id=264, parentId=259}
+ EaPackage{name='Metering values', id=266, parentId=259}
+ EaPackage{name='NECS', id=428, parentId=259}
+ EaPackage{name='Preswitch Checking', id=261, parentId=259}
+ EaPackage{name='Query', id=364, parentId=259}
+ EaPackage{name='Feedback to balance responsible party', id=570, parentId=364}
+ EaPackage{name='From balance responsible', id=569, parentId=364}
+ EaPackage{name='Feedback to 3. Party', id=404, parentId=364}
+ EaPackage{name='From 3. Party', id=402, parentId=364}
+ EaPackage{name='From Balance Supplier', id=365, parentId=364}
+ EaPackage{name='From Grid Access Provider', id=368, parentId=364}
+ EaPackage{name='Masterdata to Balance Supplier', id=366, parentId=364}
+ EaPackage{name='Masterdata to Grid Access Provider', id=370, parentId=364}
+ EaPackage{name='RequestToElhub', id=397, parentId=364}
+ EaPackage{name='RequestToGridAccessProvider', id=393, parentId=364}
+ EaPackage{name='ResponseFromElhub', id=398, parentId=364}
+ EaPackage{name='ResponseFromGridAccessProvider', id=394, parentId=364}
+ EaPackage{name='Reconciliation', id=356, parentId=259}
+ EaPackage{name='To Balance Supplier', id=357, parentId=356}
+ EaPackage{name='To Grid Access Provider', id=358, parentId=356}
+ EaPackage{name='Start of Metering Point', id=263, parentId=259}
+ EaPackage{name='To Grid Access Provider', id=375, parentId=263}
+ EaPackage{name='Start of Supply', id=260, parentId=259}
+ EaPackage{name='ThirdPartyAccess', id=411, parentId=259}
+ EaPackage{name='Update customer information', id=303, parentId=259}
+ EaPackage{name='Update master data metering point', id=265, parentId=259}
+ EaPackage{name='EIM Dynamic View', id=1364, parentId=1370}
+ EaPackage{name='States', id=901, parentId=1364}
+ EaPackage{name='EMIF Dynamic View', id=625, parentId=1370}
+ EaPackage{name='EMIF plus EQIF Interactions', id=820, parentId=1370}
+ EaPackage{name='EMIF States', id=1078, parentId=1370}
+ EaPackage{name='EMIF Internal Processing', id=629, parentId=1370}
+ EaPackage{name='EAIF', id=1157, parentId=1370}
+ EaPackage{name='Behavior', id=1684, parentId=1355}
+ EaPackage{name='B-0 Context', id=1690, parentId=1684}
+ EaPackage{name='B-1 System', id=1691, parentId=1684}
+ EaPackage{name='B-2 System Layer', id=1692, parentId=1684}
+ EaPackage{name='B-3 System Component', id=1693, parentId=1684}
+ EaPackage{name='COMP-14+ErrorHandlerBMPComponent', id=1834, parentId=1693}
+ EaPackage{name='Behavioral Patterns', id=1689, parentId=1684}
+ EaPackage{name='Collaborations and Interactions', id=1652, parentId=1684}
+ EaPackage{name='System Functions', id=1703, parentId=1684}
+ EaPackage{name='Auditing', id=1705, parentId=1703}
+ EaPackage{name='Logging', id=1704, parentId=1703}
+ EaPackage{name='Mapping', id=1709, parentId=1703}
+ EaPackage{name='Monitoring', id=1707, parentId=1703}
+ EaPackage{name='Reporting', id=1706, parentId=1703}
+ EaPackage{name='Security', id=1708, parentId=1703}
+ EaPackage{name='Structure', id=1683, parentId=1355}
+ EaPackage{name='Structural Patterns', id=1653, parentId=1683}
+ EaPackage{name='S-0 Context', id=1685, parentId=1683}
+ EaPackage{name='S-1 System', id=1686, parentId=1683}
+ EaPackage{name='S-2 System Layer', id=1687, parentId=1683}
+ EaPackage{name='S-2 EAS Layer', id=1695, parentId=1687}
+ EaPackage{name='S-2 EDS Layer', id=1698, parentId=1687}
+ EaPackage{name='S-2 Elhub Security Layer', id=1699, parentId=1687}
+ EaPackage{name='S-2 EMDM Layer', id=1697, parentId=1687}
+ EaPackage{name='S-2 ESB Layer', id=1696, parentId=1687}
+ EaPackage{name='S-2 EWP Layer', id=1694, parentId=1687}
+ EaPackage{name='S-3 System Component', id=1688, parentId=1683}
+ EaPackage{name='COMP-14 BMP Error Handler', id=1841, parentId=1688}
+ EaPackage{name='Technology Architecture', id=1352, parentId=1334}
+ EaPackage{name='EnergyIP', id=1141, parentId=1352}
+ EaPackage{name='Nodes', id=1372, parentId=1352}
+ EaPackage{name='Physical HW', id=1061, parentId=1352}
+ EaPackage{name='Security', id=1175, parentId=1352}
+ EaPackage{name='Zones', id=1060, parentId=1175}
+ EaPackage{name='Database', id=1401, parentId=1175}
+ EaPackage{name='Logical Model', id=1402, parentId=1401}
+ EaPackage{name='Oracle', id=1403, parentId=1401}
+ EaPackage{name='Functions', id=1404, parentId=1403}
+ EaPackage{name='Packages', id=1405, parentId=1403}
+ EaPackage{name='Procedures', id=1406, parentId=1403}
+ EaPackage{name='Queries', id=1411, parentId=1403}
+ EaPackage{name='Sequences', id=1407, parentId=1403}
+ EaPackage{name='Tables', id=1408, parentId=1403}
+ EaPackage{name='Triggers', id=1409, parentId=1403}
+ EaPackage{name='Views', id=1410, parentId=1403}
+ EaPackage{name='Supporting Infrastructure', id=1079, parentId=1352}
+ EaPackage{name='Virtual Servers', id=1062, parentId=1352}
+ EaPackage{name='Virtual Machines', id=1179, parentId=1062}
+ EaPackage{name='Behavior', id=1831, parentId=1352}
+ EaPackage{name='Structure', id=1832, parentId=1352}
+ EaPackage{name='Dashboard', id=1481, parentId=1334}
+ EaPackage{name='Elhub Architecture', id=1700, parentId=1481}
+ EaPackage{name='Solution Building Blocks', id=1456, parentId=1334}
+ EaPackage{name='Catalog', id=1659, parentId=1456}
+ EaPackage{name='Database', id=1671, parentId=1659}
+ EaPackage{name='Schemas', id=1710, parentId=1671}
+ EaPackage{name='Tables', id=1673, parentId=1710}
+ EaPackage{name='StoredProcedures', id=1672, parentId=1671}
+ EaPackage{name='Functions', id=1674, parentId=1671}
+ EaPackage{name='Materialized views', id=1895, parentId=1671}
+ EaPackage{name='Groups', id=1897, parentId=1895}
+ EaPackage{name='Tables', id=1896, parentId=1895}
+ EaPackage{name='Interfaces', id=1661, parentId=1659}
+ EaPackage{name='Services', id=1681, parentId=1659}
+ EaPackage{name='EAS Services', id=1722, parentId=1681}
+ EaPackage{name='EMDM Services', id=1724, parentId=1681}
+ EaPackage{name='ESB Services', id=1723, parentId=1681}
+ EaPackage{name='Infrastructure Services', id=1783, parentId=1681}
+ EaPackage{name='Sub-systems', id=1678, parentId=1659}
+ EaPackage{name='Systems', id=1677, parentId=1659}
+ EaPackage{name='Components', id=1660, parentId=1659}
+ EaPackage{name='Application Components', id=1663, parentId=1660}
+ EaPackage{name='Elhub Web Portal', id=1822, parentId=1663}
+ EaPackage{name='EnergyIP System Console', id=1823, parentId=1663}
+ EaPackage{name='Oracle BAM', id=1178, parentId=1663}
+ EaPackage{name='Oracle Enterprise Manager', id=1177, parentId=1663}
+ EaPackage{name='OBIEE', id=1726, parentId=1663}
+ EaPackage{name='Elhub Web Plugin', id=1821, parentId=1663}
+ EaPackage{name='Graylog', id=1910, parentId=1663}
+ EaPackage{name='Configurations', id=1665, parentId=1660}
+ EaPackage{name='EIP Application Confuguration', id=1914, parentId=1665}
+ EaPackage{name='DataStores', id=1664, parentId=1660}
+ EaPackage{name='Layers', id=1666, parentId=1660}
+ EaPackage{name='Processes', id=1670, parentId=1660}
+ EaPackage{name='Queues', id=1668, parentId=1660}
+ EaPackage{name='WebPages', id=1669, parentId=1660}
+ EaPackage{name='Zones', id=1667, parentId=1660}
+ EaPackage{name='Architecture Components', id=1833, parentId=1660}
+ EaPackage{name='OSB Templates', id=1836, parentId=1833}
+ EaPackage{name='Logging', id=1835, parentId=1833}
+ EaPackage{name='SCA Composite', id=1702, parentId=1660}
+ EaPackage{name='Solution Building Block Metamodel', id=1457, parentId=1456}
+ EaPackage{name='Metamodel Elements', id=1682, parentId=1457}
