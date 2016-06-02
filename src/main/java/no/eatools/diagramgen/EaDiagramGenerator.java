@@ -135,7 +135,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
 
         LOG.info("Using properties" + allProperties.toString().replaceAll(",", "\n"));
         if (isNotBlank(nodePath)) {
-            EaDiagram eaDiagram = eaRepo.findDiagramByGUID(nodePath);
+            final EaDiagram eaDiagram = eaRepo.findDiagramByGUID(nodePath);
             String urlForNode = nodePathToUrl(nodePath);
             urlForNode = eaDiagram.writeImageToFile(true);
             EaDiagram.updateDiagramUrlFile(urlForNode);
@@ -241,7 +241,9 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
 
     private void createElementFile() {
         final EaPackage eaPackage = eaRepo.populatePackageCache(elementCreationPackage);
-        eaPackage.generateDDEntryFile();
+        if(eaPackage != null) {
+            eaPackage.generateDDEntryFile();
+        }
     }
 
     private void createAutoDiagrams() {

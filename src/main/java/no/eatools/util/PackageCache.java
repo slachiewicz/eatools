@@ -5,7 +5,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import no.eatools.diagramgen.EaPackage;
@@ -26,22 +27,33 @@ public class PackageCache {
     private final Map<Integer, EaPackage> theCache = new HashMap<>();
 
     public EaPackage findPackageByName(final EaPackage rootPackage, final String theName, final boolean recursive) {
-        final Optional<Map.Entry<Integer, EaPackage>> entry = theCache.entrySet()
-                                                                      .stream()
-                                                                      .filter(e -> e.getValue()
-                                                                                    .getName()
-                                                                                    .equals(trimToEmpty(theName)))
-                                                                      .findFirst();
-        if (!entry.isPresent()) {
-            LOG.info("Package [{}] not in cache", theName);
-            return null;
+        final List<Map.Entry<Integer, EaPackage>> entries = theCache.entrySet()
+                                                                    .stream()
+                                                                    .filter(e -> e.getValue()
+                                                                                  .getName()
+                                                                                  .equals(trimToEmpty(theName)))
+                                                                    .collect(Collectors.toList());
+        for (final Map.Entry<Integer, EaPackage> entry : entries) {
+            final EaPackage result = entry.getValue();
+            if (isDescendantOf(rootPackage, result, recursive)) {
+                return result;
+            }
         }
-        final EaPackage result = entry.get()
-                                      .getValue();
-        if (isDescendantOf(rootPackage, result, recursive)) {
-            return result;
-        }
+        LOG.info("Package [{}] with ancestor [{}] not in cache", theName, rootPackage.getName());
         return null;
+    }
+
+    public List<EaPackage> findPackagesByName(final EaPackage rootPackage, final String theName, final boolean recursive) {
+        final List<EaPackage> entries = theCache.values()
+                                                .stream()
+                                                .filter(e -> e.getName()
+                                                        .equals(trimToEmpty(theName)))
+                                                .filter(e -> isDescendantOf(rootPackage, e, recursive))
+                                                .collect(Collectors.toList());
+        if(entries.isEmpty()) {
+            LOG.info("Package [{}] with ancestor [{}] not in cache", theName, rootPackage.getName());
+        }
+        return entries;
     }
 
     public boolean isDescendantOf(final EaPackage parent, final EaPackage descendant, final boolean recursive) {
@@ -63,6 +75,31 @@ public class PackageCache {
 
     public EaPackage findById(final int id) {
         return theCache.get(id);
+    }
+
+    public boolean packageMatch(final Package p, final Pattern packagePattern) {
+        if (p == null) {
+            return false;
+        }
+
+        if (packagePattern == null) {
+            return true;
+        }
+        final Matcher matcher = packagePattern.matcher(p.GetName());
+        if (matcher.matches()) {
+            LOG.debug("Package match : {}", p.GetName());
+            return true;
+        }
+        LOG.debug("Looking for parent match for {} ", p.GetName());
+        return packageMatch(findParentPackage(p), packagePattern);
+    }
+
+    private Package findParentPackage(final Package pack) {
+        if (pack == null || pack.GetParentID() == 0) {
+            return null;
+        }
+        final int key = pack.GetParentID();
+        return findById(key).unwrap();
     }
 
     /**
@@ -139,11 +176,7 @@ public class PackageCache {
                        .collect(Collectors.toList());
     }
 
-    public EaPackage getById(final int packageID) {
-        return theCache.get(packageID);
-    }
-
-    private void put(final EaPackage eaPackage) {
+    void put(final EaPackage eaPackage) {
         if (eaPackage == null) {
             LOG.error("Trying to put null");
             return;
@@ -155,5 +188,25 @@ public class PackageCache {
         }
         LOG.debug("Putting {}", eaPackage);
         theCache.put(eaPackage.getId(), eaPackage);
+    }
+
+    /**
+     * Find a package with given name and where parent matches the given package pattern.
+     *
+     * @param rootPkg
+     * @param theName
+     * @param packagePattern
+     * @param recursive
+     * @return
+     */
+    public EaPackage findPackageByName(final EaPackage rootPkg, final String theName, final Pattern packagePattern, final boolean recursive) {
+        final List<EaPackage> candidates = findPackagesByName(rootPkg, theName, recursive);
+
+        for (final EaPackage candidate : candidates) {
+            if (packageMatch(candidate.unwrap(), packagePattern)) {
+                return candidate;
+            }
+        }
+        return null;
     }
 }

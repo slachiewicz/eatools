@@ -663,21 +663,20 @@ public class EaRepo {
         }
 
         if (!packageCache.isEmpty()) {
-            final EaPackage result = packageCache.findPackageByName(rootPkg, theName, recursive);
-            if (result != null && packageMatch(result.unwrap())) {
-                return result;
-            }
-            return null;
+            return packageCache.findPackageByName(rootPkg, theName, packagePattern, recursive);
+        } else {
+            return findPackageByNameNoCache(theName, rootPkg, recursive);
         }
-        for (final Package pkg : rootPkg.unwrap()
-                                        .GetPackages()) {
+    }
+
+    private EaPackage findPackageByNameNoCache(final String theName, final EaPackage rootPkg, final boolean recursive) {
+        for (final Package pkg : rootPkg.unwrap().GetPackages()) {
             final EaPackage child = new EaPackage(pkg, this, rootPkg);
-            if (pkg.GetName()
-                   .equals(theName) && packageMatch(pkg)) {
+            if (pkg.GetName().equals(theName) && packageMatchNoCache(pkg)) {
                 return child;
             }
             if (recursive) {
-                final EaPackage nextPkg = findPackageByName(theName, child, true);
+                final EaPackage nextPkg = findPackageByNameNoCache(theName, child, true);
 
                 if (nextPkg != null) {
                     // Found it
@@ -818,7 +817,7 @@ public class EaRepo {
     }
 
     private boolean generateAllDigramsInPackage(final EaPackage pkg, final IntCounter diagramCount) {
-        if (!packageMatch(pkg.unwrap())) {
+        if (!packageCache.packageMatch(pkg.unwrap(), packagePattern)) {
             LOG.info("--- Skipping package " + pkg.getName());
             return true;
         }
@@ -834,22 +833,6 @@ public class EaRepo {
             }
         }
         return false;
-    }
-
-    public boolean packageMatch(final Package p) {
-        if (p == null) {
-            return false;
-        }
-        if (packagePattern == null) {
-            return true;
-        }
-        final Matcher matcher = packagePattern.matcher(p.GetName());
-        if (matcher.matches()) {
-            LOG.debug("Package match : {}", p.GetName());
-            return true;
-        }
-        LOG.debug("Looking for parent match for {} ", p.GetName());
-        return packageMatch(findParentPackage(p));
     }
 
     /**
@@ -913,6 +896,31 @@ public class EaRepo {
         }
     }
 
+    public boolean packageMatch(final Package p) {
+        if(packageCache.isEmpty()) {
+            return packageMatchNoCache(p);
+        } else {
+            return packageCache.packageMatch(p, packagePattern);
+        }
+    }
+
+    private boolean packageMatchNoCache(final Package p) {
+        if (p == null) {
+            return false;
+        }
+
+        if (packagePattern == null) {
+            return true;
+        }
+        final Matcher matcher = packagePattern.matcher(p.GetName());
+        if (matcher.matches()) {
+            LOG.debug("Package match : {}", p.GetName());
+            return true;
+        }
+        LOG.debug("Looking for parent match for {} ", p.GetName());
+        return packageMatchNoCache(findPackageByIdNoCache(p.GetParentID()));
+    }
+
     public Package findPackageByID(final int packageID) {
         if (packageID == 0) {
             // id=0 means this is the root
@@ -921,9 +929,9 @@ public class EaRepo {
         LOG.info("Looking for package with id {} ", packageID);
         if (packageCache.isEmpty()) {
             ensureRepoIsOpen();
-            return repository.GetPackageByID(packageID);
+            return findPackageByIdNoCache(packageID);
         } else {
-            final EaPackage eaPackage = packageCache.getById(packageID);
+            final EaPackage eaPackage = packageCache.findById(packageID);
             LOG.info("Found package in cache {} ", eaPackage != null ? eaPackage.getName() : "not found...");
             return eaPackage != null ? eaPackage.unwrap() : null;
         }
@@ -931,14 +939,6 @@ public class EaRepo {
 
     public Package findPackageByIdNoCache(final int packageId) {
         return repository.GetPackageByID(packageId);
-    }
-
-    public Package findParentPackage(final Package pack) {
-        if (pack == null || pack.GetParentID() == 0) {
-            return null;
-        }
-        final int key = pack.GetParentID();
-        return findPackageByID(key);
     }
 
     /**
@@ -1031,7 +1031,6 @@ public class EaRepo {
      * @param object
      * @param name
      * @param value
-     *
      */
     public void setAttributeValue(final Element object, final String name, final String value) {
         ensureRepoIsOpen();

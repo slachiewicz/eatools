@@ -1,0 +1,9 @@
+ EaPackage{name='Elhub Architecture', id=1334, parentId=0}
+ EaPackage{name='Business Architecture', id=1353, parentId=1334}
+ EaPackage{name='User Roles', id=616, parentId=1353}
+ EaPackage{name='Business Processes', id=997, parentId=1353}
+ EaPackage{name='BRS-NO-101 Start of supply - change of supplier', id=998, parentId=997}
+ EaPackage{name='BRS-NO-102 Start of supply - move in - in the future', id=999, parentId=997}
+ EaPackage{name='BRS-NO-103 Start of supply - move in - back in time', id=1000, parentId=997}
+ EaPackage{name='BRS-NO-104 Change of Supplier from last resort', id=1001, parentId=997}
+ EaPackage{name='BRS-NO-111 Rollback - start of supply', id=1002, parentId=997}

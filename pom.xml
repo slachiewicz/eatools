@@ -127,6 +127,12 @@
             <version>1.6.5</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>no.bouvet.ohs</groupId>
+            <artifactId>dot</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <properties>
@@ -173,7 +179,7 @@
                 <version>2.6</version>
                 <configuration>
                     <!--<excludes>-->
-                        <!--<exclude>**/logback.xml</exclude>-->
+                    <!--<exclude>**/logback.xml</exclude>-->
                     <!--</excludes>-->
                 </configuration>
             </plugin>
@@ -191,10 +197,10 @@
                     <appendAssemblyId>false</appendAssemblyId>
 
                     <!--<filters>-->
-                        <!--<filter>src/assembly/filter.properties</filter>-->
+                    <!--<filter>src/assembly/filter.properties</filter>-->
                     <!--</filters>-->
                     <!--<descriptors>-->
-                        <!--<descriptor>src/assembly/distribution.xml</descriptor>-->
+                    <!--<descriptor>src/assembly/distribution.xml</descriptor>-->
                     <!--</descriptors>-->
 
                     <archive>
@@ -204,7 +210,7 @@
                             <!--<addClasspath>true</addClasspath>-->
                         </manifest>
                         <!--<manifestEntries>-->
-                            <!--<mode>development</mode>-->
+                        <!--<mode>development</mode>-->
                         <!--</manifestEntries>-->
 
                     </archive>
@@ -264,10 +270,10 @@
     </build>
 
     <!--<pluginRepositories>-->
-        <!--<pluginRepository>-->
-            <!--<id>onejar-maven-plugin.googlecode.com</id>-->
-            <!--<url>http://onejar-maven-plugin.googlecode.com/svn/mavenrepo</url>-->
-        <!--</pluginRepository>-->
+    <!--<pluginRepository>-->
+    <!--<id>onejar-maven-plugin.googlecode.com</id>-->
+    <!--<url>http://onejar-maven-plugin.googlecode.com/svn/mavenrepo</url>-->
+    <!--</pluginRepository>-->
     <!--</pluginRepositories>-->
 
 </project>
