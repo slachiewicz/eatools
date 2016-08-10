@@ -1,8 +1,10 @@
 package no.eatools.util;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -56,7 +58,7 @@ public class PackageCache {
         return entries;
     }
 
-    public boolean isDescendantOf(final EaPackage parent, final EaPackage descendant, final boolean recursive) {
+    private boolean isDescendantOf(final EaPackage parent, final EaPackage descendant, final boolean recursive) {
         if (parent == null || descendant == null) {
             return false;
         }
@@ -206,6 +208,33 @@ public class PackageCache {
             if (packageMatch(candidate.unwrap(), packagePattern)) {
                 return candidate;
             }
+        }
+        return null;
+    }
+
+    /**
+     * Find a package with given hierarchical name and where parent matches the given package pattern.
+     *
+     * @param rootPkg
+     * @param nameHierarchy hierarchical name, e.g. "A->subPack->child"
+     * @param packagePattern
+     * @return
+     */
+    public EaPackage findPackageByHierarchicalName(final EaPackage rootPkg, final String nameHierarchy, final Pattern packagePattern) {
+
+        final LinkedList<String> hier = new LinkedList<>(Arrays.asList(nameHierarchy.split("->")));
+
+        return findPackage(hier, rootPkg, packagePattern);
+    }
+
+    private EaPackage findPackage(final LinkedList<String> hier, final EaPackage rootPkg, final Pattern packagePattern) {
+        if (hier.isEmpty()) {
+            return rootPkg;
+        }
+        final String child = hier.pollFirst();
+        final EaPackage pack = findPackageByName(rootPkg, child, packagePattern, true);
+        if(pack != null) {
+            return findPackage(hier, pack, packagePattern);
         }
         return null;
     }

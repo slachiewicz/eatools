@@ -101,7 +101,7 @@ public class PackageCacheTest {
         final Package root = pkgMap.get(1334);
 
         new Dotter<Package, Integer>("packagesC.dot")
-                .dotItWithChildrenWithIterator(newArrayList(pkgMap.get(1334)), p -> p.GetPackages()
+                .dotItWithChildrenWithIterator(newArrayList(root), p -> p.GetPackages()
                                                                                      .iterator());
 
 //        new Dotter<Package, Integer>("packagesC.dot")
@@ -156,6 +156,10 @@ public class PackageCacheTest {
     }
 
     private void logAncestorTree(final EaPackage pkg) {
+        if(pkg == null) {
+            LOG.info("Tree is empty");
+            return;
+        }
         final StringJoiner sj = new StringJoiner("->\n").add(pkg.toString());
         int parentId = pkg.getParentId();
         while (parentId > 0) {
@@ -164,5 +168,56 @@ public class PackageCacheTest {
             parentId = parentPkg.getParentId();
         }
         LOG.info(sj.toString());
+    }
+
+    @Test
+    public void testFindPackageByHierarcicalName() throws Exception {
+        EaPackage mimLogical = subject.findPackageByHierarchicalName(subject.findById(1334), "MIM->Logical", Pattern.compile("Elhub.*"));
+        logAncestorTree(mimLogical);
+        assertEquals("Logical", mimLogical.getName());
+        assertEquals("MIM", mimLogical.getParent().getName());
+
+        EaPackage eimLogical = subject.findPackageByHierarchicalName(subject.findById(1334), "EIM->Logical", Pattern.compile("Elhub.*"));
+        logAncestorTree(eimLogical);
+        assertEquals("Logical", eimLogical.getName());
+        assertEquals("EIM", eimLogical.getParent().getName());
+
+        eimLogical = subject.findPackageByHierarchicalName(subject.findById(1334), "Information Architecture->EIM->Logical", Pattern.compile("Elhub.*"));
+        logAncestorTree(eimLogical);
+        assertEquals("Logical", eimLogical.getName());
+        assertEquals("EIM", eimLogical.getParent().getName());
+        assertEquals("Information Architecture", eimLogical.getParent().getParent().getName());
+
+        assertNotEquals(mimLogical.getId(), eimLogical.getId());
+
+        EaPackage rubbish = subject.findPackageByHierarchicalName(subject.findById(1334), "MIM->Logical->rubbish", Pattern.compile("Elhub.*"));
+        assertNull(rubbish);
+
+        rubbish = subject.findPackageByHierarchicalName(subject.findById(1334), "rubbish->MIM->Logical", Pattern.compile("Elhub.*"));
+        assertNull(rubbish);
+
+        rubbish = subject.findPackageByHierarchicalName(subject.findById(1334), "", Pattern.compile("Elhub.*"));
+        assertNull(rubbish);
+
+        rubbish = subject.findPackageByHierarchicalName(subject.findById(1334), "  ", Pattern.compile("Elhub.*"));
+        assertNull(rubbish);
+
+        rubbish = subject.findPackageByHierarchicalName(subject.findById(1334), "->", Pattern.compile("Elhub.*"));
+        assertEquals(1334, rubbish.getId()); // returns root
+
+        rubbish = subject.findPackageByHierarchicalName(subject.findById(1334), "EIM->", Pattern.compile("Elhub.*"));
+        assertEquals("EIM", rubbish.getName());
+
+        rubbish = subject.findPackageByHierarchicalName(subject.findById(1334), "EIM", Pattern.compile("Elhub.*"));
+        assertEquals("EIM", rubbish.getName());
+
+        rubbish = subject.findPackageByHierarchicalName(subject.findById(1334), "->EIM", Pattern.compile("Elhub.*"));
+        assertNull(rubbish);
+
+        rubbish = subject.findPackageByHierarchicalName(subject.findById(1334), " ->EIM ", Pattern.compile("Elhub.*"));
+        assertNull(rubbish);
+
+        rubbish = subject.findPackageByHierarchicalName(subject.findById(1334), "MIM->Logical", Pattern.compile("Elhux.*"));
+        assertNull(rubbish);
     }
 }

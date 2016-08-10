@@ -1132,7 +1132,8 @@ public class EaRepo {
     public EaPackage populatePackageCache(final String elementCreationPackage) {
         LOG.info("Finding local root [{}]", elementCreationPackage);
         packageCache.populate(this, getRootPackage(), getRootPackage());
-        final EaPackage localRoot = findPackageByName(elementCreationPackage, true);
+//        final EaPackage localRoot = findPackageByName(elementCreationPackage, true);
+        final EaPackage localRoot = packageCache.findPackageByHierarchicalName(getRootPackage(), elementCreationPackage, packagePattern);
         LOG.info("Found local root {}", localRoot);
 //        packageCache.populate(this, localRoot, getRootPackage());
         return localRoot;
