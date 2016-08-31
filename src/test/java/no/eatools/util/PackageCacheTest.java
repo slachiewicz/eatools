@@ -219,5 +219,11 @@ public class PackageCacheTest {
 
         rubbish = subject.findPackageByHierarchicalName(subject.findById(1334), "MIM->Logical", Pattern.compile("Elhux.*"));
         assertNull(rubbish);
+
+
+        eimLogical = subject.findPackageByHierarchicalName(subject.findById(1334), "EIM->Logical", Pattern.compile("Logical"));
+        logAncestorTree(eimLogical);
+        assertEquals("Logical", eimLogical.getName());
+        assertEquals("EIM", eimLogical.getParent().getName());
     }
 }

@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import no.bouvet.ohs.args4j.CliApp;
 import no.bouvet.ohs.args4j.HelpProducer;
@@ -14,6 +15,7 @@ import no.bouvet.ohs.jops.PropertyMap;
 import no.eatools.util.EaApplicationProperties;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 import org.slf4j.Logger;
@@ -38,7 +40,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             "Verify that the connect string in the ea.application.properties file is the same as\n" +
             "the connect string that you can find in Enterprise Architect via the File->Open Project dialog";
 
-    @Option(name = "-r", usage = "create relationships of package", metaVar = "package")
+    @Option(name = "-r", usage = "create relationships of package(s)", metaVar = "package")
     private String pack = "";
 
     @Option(name = "-n", usage = "create url for result file only")
@@ -47,7 +49,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     @Option(name = "-np", usage = "create url from nodePath ", metaVar = "Node Path as exported from EA")
     private String nodePath = "";
 
-    @Option(name = "-e", usage = "create file with attribute entries", metaVar = "package to generate elements from")
+    @Option(name = "-e", usage = "create file with attribute entries", metaVar = "package(s) to generate elements from")
     private String elementCreationPackage = "";
 
     @Option(name = "-p", usage = "Property override [property]=[new value],... ", metaVar = "list of key, value pairs")
@@ -69,10 +71,10 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             "values to add")
     private List<String> taggedValues = new ArrayList<>();
 
-    @Option(name = "-cl", usage = "List all components recursively in given package", metaVar = "Package root")
+    @Option(name = "-cl", usage = "List all components recursively in given package(s)", metaVar = "Package root")
     private String packageForList = "";
 
-    @Option(name = "-ad", usage = "Auto generate diagrams for elemnts in given package", metaVar = "Package root")
+    @Option(name = "-ad", usage = "Auto generate diagrams for elements in given package(s) recursively", metaVar = "Package root")
     private String packageForAutoDiagrams = "";
 
 //    @Argument(metaVar = PROPERTY_FILE, usage = "property file. If omitted standard file is looked for ", index = 0, required = true)
@@ -96,7 +98,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         } finally {
             eaDiagramGenerator.stopProgress();
             final EaRepo repos = eaDiagramGenerator.eaRepo;
-            if(repos != null) {
+            if (repos != null) {
                 repos.close();
             }
         }
@@ -130,10 +132,12 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
                           .forEach(System.out::println);
             return;
         }
-        final List<String> allProperties = Arrays.asList(listAllProperties().toString().split(","));
+        final List<String> allProperties = Arrays.asList(listAllProperties().toString()
+                                                                            .split(","));
         allProperties.sort(String::compareTo);
 
-        LOG.info("Using properties" + allProperties.toString().replaceAll(",", "\n"));
+        LOG.info("Using properties" + allProperties.toString()
+                                                   .replaceAll(",", "\n"));
         if (isNotBlank(nodePath)) {
             final EaDiagram eaDiagram = eaRepo.findDiagramByGUID(nodePath);
             String urlForNode = nodePathToUrl(nodePath);
@@ -164,16 +168,20 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             if (isBlank(pack)) {
                 usageHelper.terminateWithHelp(-2, "No package to list elements in");
             }
-            final EaPackage eaPackage = new EaPackage(pack, eaRepo);
-            eaPackage.listElementProperties();
+            for (String aPackage : toListOfPackages(pack)) {
+                final EaPackage eaPackage = new EaPackage(aPackage, eaRepo);
+                eaPackage.listElementProperties();
+            }
             return;
         }
 
         if (isNotBlank(packageForList)) {
-            System.out.println("Listing components in package: [" + packageForList + "]");
-            final EaPackage eaPackage = new EaPackage(packageForList, eaRepo);
-            eaPackage.listElements(EaMetaType.COMPONENT);
-            eaPackage.listElements(EaMetaType.INTERFACE);
+            for (String pack : toListOfPackages(packageForList)) {
+                System.out.println("Listing components in package: [" + pack + "]");
+                final EaPackage eaPackage = new EaPackage(pack, eaRepo);
+                eaPackage.listElements(EaMetaType.COMPONENT);
+                eaPackage.listElements(EaMetaType.INTERFACE);
+            }
             return;
         }
 
@@ -192,8 +200,10 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         }
 
         if (isNotBlank(pack)) {
-            final EaPackage eaPackage = new EaPackage(pack, eaRepo);
-            eaPackage.generatePackageRelationships();
+            for (String aPackage : toListOfPackages(pack)) {
+                final EaPackage eaPackage = new EaPackage(aPackage, eaRepo);
+                eaPackage.generatePackageRelationships();
+            }
             return;
         }
         if (isNotBlank(elementCreationPackage)) {
@@ -240,15 +250,22 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     }
 
     private void createElementFile() {
-        final EaPackage eaPackage = eaRepo.populatePackageCache(elementCreationPackage);
-        if(eaPackage != null) {
-            eaPackage.generateDDEntryFile();
+        for (String pack : toListOfPackages(elementCreationPackage)) {
+            final EaPackage eaPackage = eaRepo.populatePackageCache(pack);
+            if (eaPackage != null) {
+                eaPackage.generateDDEntryFile();
+            }
         }
     }
 
     private void createAutoDiagrams() {
-        final EaPackage eaPackage = eaRepo.populatePackageCache(packageForAutoDiagrams);
-        eaPackage.generateAutoDiagrams();
+        for (String pack : toListOfPackages(packageForAutoDiagrams)) {
+            LOG.info("Creating AUTO diagrams for package [{}]", pack);
+            final EaPackage eaPackage = eaRepo.populatePackageCache(pack);
+            if (eaPackage != null) {
+                eaPackage.generateAutoDiagramsRecursively();
+            }
+        }
     }
 
     private void generateSpecificDiagram() {
@@ -259,6 +276,15 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         } else {
             LOG.info("diagram '{}' not found", diagram);
         }
+    }
+
+    List<String> toListOfPackages(String packageList) {
+        return Arrays.asList(StringUtils.trimToEmpty(packageList)
+                                        .split(","))
+                     .stream()
+                     .filter(StringUtils::isNotBlank)
+                     .map(StringUtils::trimToEmpty)
+                     .collect(Collectors.toList());
     }
 
 //    private void generateReposHtml() {

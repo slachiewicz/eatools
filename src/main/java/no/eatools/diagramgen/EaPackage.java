@@ -431,10 +431,18 @@ public class EaPackage {
                     .add(element.GetAuthor());
     }
 
-    public void generateAutoDiagrams() {
+    public void generateAutoDiagramsRecursively() {
         for (final Element element : me.GetElements()) {
             final EaDiagram eaDiagram = repos.createOrUpdateStandardDiagram(new EaElement(element, repos));
+            LOG.info("Created/updated [{}] status [{}]", eaDiagram.getName(), eaDiagram.getStatus());
         }
+        for (final EaPackage eaPackage : children()) {
+            eaPackage.generateAutoDiagramsRecursively();
+        }
+    }
+
+    public List<EaPackage> children() {
+        return repos.findPackages(this);
     }
 
     /**

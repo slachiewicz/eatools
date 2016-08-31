@@ -51,35 +51,35 @@ public enum EaApplicationProperties implements EnumProperty {
     @Description(text = "The loglevel when running the utility.", defaultValue = "INFO")
     EA_LOGLEVEL(),
 
-    @Description(text = "Name or diagramId (internal EA number) of diagram to generate. I ")
+    @Description(text = "Name or diagramId (internal EA number) of diagram to generate.")
     EA_DIAGRAM_TO_GENERATE(),
 
     @Description(text = "Which file to place the url of the generated diagram. This file may be used for scripting after generation or as a "
             + "debugging aid.")
     EA_DIAGRAM_URL_FILE(),
 
-    @Description(text = "Only include packages which matches given regexp")
+    @Description(text = "Only include packages which matches given regexp. Applies to packages above given specified export package.")
     EA_PACKAGE_FILTER(),
 
-    @Description(text = "Only include elements which matches given regexp")
+    @Description(text = "Only include elements which matches given regexp.")
     EA_ELEMENT_FILTER(),
 
-    @Description(text = "Only include elements has a stereotype mathcing given regexp")
+    @Description(text = "Only include elements has a stereotype matching given regexp.")
     EA_STEREOTYPE_FILTER(),
 
-    @Description(text = "Top level package for commands that require a starting package")
+    @Description(text = "Top level package for commands that require a starting package.")
     EA_TOP_LEVEL_PACKAGE("Must be set"),
 
-    @Description(text = "Username for EA repos")
+    @Description(text = "Username for EA repos.")
     EA_USERNAME(),
 
-    @Description(text = "Password for EA repos")
+    @Description(text = "Password for EA repos.")
     EA_PASSWORD(),
 
-    @Description(text = "If present, add diagram version as part of diagram filename")
+    @Description(text = "If present, add diagram version as part of diagram filename.")
     EA_ADD_VERSION(),
 
-    @Description(text = "For -m option, generate HTML to this path")
+    @Description(text = "For -m option, generate HTML to this path.")
     EA_HTML_OUTPUT(),
 
     @Description(text = "Base URL for shared store of diagram files. Used for generating list of files. E.g. 'http://images.mysite.org/'")

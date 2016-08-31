@@ -1055,9 +1055,11 @@ public class EaRepo {
             eaDiagram = new EaDiagram(this, diagram, getPackagePath(pack));
             eaDiagram.setParentId(centralElement.getId());
             LOG.info("Created diagram {} below {}", diagramName, centralElement.getName());
+            eaDiagram.setStatus(EaDiagram.Status.NEW);
         } else {
             eaDiagram.removeAllElements();
             LOG.info("Removed elements from {}", eaDiagram.getName());
+            eaDiagram.setStatus(EaDiagram.Status.UPDATED);
         }
         final EaDiagram finalDiagram = eaDiagram;
         finalDiagram.hideDetails();
@@ -1131,7 +1133,9 @@ public class EaRepo {
 
     public EaPackage populatePackageCache(final String elementCreationPackage) {
         LOG.info("Finding local root [{}]", elementCreationPackage);
-        packageCache.populate(this, getRootPackage(), getRootPackage());
+        if(packageCache.isEmpty()) {
+            packageCache.populate(this, getRootPackage(), getRootPackage());
+        }
 //        final EaPackage localRoot = findPackageByName(elementCreationPackage, true);
         final EaPackage localRoot = packageCache.findPackageByHierarchicalName(getRootPackage(), elementCreationPackage, packagePattern);
         LOG.info("Found local root {}", localRoot);
@@ -1139,6 +1143,11 @@ public class EaRepo {
         return localRoot;
     }
 
+    /**
+     * Find all children packages of pkg
+     * @param pkg
+     * @return
+     */
     public List<EaPackage> findPackages(final EaPackage pkg) {
         final List<EaPackage> result = new ArrayList<>();
         if (packageCache.isEmpty()) {

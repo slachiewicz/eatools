@@ -39,6 +39,7 @@ public class EaDiagram {
     private final int diagramID;
     private final DiagramNameMode diagramNameMode;
     private final Map<Integer, EaElement> diagramElements = new HashMap<>();
+    private Status status = Status.UNKNOWN;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
@@ -72,6 +73,17 @@ public class EaDiagram {
 
     public String getGuid() {
         return eaDiagram.GetDiagramGUID();
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public enum Status {
+        NEW,
+        UPDATED,
+        DELETED,
+        UNKNOWN
     }
 
 // -------------------------- OTHER METHODS --------------------------
@@ -250,5 +262,9 @@ public class EaDiagram {
 
     public void update() {
         eaDiagram.Update();
+    }
+
+    public void setStatus(Status status) {
+        this.status = status == null? Status.UNKNOWN : status;
     }
 }
