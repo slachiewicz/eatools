@@ -1,0 +1,10 @@
+Catalog->Components
+Catalog->Architectural Patterns
+Catalog->Database
+Calalog->Interfaces
+Catalog->Layers
+Catalog->Services
+Catalog->Sub-systems
+Catalog->Systems
+Catalog->Zones
+

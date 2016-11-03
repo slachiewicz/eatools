@@ -331,7 +331,7 @@ public class EaPackage {
                 oldValues.AddNew(taggedValue, "");
                 element.Update();
                 element.Refresh();
-                System.out.println("************** Set tag " + taggedValue + " for element " + element.GetName());
+                LOG.info("************** Set tag " + taggedValue + " for element " + element.GetName());
             }
         }
 //        element.Update();
@@ -533,5 +533,16 @@ public class EaPackage {
         result = 31 * result + id;
         result = 31 * result + parentId;
         return result;
+    }
+
+    public Boolean createBaseline(String versionNo, String notes) {
+        return repos.createBaseline(me.GetPackageGUID(), versionNo, notes);
+    }
+
+    public String toHierarchicalString() {
+        if (parent != null) {
+            return parent.toHierarchicalString() + "->" + name;
+        }
+        return name;
     }
 }

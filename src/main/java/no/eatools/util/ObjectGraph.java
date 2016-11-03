@@ -14,9 +14,16 @@ import org.sparx.Collection;
  * @author ohs
  */
 public class ObjectGraph {
-    private static final transient Logger LOG = LoggerFactory.getLogger(ObjectGraph.class);
+// ------------------------------ FIELDS ------------------------------
 
-    private final static Set<Class> terminatingClasses = new HashSet<Class>();
+    private static final Logger LOG = LoggerFactory.getLogger(ObjectGraph.class);
+
+    private final static Set<Class> terminatingClasses = new HashSet<>();
+
+    Set<Object> dependents = new HashSet<>();
+
+// -------------------------- STATIC METHODS --------------------------
+
     static {
         terminatingClasses.add(String.class);
         terminatingClasses.add(Integer.class);
@@ -27,7 +34,7 @@ public class ObjectGraph {
         terminatingClasses.add(Byte.class);
     }
 
-    Set<Object> dependents = new HashSet<Object>();
+// -------------------------- OTHER METHODS --------------------------
 
     public String createDotGraph(final Object obj) {
         final StringBuilder sb = new StringBuilder();
@@ -65,7 +72,7 @@ public class ObjectGraph {
                 try {
                     prop = method.invoke(obj, new Object[]{});
                 } catch (final Exception e) {
-                    LOG.debug("Skipped " + methodName);
+                    LOG.debug("Skipped [{}] because [{}]", methodName, e.getMessage());
                 }
                 sb.append(methodName).append("=");
                 recurseTheGraph(sb, prop);

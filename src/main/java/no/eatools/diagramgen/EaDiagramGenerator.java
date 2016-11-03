@@ -1,6 +1,9 @@
 package no.eatools.diagramgen;
 
 import java.io.File;
+import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -14,6 +17,7 @@ import no.bouvet.ohs.jops.EnumProperty;
 import no.bouvet.ohs.jops.PropertyMap;
 import no.eatools.util.EaApplicationProperties;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.args4j.Argument;
@@ -52,6 +56,9 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     @Option(name = "-e", usage = "create file with attribute entries", metaVar = "package(s) to generate elements from")
     private String elementCreationPackage = "";
 
+    @Option(name = "-b", usage = "create baseline for packages in the -e option", metaVar = "<versionNo>, {<Notes>}")
+    private String baseline = "";
+
     @Option(name = "-p", usage = "Property override [property]=[new value],... ", metaVar = "list of key, value pairs")
     private PropertyMap<EaApplicationProperties> propertyMap = getThePropertyMap();
 
@@ -73,6 +80,9 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
 
     @Option(name = "-cl", usage = "List all components recursively in given package(s)", metaVar = "Package root")
     private String packageForList = "";
+
+    @Option(name = "-pl", usage = "List all package with hierarchical names", metaVar = "Package root")
+    private String rootForPackageList = "";
 
     @Option(name = "-ad", usage = "Auto generate diagrams for elements in given package(s) recursively", metaVar = "Package root")
     private String packageForAutoDiagrams = "";
@@ -108,6 +118,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         super(true);
     }
 
+    @Override
     protected void doMain(final String[] args) {
         setDiagram();
         ResourceFinder.findResourceAsStringList(VERSION_FILE)
@@ -168,17 +179,22 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             if (isBlank(pack)) {
                 usageHelper.terminateWithHelp(-2, "No package to list elements in");
             }
-            for (String aPackage : toListOfPackages(pack)) {
+            for (final String aPackage : toListOfPackages(pack)) {
                 final EaPackage eaPackage = new EaPackage(aPackage, eaRepo);
                 eaPackage.listElementProperties();
             }
             return;
         }
 
+        if (isNotBlank(rootForPackageList)) {
+            listAllPackages();
+            return;
+        }
+
         if (isNotBlank(packageForList)) {
-            for (String pack : toListOfPackages(packageForList)) {
-                System.out.println("Listing components in package: [" + pack + "]");
-                final EaPackage eaPackage = new EaPackage(pack, eaRepo);
+            for (final String aPackage : toListOfPackages(packageForList)) {
+                System.out.println("Listing components in package: [" + aPackage + "]");
+                final EaPackage eaPackage = new EaPackage(aPackage, eaRepo);
                 eaPackage.listElements(EaMetaType.COMPONENT);
                 eaPackage.listElements(EaMetaType.INTERFACE);
             }
@@ -200,13 +216,27 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         }
 
         if (isNotBlank(pack)) {
-            for (String aPackage : toListOfPackages(pack)) {
+            for (final String aPackage : toListOfPackages(pack)) {
                 final EaPackage eaPackage = new EaPackage(aPackage, eaRepo);
                 eaPackage.generatePackageRelationships();
             }
             return;
         }
+        if (isNotBlank(baseline)) {
+            elementCreationPackage = possiblyFromFile(elementCreationPackage);
+            if (isBlank(elementCreationPackage)) {
+                System.out.println("No pckages specified");
+                return;
+            }
+            final String[] baselineElms = baseline.split(",");
+            final String notes = ZonedDateTime.now()
+                                              .format(DateTimeFormatter.ISO_DATE_TIME) + (baselineElms.length > 1 ? baselineElms[1] : EMPTY);
+            createBaselines(baselineElms[0], notes);
+            return;
+        }
+
         if (isNotBlank(elementCreationPackage)) {
+            elementCreationPackage = possiblyFromFile(elementCreationPackage);
             createElementFile();
             return;
         }
@@ -229,6 +259,23 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         }
     }
 
+    private String possiblyFromFile(final String elementCreationPackage) {
+        final File packagesFile = new File(elementCreationPackage);
+        if (packagesFile.canRead()) {
+            try {
+                return FileUtils.readLines(packagesFile)
+                                .stream()
+                                .map(org.apache.commons.lang.StringUtils::trimToEmpty)
+                                .filter(l -> !l.startsWith("#"))
+                                .collect(Collectors.joining(","));
+            } catch (final IOException e) {
+                System.out.println("Error reading file " + packagesFile.getAbsolutePath() + " reason: " + e.getMessage());
+                return elementCreationPackage;
+            }
+        }
+        return elementCreationPackage;
+    }
+
     private void setDiagram() {
         if (isBlank(diagram)) {
             diagram = EA_DIAGRAM_TO_GENERATE.value();
@@ -249,8 +296,15 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         }
     }
 
+    private void listAllPackages() {
+        EaPackage rootpkg = eaRepo.populatePackageCache(rootForPackageList);
+        eaRepo.findAllPackages(rootpkg)
+               .stream()
+               .forEach(p-> System.out.println(p.toHierarchicalString()));
+    }
+
     private void createElementFile() {
-        for (String pack : toListOfPackages(elementCreationPackage)) {
+        for (final String pack : toListOfPackages(elementCreationPackage)) {
             final EaPackage eaPackage = eaRepo.populatePackageCache(pack);
             if (eaPackage != null) {
                 eaPackage.generateDDEntryFile();
@@ -258,10 +312,20 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         }
     }
 
-    private void createAutoDiagrams() {
-        for (String pack : toListOfPackages(packageForAutoDiagrams)) {
-            LOG.info("Creating AUTO diagrams for package [{}]", pack);
+    private void createBaselines(final String versionNo, final String notes) {
+        for (final String pack : toListOfPackages(elementCreationPackage)) {
+            LOG.info("Creating baseline version [{}] for package [{}], Note [{}]", versionNo, pack, notes);
             final EaPackage eaPackage = eaRepo.populatePackageCache(pack);
+            if (eaPackage != null) {
+                eaPackage.createBaseline(versionNo, notes);
+            }
+        }
+    }
+
+    private void createAutoDiagrams() {
+        for (final String aPackage : toListOfPackages(packageForAutoDiagrams)) {
+            LOG.info("Creating AUTO diagrams for package [{}]", aPackage);
+            final EaPackage eaPackage = eaRepo.populatePackageCache(aPackage);
             if (eaPackage != null) {
                 eaPackage.generateAutoDiagramsRecursively();
             }
@@ -278,7 +342,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         }
     }
 
-    List<String> toListOfPackages(String packageList) {
+    List<String> toListOfPackages(final String packageList) {
         return Arrays.asList(StringUtils.trimToEmpty(packageList)
                                         .split(","))
                      .stream()

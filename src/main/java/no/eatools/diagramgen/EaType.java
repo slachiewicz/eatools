@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+@SuppressWarnings("squid:S00115")
 public enum EaType {
     Action,
     ActionPin,

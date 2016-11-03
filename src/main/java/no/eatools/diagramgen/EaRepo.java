@@ -172,7 +172,9 @@ public class EaRepo {
 //        }pkg.GetElements()
 
         final EaDiagram diagram = findDiagramInPackage(pkg, diagramName);
-        if (diagram != null) return diagram;
+        if (diagram != null) {
+            return diagram;
+        }
 
         if (recursive) {
 //            packageCache.get()
@@ -243,7 +245,7 @@ public class EaRepo {
         return new ArrayList<>(result);
     }
 
-    //todo use pacjage cache
+    //todo use package cache
     private void findMetaTypesInPackage(final EaPackage pkg, final Set<String> result) {
         for (final Element element : pkg.unwrap()
                                         .GetElements()) {
@@ -311,7 +313,7 @@ public class EaRepo {
             return null;
         }
         ensureRepoIsOpen();
-        return repository.GetElementByID((elementId));
+        return repository.GetElementByID(elementId);
     }
 
     /**
@@ -416,14 +418,9 @@ public class EaRepo {
      */
     public Element findOrCreateComponentInPackage(final Package definedPackage, final String componentName) {
         ensureRepoIsOpen();
-
-        final Optional<Element> candidate = findNamedElementOnList(findComponentsInPackage(definedPackage), componentName);
-
-        if (candidate.isPresent()) {
-            return candidate.get();
-        }
-
-        return addElementInPackage(definedPackage, componentName, EaMetaType.COMPONENT, null);
+        return findNamedElementOnList(findComponentsInPackage(definedPackage), componentName).orElse(addElementInPackage(definedPackage,
+                                                                                                                         componentName, EaMetaType
+                                                                                                                                 .COMPONENT, null));
     }
 
     /**
@@ -670,9 +667,11 @@ public class EaRepo {
     }
 
     private EaPackage findPackageByNameNoCache(final String theName, final EaPackage rootPkg, final boolean recursive) {
-        for (final Package pkg : rootPkg.unwrap().GetPackages()) {
+        for (final Package pkg : rootPkg.unwrap()
+                                        .GetPackages()) {
             final EaPackage child = new EaPackage(pkg, this, rootPkg);
-            if (pkg.GetName().equals(theName) && packageMatchNoCache(pkg)) {
+            if (pkg.GetName()
+                   .equals(theName) && packageMatchNoCache(pkg)) {
                 return child;
             }
             if (recursive) {
@@ -897,7 +896,7 @@ public class EaRepo {
     }
 
     public boolean packageMatch(final Package p) {
-        if(packageCache.isEmpty()) {
+        if (packageCache.isEmpty()) {
             return packageMatchNoCache(p);
         } else {
             return packageCache.packageMatch(p, packagePattern);
@@ -1133,18 +1132,20 @@ public class EaRepo {
 
     public EaPackage populatePackageCache(final String elementCreationPackage) {
         LOG.info("Finding local root [{}]", elementCreationPackage);
-        if(packageCache.isEmpty()) {
+        if (packageCache.isEmpty()) {
             packageCache.populate(this, getRootPackage(), getRootPackage());
         }
 //        final EaPackage localRoot = findPackageByName(elementCreationPackage, true);
         final EaPackage localRoot = packageCache.findPackageByHierarchicalName(getRootPackage(), elementCreationPackage, packagePattern);
-        LOG.info("Found local root {}", localRoot);
+        LOG.info("Found local root [{}] for [{}] from [{}] using pattern [{}]", localRoot, elementCreationPackage, getRootPackage()
+                .toHierarchicalString(), packagePattern);
 //        packageCache.populate(this, localRoot, getRootPackage());
         return localRoot;
     }
 
     /**
-     * Find all children packages of pkg
+     * Find all immediate children packages of pkg
+     *
      * @param pkg
      * @return
      */
@@ -1158,5 +1159,22 @@ public class EaRepo {
             return result;
         }
         return packageCache.findChildrenOf(pkg);
+    }
+
+    /**
+     * Find all descendants of pkg
+     *
+     * @param pkg
+     * @return
+     */
+    public List<EaPackage> findAllPackages(final EaPackage pkg) {
+        if (packageCache.isEmpty()) {
+            throw new UnsupportedOperationException("Cache is not populated");
+        }
+        return packageCache.findFamilyOf(pkg);
+    }
+
+    public Boolean createBaseline(String packageGuid, String versionNo, String notes) {
+        return project.CreateBaseline(packageGuid, versionNo, notes);
     }
 }

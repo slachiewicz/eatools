@@ -17,6 +17,7 @@ public enum EaLinkDirection {
      * "Source -> Destination"
      */
     SOURCE_DESTINATION {
+        @Override
         public String toString() {
             return super.toString().replace(Camel.HYPHEN, SPACED_RIGHT_ARROW);
         }
@@ -26,6 +27,7 @@ public enum EaLinkDirection {
      * "Destination -> Source"
      */
     DESTINATION_SOURCE {
+        @Override
         public String toString() {
             return super.toString().replace(Camel.HYPHEN, SPACED_RIGHT_ARROW);
         }
@@ -49,6 +51,7 @@ public enum EaLinkDirection {
         return Enums.valueOf(EaLinkDirection.class, Camel.toConstantString(metaType), UNSPECIFIED);
     }
 
+    @Override
     public String toString() {
         return Camel.toHyphenatedCamelCaseString(super.toString());
     }

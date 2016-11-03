@@ -1,7 +1,6 @@
 package no.eatools.util;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -24,7 +23,7 @@ import static org.apache.commons.lang3.StringUtils.*;
  * @author ohs
  */
 public class PackageCache {
-    private static final transient Logger LOG = LoggerFactory.getLogger(PackageCache.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PackageCache.class);
     // Package ID -> package
     private final Map<Integer, EaPackage> theCache = new HashMap<>();
 
@@ -151,7 +150,7 @@ public class PackageCache {
      * @param ancestor
      * @return
      */
-    public Collection<EaPackage> findFamilyOf(final EaPackage ancestor) {
+    public List<EaPackage> findFamilyOf(final EaPackage ancestor) {
         return findDescendantsOf(ancestor, true);
     }
 
@@ -217,10 +216,14 @@ public class PackageCache {
      *
      * @param rootPkg
      * @param nameHierarchy hierarchical name, e.g. "A->subPack->child"
-     * @param packagePattern
+     * @param packagePattern matching pattern agains any parent package.
      * @return
      */
     public EaPackage findPackageByHierarchicalName(final EaPackage rootPkg, final String nameHierarchy, final Pattern packagePattern) {
+        // root is special
+        if(rootPkg.getName().equals(nameHierarchy)) {
+            return rootPkg;
+        }
 
         final LinkedList<String> hier = new LinkedList<>(Arrays.asList(nameHierarchy.split("->")));
 
@@ -237,5 +240,9 @@ public class PackageCache {
             return findPackage(hier, pack, packagePattern);
         }
         return null;
+    }
+
+    public boolean contains(EaPackage localRoot) {
+        return theCache.containsValue(localRoot);
     }
 }

@@ -9,7 +9,7 @@ package no.eatools;/*
 // ObjectType
 // See http://www.sparxsystems.com/uml_tool_guide/sdk_for_enterprise_architect/objecttypeenum.htm
 // =================================================================================================
-
+@SuppressWarnings("squid:S00115")
 public class EAConstants {
     public static final int otNone = 0;
     public static final int otProject = 1;
@@ -321,4 +321,7 @@ public class EAConstants {
     public static final int mfYellow = 5;
     public static final int mfBlue = 6;
     public static final int mfRed = 7;
+
+    private EAConstants() {
+    }
 }
