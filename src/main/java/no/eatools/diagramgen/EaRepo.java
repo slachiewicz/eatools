@@ -1130,7 +1130,13 @@ public class EaRepo {
                                          .matches();
     }
 
-    public EaPackage populatePackageCache(final String elementCreationPackage) {
+    /**
+     * Ppopulate cache if not already done, then find the packge.
+     *
+     * @param elementCreationPackage
+     * @return
+     */
+    public EaPackage findInPackageCache(final String elementCreationPackage) {
         LOG.info("Finding local root [{}]", elementCreationPackage);
         if (packageCache.isEmpty()) {
             packageCache.populate(this, getRootPackage(), getRootPackage());
@@ -1174,7 +1180,7 @@ public class EaRepo {
         return packageCache.findFamilyOf(pkg);
     }
 
-    public Boolean createBaseline(String packageGuid, String versionNo, String notes) {
+    public Boolean createBaseline(final String packageGuid, final String versionNo, final String notes) {
         return project.CreateBaseline(packageGuid, versionNo, notes);
     }
 }

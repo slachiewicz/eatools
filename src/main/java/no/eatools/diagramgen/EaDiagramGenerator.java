@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import no.bouvet.ohs.args4j.CliApp;
@@ -14,6 +15,7 @@ import no.bouvet.ohs.args4j.HelpProducer;
 import no.bouvet.ohs.args4j.UsageHelper;
 import no.bouvet.ohs.futil.ResourceFinder;
 import no.bouvet.ohs.jops.EnumProperty;
+import no.bouvet.ohs.jops.Enums;
 import no.bouvet.ohs.jops.PropertyMap;
 import no.eatools.util.EaApplicationProperties;
 
@@ -44,26 +46,26 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             "Verify that the connect string in the ea.application.properties file is the same as\n" +
             "the connect string that you can find in Enterprise Architect via the File->Open Project dialog";
 
-    @Option(name = "-r", usage = "create relationships of package(s)", metaVar = "package")
+    @Option(name = "-r", usage = "Create relationships of package(s)", metaVar = "package")
     private String pack = "";
 
-    @Option(name = "-n", usage = "create url for result file only")
+    @Option(name = "-n", usage = "Create url for result file only")
     private boolean urlForFileOnly = false;
 
-    @Option(name = "-np", usage = "create url from nodePath ", metaVar = "Node Path as exported from EA")
+    @Option(name = "-np", usage = "Create url from nodePath ", metaVar = "Node Path as exported from EA")
     private String nodePath = "";
 
-    @Option(name = "-e", usage = "create file with attribute entries", metaVar = "package(s) to generate elements from")
+    @Option(name = "-e", usage = "Create file with attribute entries", metaVar = "package(s) to generate elements from")
     private String elementCreationPackage = "";
 
-    @Option(name = "-b", usage = "create baseline for packages in the -e option", metaVar = "<versionNo>, {<Notes>}")
+    @Option(name = "-b", usage = "Create baseline for packages in the -e option", metaVar = "<versionNo>, {<Notes>}")
     private String baseline = "";
 
     @Option(name = "-p", usage = "Property override [property]=[new value],... ", metaVar = "list of key, value pairs")
     private PropertyMap<EaApplicationProperties> propertyMap = getThePropertyMap();
 
     @Option(name = "-c", usage = "Set connectors on given diagram to type", metaVar = "Connector Type")
-    private Integer connectorType = null;
+    private String connectorType = null;
 
     @Option(name = "-v", usage = "Show version and exit")
     private boolean showVersion = false;
@@ -174,82 +176,54 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         LOG.info("Finished");
     }
 
+    /**
+     * Command switch
+     */
     private void executeTasks() {
         if (list) {
             if (isBlank(pack)) {
                 usageHelper.terminateWithHelp(-2, "No package to list elements in");
             }
-            for (final String aPackage : toListOfPackages(pack)) {
-                final EaPackage eaPackage = new EaPackage(aPackage, eaRepo);
-                eaPackage.listElementProperties();
-            }
+            executeOnPackages(pack, false, EaPackage::listElementProperties, "Listing Element Properties in [{}]");
             return;
         }
-
         if (isNotBlank(rootForPackageList)) {
-            listAllPackages();
+            listAllPackages(rootForPackageList);
             return;
         }
-
         if (isNotBlank(packageForList)) {
-            for (final String aPackage : toListOfPackages(packageForList)) {
-                System.out.println("Listing components in package: [" + aPackage + "]");
-                final EaPackage eaPackage = new EaPackage(aPackage, eaRepo);
-                eaPackage.listElements(EaMetaType.COMPONENT);
-                eaPackage.listElements(EaMetaType.INTERFACE);
-            }
+            listElements(packageForList);
             return;
         }
-
-        if (connectorType != null) {
-            adjustConnectors();
+        if (isNotBlank(connectorType)) {
+            adjustConnectors(connectorType);
         }
-
         if (!taggedValues.isEmpty()) {
-            if (EA_TOP_LEVEL_PACKAGE.exists()) {
-                final EaPackage eaPackage = new EaPackage(EA_TOP_LEVEL_PACKAGE.value(), eaRepo);
-                eaPackage.setTaggedValues(taggedValues);
-                return;
-            } else {
-                usageHelper.terminateWithHelp(-2, EA_TOP_LEVEL_PACKAGE.getMessage());
-            }
+            setTaggedValues(taggedValues);
+            return;
         }
-
         if (isNotBlank(pack)) {
-            for (final String aPackage : toListOfPackages(pack)) {
-                final EaPackage eaPackage = new EaPackage(aPackage, eaRepo);
-                eaPackage.generatePackageRelationships();
-            }
+            executeOnPackages(pack, false, EaPackage::generatePackageRelationships, "Generating relationships for [{}]");
             return;
         }
         if (isNotBlank(baseline)) {
-            elementCreationPackage = possiblyFromFile(elementCreationPackage);
-            if (isBlank(elementCreationPackage)) {
-                System.out.println("No pckages specified");
-                return;
-            }
-            final String[] baselineElms = baseline.split(",");
-            final String notes = ZonedDateTime.now()
-                                              .format(DateTimeFormatter.ISO_DATE_TIME) + (baselineElms.length > 1 ? baselineElms[1] : EMPTY);
-            createBaselines(baselineElms[0], notes);
+            createBaselines(elementCreationPackage, baseline);
             return;
         }
-
         if (isNotBlank(elementCreationPackage)) {
-            elementCreationPackage = possiblyFromFile(elementCreationPackage);
-            createElementFile();
+            executeOnPackages(elementCreationPackage, true, EaPackage::generateDDEntryFile, "Creating DD entry file for [[]]");
             return;
         }
         if (isNotBlank(packageForAutoDiagrams)) {
-            createAutoDiagrams();
+            executeOnPackages(packageForAutoDiagrams, true, EaPackage::generateAutoDiagramsRecursively, "Creating AUTO diagrams for package [{}]");
             return;
         }
-        if (htmlOutputPath != null) {
+        if (isNotBlank(htmlOutputPath)) {
             eaRepo.generateHtml(htmlOutputPath);
             return;
         }
         if (isNotBlank(diagram)) {
-            generateSpecificDiagram();
+            generateSpecificDiagram(diagram);
         } else {
             // generate all diagrams
             final int count = eaRepo.generateAllDiagramsFromRoot();
@@ -257,6 +231,35 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             LOG.info(msg);
             System.out.println(msg);
         }
+    }
+
+    private void listElements(final String packages) {
+        for (final String aPackage : toListOfPackages(packages)) {
+            System.out.println("Listing components in package: [" + aPackage + "]");
+            final EaPackage eaPackage = new EaPackage(aPackage, eaRepo);
+            eaPackage.listElements(EaMetaType.COMPONENT);
+            eaPackage.listElements(EaMetaType.INTERFACE);
+        }
+    }
+
+    private void setTaggedValues(final List<String> taggedValues) {
+        if (EA_TOP_LEVEL_PACKAGE.exists()) {
+            final EaPackage eaPackage = new EaPackage(EA_TOP_LEVEL_PACKAGE.value(), eaRepo);
+            eaPackage.setTaggedValues(taggedValues);
+        } else {
+            usageHelper.terminateWithHelp(-2, EA_TOP_LEVEL_PACKAGE.getMessage());
+        }
+    }
+
+    private void createBaselines(final String packages, final String baseline) {
+        if (isBlank(packages)) {
+            System.out.println("No packages specified");
+            return;
+        }
+        final String[] baselineElms = baseline.split(",");
+        final String notes = ZonedDateTime.now()
+                                          .format(DateTimeFormatter.ISO_DATE_TIME) + (baselineElms.length > 1 ? baselineElms[1] : EMPTY);
+        createBaselines(baselineElms[0], notes, packages);
     }
 
     private String possiblyFromFile(final String elementCreationPackage) {
@@ -289,76 +292,69 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         return result;
     }
 
-    private void adjustConnectors() {
+    private void adjustConnectors(final String connectorType) {
+        if(! Enums.hasValueFor(EaConnectorStyle.class, connectorType)) {
+            usageHelper.terminateWithHelp(-2, "Unknown connector type [" + connectorType + "]");
+        }
         final EaDiagram eaDiagram = EaDiagram.findEaDiagram(eaRepo, diagram);
         if (eaDiagram != null) {
-            eaDiagram.setAllConnectorsToStyle(0);
+            eaDiagram.setAllConnectorsToStyle(Enums.fromString(EaConnectorStyle.class, connectorType, Enums.CaseConversion.TO_UPPER));
         }
     }
 
-    private void listAllPackages() {
-        EaPackage rootpkg = eaRepo.populatePackageCache(rootForPackageList);
+    private void listAllPackages(final String rootForPackageList) {
+        final EaPackage rootpkg = eaRepo.findInPackageCache(rootForPackageList);
         eaRepo.findAllPackages(rootpkg)
-               .stream()
-               .forEach(p-> System.out.println(p.toHierarchicalString()));
+              .stream()
+              .forEach(p -> System.out.println(p.toHierarchicalString()));
     }
 
-    private void createElementFile() {
+    private void createBaselines(final String versionNo, final String notes, final String elementCreationPackage) {
+//        executeOnPackages(packageForAutoDiagrams, EaPackage::createBaseline(versionNo, notes), "Creating baseline for package [{}], version [{}],
+//  Note [{}]", versionNo, notes);
         for (final String pack : toListOfPackages(elementCreationPackage)) {
-            final EaPackage eaPackage = eaRepo.populatePackageCache(pack);
-            if (eaPackage != null) {
-                eaPackage.generateDDEntryFile();
-            }
-        }
-    }
-
-    private void createBaselines(final String versionNo, final String notes) {
-        for (final String pack : toListOfPackages(elementCreationPackage)) {
-            LOG.info("Creating baseline version [{}] for package [{}], Note [{}]", versionNo, pack, notes);
-            final EaPackage eaPackage = eaRepo.populatePackageCache(pack);
+            LOG.info("Creating baseline for package [{}], version [{}],  Note [{}]", versionNo, pack, notes);
+            final EaPackage eaPackage = eaRepo.findInPackageCache(pack);
             if (eaPackage != null) {
                 eaPackage.createBaseline(versionNo, notes);
             }
         }
     }
 
-    private void createAutoDiagrams() {
-        for (final String aPackage : toListOfPackages(packageForAutoDiagrams)) {
-            LOG.info("Creating AUTO diagrams for package [{}]", aPackage);
-            final EaPackage eaPackage = eaRepo.populatePackageCache(aPackage);
-            if (eaPackage != null) {
-                eaPackage.generateAutoDiagramsRecursively();
-            }
-        }
+
+    private void executeOnPackages(final String packageForAutoDiagrams, final boolean useCache, final Consumer<EaPackage> function, final String msg, final Object...
+            additionalLogParams) {
+        toListOfPackages(packageForAutoDiagrams).stream()
+                                                .map(p -> {
+                                                    if (useCache) {
+                                                        return eaRepo.findInPackageCache(p);
+                                                    } else {
+                                                        return new EaPackage(p, eaRepo);
+                                                    }
+                                                })
+                                                .forEach(p -> {
+                                                             LOG.info(msg, p, additionalLogParams);
+                                                             function.accept(p);
+                                                         }
+                                                );
     }
 
-    private void generateSpecificDiagram() {
+    private void generateSpecificDiagram(final String diagram) {
         final EaDiagram eaDiagram = EaDiagram.findEaDiagram(eaRepo, diagram);
         if (eaDiagram != null) {
             final String diagramUrl = eaDiagram.writeImageToFile(urlForFileOnly);
             LOG.info("Diagram created {}", defaultIfBlank(diagramUrl, "-- No diagram --"));
         } else {
-            LOG.info("diagram '{}' not found", diagram);
+            LOG.info("diagram '{}' not found", this.diagram);
         }
     }
 
     List<String> toListOfPackages(final String packageList) {
-        return Arrays.asList(StringUtils.trimToEmpty(packageList)
+        return Arrays.asList(StringUtils.trimToEmpty(possiblyFromFile(packageList))
                                         .split(","))
                      .stream()
                      .filter(StringUtils::isNotBlank)
                      .map(StringUtils::trimToEmpty)
                      .collect(Collectors.toList());
     }
-
-//    private void generateReposHtml() {
-//        org.sparx.Repository r = new org.sparx.Repository();
-//
-//        System.out.println("Repository: " + args[0]);
-//        System.out.println("Package:    " + args[1]);
-//        System.out.println("Output:     " + args[2]);
-//        r.OpenFile(args[0]);
-//        r.GetProjectInterface().RunHTMLReport(args[1], args[2], "PNG", "<default>", ".html");
-//        r.CloseFile();
-//    }
 }

@@ -382,6 +382,7 @@ public class EaPackage {
         final File file = new File(me.GetName() + "_" + metaType + ".csv");
         try {
             FileUtils.writeLines(file, components);
+            System.out.println("File created: " + file.getAbsolutePath());
         } catch (final IOException e) {
             LOG.error("Unable to create file {} {}", file.getAbsoluteFile(), e);
         }

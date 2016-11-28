@@ -94,10 +94,11 @@ public class EaDiagram {
 
     /**
      * Experimental
+     * todo fix it
      *
      * @param style
      */
-    public void setAllConnectorsToStyle(final int style) {
+    public void setAllConnectorsToStyle(final EaConnectorStyle style) {
 //        for (DiagramObject diagramObject : eaDiagram.GetDiagramObjects()) {
 //            diagramObject.GetBottom();
 //
