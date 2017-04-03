@@ -15,7 +15,7 @@ public class EaXsdTypeTest extends AbstractEaTestCase {
     @Test
     @Category(no.eatools.documenter.EaXsdTypeTest.class)
     public void testSetNewDocumentation() throws Exception {
-        new EaXsdType(eaRepo).setNewDocumentation("Halla Balla " + new Date().toString());
+        new EaXsdType(eaRepo, "BalanceResponsibilityContract").setNewDocumentation("Halla Balla " + new Date().toString());
         eaRepo.close();
     }
 }

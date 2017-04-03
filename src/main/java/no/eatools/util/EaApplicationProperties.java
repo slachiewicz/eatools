@@ -165,4 +165,9 @@ public enum EaApplicationProperties implements EnumProperty {
     public String getKeyValue() {
         return keyAsPropertyName() + "=" + value();
     }
+
+    public static void reset() {
+        propsMap.resetAll();
+    }
+
 }

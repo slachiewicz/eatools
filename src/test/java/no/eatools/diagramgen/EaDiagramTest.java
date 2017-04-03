@@ -5,6 +5,7 @@ import java.util.List;
 import no.bouvet.ohs.futil.ImageFileFormat;
 import no.eatools.util.EaApplicationProperties;
 
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +17,7 @@ import static org.junit.Assert.*;
 public class EaDiagramTest extends AbstractEaTestCase {
     private static final transient Logger log = LoggerFactory.getLogger(EaDiagramTest.class);
 
+    @Test
     public void testFindDiagramsInPackage() throws Exception {
         final EaPackage rootPkg = eaRepo.getRootPackage();
         assertNotNull(rootPkg);
@@ -26,17 +28,25 @@ public class EaDiagramTest extends AbstractEaTestCase {
         assertNotNull(diagrams);
     }
 
+    @Test
     public void testLogicalPathName() throws Exception {
         final EaDiagram diagram = eaRepo.findDiagramByName("Domain Model");
         assertNotNull(diagram);
         final String filename = diagram.getPathname();
-        assertEquals("\\Model\\Domain Model", filename);
+        // Windows safe
+        assertEquals("\\Model\\Domain Model", filename.replaceAll("/", "\\\\"));
     }
 
+    @Test
     public void testGenerateDiagram() {
         //EaDiagram diagram = EaDiagram.findDiagram(eaRepo, "Domain Model");
-        String diagramName = EaApplicationProperties.EA_DIAGRAM_TO_GENERATE.value();
-        if (diagramName.equals("")) diagramName = "Domain Model";
+        String diagramName = "";
+        if(EaApplicationProperties.EA_DIAGRAM_TO_GENERATE.exists()) {
+            diagramName = EaApplicationProperties.EA_DIAGRAM_TO_GENERATE.value();
+        }
+        if (diagramName.equals("")) {
+            diagramName = "Domain Model";
+        }
         final EaDiagram diagram = eaRepo.findDiagramByName(diagramName);
         if (diagram != null) {
             final String diagramUrl = diagram.writeImageToFile(false);
@@ -46,6 +56,7 @@ public class EaDiagramTest extends AbstractEaTestCase {
         }
     }
 
+    @Test
     public void testGenerateAllDiagramsInPackage() throws Exception {
         final EaPackage pkg = eaRepo.findPackageByName("Klasser", EaRepo.RECURSIVE);
 
@@ -58,6 +69,7 @@ public class EaDiagramTest extends AbstractEaTestCase {
         }
     }
 
+    @Test
     public void testGenerateAllDiagramsInProject() throws Exception {
         final int count = eaRepo.generateAllDiagramsFromRoot();
         log.debug("Generated " + count + " diagrams");

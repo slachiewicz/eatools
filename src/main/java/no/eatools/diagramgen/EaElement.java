@@ -12,6 +12,8 @@ import org.sparx.Collection;
 import org.sparx.Connector;
 import org.sparx.Diagram;
 import org.sparx.Element;
+import org.sparx.Method;
+import org.sparx.ObjectType;
 import org.sparx.TaggedValue;
 
 import static no.eatools.diagramgen.EaType.*;
@@ -23,8 +25,8 @@ public class EaElement {
     private static final transient Logger LOG = LoggerFactory.getLogger(EaElement.class);
     public static final String IMAGE_URL_TAG = "imageUrl";
     private final Element theElement;
-    final EaRepo repos;
-    final EaMetaType eaMetaType;
+    private final EaRepo repos;
+    private final EaMetaType eaMetaType;
 
     public EaElement(final Element theElement, final EaRepo repos) {
         this.theElement = theElement;
@@ -300,5 +302,9 @@ public class EaElement {
         theElement.SetTag(newTag);
         theElement.Refresh();
         theElement.Update();
+    }
+
+    public Method addMethod(String methodName) {
+        return theElement.GetMethods().AddNew(methodName, EaObjectType.toString(ObjectType.otMethod));
     }
 }

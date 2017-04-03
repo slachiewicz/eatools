@@ -16,13 +16,15 @@ public class EaXsdType {
     private static final transient Logger LOG = LoggerFactory.getLogger(EaXsdType.class);
 
     private final EaRepo eaRepo;
+    private final String name;
 
-    public EaXsdType(final EaRepo eaRepo) {
+    public EaXsdType(final EaRepo eaRepo, String name) {
         this.eaRepo = eaRepo;
+        this.name = name;
     }
 
     public void setNewDocumentation(final String s) {
-        final Element xsdType = eaRepo.findXsdType(eaRepo.getRootPackage().unwrap(), "ComplexType1");
+        final Element xsdType = eaRepo.findXsdType(eaRepo.getRootPackage().unwrap(), name);
 
         final ObjectGraph objectGraph = new ObjectGraph();
         LOG.debug(objectGraph.createDotGraph(xsdType));

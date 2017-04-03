@@ -7,3 +7,5 @@
  EaPackage{name='BRS-NO-103 Start of supply - move in - back in time', id=1000, parentId=997}
  EaPackage{name='BRS-NO-104 Change of Supplier from last resort', id=1001, parentId=997}
  EaPackage{name='BRS-NO-111 Rollback - start of supply', id=1002, parentId=997}
+ EaPackage{name='Interfaces', id=1370, parentId=1907}
+ EaPackage{name='Interfaces', id=1661, parentId=1659}

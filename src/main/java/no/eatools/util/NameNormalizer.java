@@ -127,6 +127,7 @@ public class NameNormalizer {
     public static String createUrlPart(final int level, final String logicalPathname, final String diagramName, final String diagramGUID, final String
             diagramVersion, final DiagramNameMode diagramNameMode, final String fileExtension) {
         final StringBuilder urlPart = new StringBuilder();
+        String adjustedDiagramName = diagramName.replaceAll("[\\\\\\/]", "_"); // No slashes (back or fwd) in resulting filename
 
         switch (diagramNameMode) {
             case GUID_AT_START:
@@ -134,20 +135,20 @@ public class NameNormalizer {
                        .append(createPath(logicalPathname, level))
                        .append(FILE_SEPARATOR.value())
                        .append(diagramGUID)
-                       .append(diagramName);
+                       .append(adjustedDiagramName);
                 break;
             case GUID_AT_END:
                 urlPart.append(FILE_SEPARATOR.value())
                        .append(createPath(logicalPathname, level))
                        .append(FILE_SEPARATOR.value())
-                       .append(diagramName)
+                       .append(adjustedDiagramName)
                        .append(diagramGUID);
                 break;
             case FULL_PATH:
             default:
                 urlPart.append(logicalPathname)
                        .append(FILE_SEPARATOR.value())
-                       .append(diagramName);
+                       .append(adjustedDiagramName);
                 break;
         }
 

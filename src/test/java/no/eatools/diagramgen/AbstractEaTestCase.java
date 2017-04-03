@@ -2,10 +2,13 @@ package no.eatools.diagramgen;
 
 import java.io.File;
 
+import no.bouvet.ohs.jops.Prop;
+import no.eatools.util.EaApplicationProperties;
+
 import org.junit.After;
 import org.junit.Before;
 
-import static no.eatools.util.EaApplicationProperties.EA_ROOTPKG;
+import static no.eatools.util.EaApplicationProperties.*;
 
 /**
  * Helper class that takes care of standard JUnit things
@@ -15,12 +18,18 @@ public abstract class AbstractEaTestCase {
 
     @Before
     public void setUp() throws Exception {
+        // Remove properties from previous runs
+        Prop.getInstance().clear();
+        EaApplicationProperties.reset();
 //        super.setUp();
 
 //        EaApplicationProperties.init("test.ea.application.properties", new PropertyMap(EaApplicationProperties.class));
 //        File modelFile = new File(EaApplicationProperties.EA_PROJECT.value());
         EA_ROOTPKG.setValue("Model");
-        File modelFile = new File("test.eap");
+        EA_PROJECT.setValue("test.eap");
+        EA_DOC_ROOT_DIR.setValue("./tmp/");
+        EA_DIAGRAM_URL_FILE.setValue("diagram_url.txt");
+        File modelFile = new File(EA_PROJECT.value());
         eaRepo = new EaRepo(modelFile);
         eaRepo.open();
     }

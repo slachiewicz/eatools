@@ -817,7 +817,7 @@ public class EaRepo {
 
     private boolean generateAllDigramsInPackage(final EaPackage pkg, final IntCounter diagramCount) {
         if (!packageCache.packageMatch(pkg.unwrap(), packagePattern)) {
-            LOG.info("--- Skipping package " + pkg.getName());
+            LOG.info("--- Skipping package [{}] Applied filter: [{}]", pkg.getName(), packagePattern.pattern());
             return true;
         }
 
@@ -1143,8 +1143,8 @@ public class EaRepo {
         }
 //        final EaPackage localRoot = findPackageByName(elementCreationPackage, true);
         final EaPackage localRoot = packageCache.findPackageByHierarchicalName(getRootPackage(), elementCreationPackage, packagePattern);
-        LOG.info("Found local root [{}] for [{}] from [{}] using pattern [{}]", localRoot, elementCreationPackage, getRootPackage()
-                .toHierarchicalString(), packagePattern);
+        LOG.info("Found [{}] local root for [{}] from [{}] using pattern [{}]", localRoot == null ? "no": localRoot + " as ", elementCreationPackage, getRootPackage()
+                .toHierarchicalString(), packagePattern == null ? "no" : packagePattern);
 //        packageCache.populate(this, localRoot, getRootPackage());
         return localRoot;
     }

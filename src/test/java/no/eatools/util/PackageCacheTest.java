@@ -164,16 +164,15 @@ public class PackageCacheTest {
     public void testFindAndPrintHiearchicalName() throws Exception {
         System.out.println(localRoot);
         subject.findDescendantsOf(localRoot, true)
-               .stream()
                .forEach(p-> System.out.println(p.toHierarchicalString()));
     }
 
     @Test
     public void testFindPackageByNameWithFilter() throws Exception {
-        final EaPackage interfaces = subject.findPackageByName(subject.findById(1334), "Interfaces", Pattern.compile("Solution Building Blocks"),
+        final EaPackage interfaces = subject.findPackageByName(subject.findById(1334), "Interfaces2", Pattern.compile("Solution Building Blocks"),
                                                                true);
         logAncestorTree(interfaces);
-        assertEquals("Interfaces", interfaces.getName());
+        assertEquals("Interfaces2", interfaces.getName());
         assertEquals(1659, interfaces.getParentId());
     }
 

@@ -2,6 +2,9 @@ package no.eatools.diagramgen;
 
 import java.util.List;
 
+import no.bouvet.ohs.jops.Prop;
+import no.eatools.util.EaApplicationProperties;
+
 import org.junit.Test;
 
 import static junit.framework.TestCase.*;
@@ -9,7 +12,7 @@ import static junit.framework.TestCase.*;
 /**
  * @author ohs
  */
-public class EaDiagramGeneratorTest {
+public class EaDiagramGeneratorTest extends AbstractEaTestCase {
 
     @Test
     public void testFileUrlFromNodePath() throws Exception {
@@ -21,12 +24,18 @@ public class EaDiagramGeneratorTest {
     public void testPropertyArgs() throws Exception {
         final String[] args = {"test.ea.application.properties", "-p", "ea.package.filter=ABC"};
         EaDiagramGenerator.main(args);
+        assertNull(Prop.getInstance().get("ea.package.filter"));
+        assertNull(Prop.getInstance().get("EA_PACKAGE_FILTER"));
+        assertNull(Prop.getInstance().get(EaApplicationProperties.EA_PACKAGE_FILTER));
+        assertEquals("ABC", EaApplicationProperties.EA_PACKAGE_FILTER.value());
+        EaApplicationProperties.reset();
+        assertNull(EaApplicationProperties.EA_PACKAGE_FILTER.value());
     }
 
     @Test
     public void testToListOfPackages() throws Exception {
         String packageList = null;
-        EaDiagramGenerator subject = new EaDiagramGenerator();
+        final EaDiagramGenerator subject = new EaDiagramGenerator();
         List<String> result = subject.toListOfPackages(packageList);
         System.out.printf(result.toString());
         assertTrue(result.isEmpty());

@@ -7,6 +7,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -211,7 +212,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             return;
         }
         if (isNotBlank(elementCreationPackage)) {
-            executeOnPackages(elementCreationPackage, true, EaPackage::generateDDEntryFile, "Creating DD entry file for [[]]");
+            executeOnPackages(elementCreationPackage, true, EaPackage::generateDDEntryFile, "Creating DD entry file for [{}]");
             return;
         }
         if (isNotBlank(packageForAutoDiagrams)) {
@@ -258,11 +259,14 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         }
         final String[] baselineElms = baseline.split(",");
         final String notes = ZonedDateTime.now()
-                                          .format(DateTimeFormatter.ISO_DATE_TIME) + (baselineElms.length > 1 ? baselineElms[1] : EMPTY);
+                                          .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) + (baselineElms.length > 1 ? baselineElms[1] : EMPTY);
         createBaselines(baselineElms[0], notes, packages);
     }
 
     private String possiblyFromFile(final String elementCreationPackage) {
+        if(isBlank(elementCreationPackage)) {
+            return elementCreationPackage;
+        }
         final File packagesFile = new File(elementCreationPackage);
         if (packagesFile.canRead()) {
             try {
@@ -272,9 +276,13 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
                                 .filter(l -> !l.startsWith("#"))
                                 .collect(Collectors.joining(","));
             } catch (final IOException e) {
-                System.out.println("Error reading file " + packagesFile.getAbsolutePath() + " reason: " + e.getMessage());
+                final String errormsg = "Error reading file " + packagesFile.getAbsolutePath() + " reason: " + e.getMessage();
+                LOG.error(errormsg);
+                System.out.println(errormsg);
                 return elementCreationPackage;
             }
+        } else {
+            LOG.info("[{}] is not a readable file, using it as is", packagesFile.getAbsoluteFile());
         }
         return elementCreationPackage;
     }
@@ -293,7 +301,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     }
 
     private void adjustConnectors(final String connectorType) {
-        if(! Enums.hasValueFor(EaConnectorStyle.class, connectorType)) {
+        if (!Enums.hasValueFor(EaConnectorStyle.class, connectorType)) {
             usageHelper.terminateWithHelp(-2, "Unknown connector type [" + connectorType + "]");
         }
         final EaDiagram eaDiagram = EaDiagram.findEaDiagram(eaRepo, diagram);
@@ -305,7 +313,6 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     private void listAllPackages(final String rootForPackageList) {
         final EaPackage rootpkg = eaRepo.findInPackageCache(rootForPackageList);
         eaRepo.findAllPackages(rootpkg)
-              .stream()
               .forEach(p -> System.out.println(p.toHierarchicalString()));
     }
 
@@ -313,7 +320,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
 //        executeOnPackages(packageForAutoDiagrams, EaPackage::createBaseline(versionNo, notes), "Creating baseline for package [{}], version [{}],
 //  Note [{}]", versionNo, notes);
         for (final String pack : toListOfPackages(elementCreationPackage)) {
-            LOG.info("Creating baseline for package [{}], version [{}],  Note [{}]", versionNo, pack, notes);
+            LOG.info("Creating baseline for package [{}], version [{}],  Note [{}]", pack, versionNo, notes);
             final EaPackage eaPackage = eaRepo.findInPackageCache(pack);
             if (eaPackage != null) {
                 eaPackage.createBaseline(versionNo, notes);
@@ -322,21 +329,22 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     }
 
 
-    private void executeOnPackages(final String packageForAutoDiagrams, final boolean useCache, final Consumer<EaPackage> function, final String msg, final Object...
+    private void executeOnPackages(final String pack, final boolean useCache, final Consumer<EaPackage> function, final String msg, final Object...
             additionalLogParams) {
-        toListOfPackages(packageForAutoDiagrams).stream()
-                                                .map(p -> {
-                                                    if (useCache) {
-                                                        return eaRepo.findInPackageCache(p);
-                                                    } else {
-                                                        return new EaPackage(p, eaRepo);
-                                                    }
-                                                })
-                                                .forEach(p -> {
-                                                             LOG.info(msg, p, additionalLogParams);
-                                                             function.accept(p);
-                                                         }
-                                                );
+        toListOfPackages(pack).stream()
+                              .map(p -> {
+                                  if (useCache) {
+                                      return eaRepo.findInPackageCache(p);
+                                  } else {
+                                      return new EaPackage(p, eaRepo);
+                                  }
+                              })
+                              .filter(Objects::nonNull)
+                              .forEach(p -> {
+                                           LOG.info(msg, p, additionalLogParams);
+                                           function.accept(p);
+                                       }
+                              );
     }
 
     private void generateSpecificDiagram(final String diagram) {
@@ -350,9 +358,8 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     }
 
     List<String> toListOfPackages(final String packageList) {
-        return Arrays.asList(StringUtils.trimToEmpty(possiblyFromFile(packageList))
+        return Arrays.stream(StringUtils.trimToEmpty(possiblyFromFile(packageList))
                                         .split(","))
-                     .stream()
                      .filter(StringUtils::isNotBlank)
                      .map(StringUtils::trimToEmpty)
                      .collect(Collectors.toList());
