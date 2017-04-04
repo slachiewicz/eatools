@@ -245,4 +245,8 @@ public class PackageCache {
     public boolean contains(EaPackage localRoot) {
         return theCache.containsValue(localRoot);
     }
+
+    public void clear() {
+        theCache.clear();
+    }
 }

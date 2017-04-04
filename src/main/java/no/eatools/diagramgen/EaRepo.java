@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import no.bouvet.ohs.ea.dd.DDEntry;
 import no.bouvet.ohs.ea.dd.DDEntryList;
@@ -37,6 +38,8 @@ import org.sparx.Repository;
 import static no.eatools.diagramgen.EaType.*;
 import static no.eatools.util.EaApplicationProperties.*;
 import static org.apache.commons.lang3.StringUtils.*;
+
+import org.sparx.Package;
 
 /**
  * Utilities for use with the EA (Enterprise Architect DLL).
@@ -218,16 +221,19 @@ public class EaRepo {
             return false;
         }
         short index = 0;
-        short indexToDelete = -1;
         for (final Element element : pkg.GetElements()) {
             if (element.GetName()
                        .equals(objectName)) {
                 if ((classifier == null) || (classifier.GetElementID() == element.GetClassifierID())) {
-                    indexToDelete = index;
+                    return deleteByIndex(pkg, index);
                 }
             }
             ++index;
         }
+        return false;
+    }
+
+    private boolean deleteByIndex(final Package pkg, final short indexToDelete) {
         if (indexToDelete != -1) {
             pkg.GetElements()
                .Delete(indexToDelete);
@@ -236,7 +242,59 @@ public class EaRepo {
                .Refresh();
             return true;
         }
-        return false;  //To change body of created methods use File | Settings | File Templates.
+        return false;
+    }
+
+    public boolean deleteClass(final EaPackage pack, final String componentName) {
+        return deleteElement(pack, componentName, EaMetaType.CLASS);
+    }
+
+    public boolean deleteComponent(final EaPackage pack, final String componentName) {
+        return deleteElement(pack, componentName, EaMetaType.COMPONENT);
+    }
+
+    private boolean deleteElement(final EaPackage pack, final String name, EaMetaType metaType) {
+        if ((pack == null) || (pack.unwrap() == null)) {
+            return false;
+        }
+        final Package pkg = pack.unwrap();
+        short index = 0;
+        for (final Element element : pkg.GetElements()) {
+            if (element.GetName()
+                       .equals(name) && element.GetMetaType()
+                                               .equals(metaType.toString())) {
+                return deleteByIndex(pkg, index);
+            }
+            ++index;
+        }
+        return false;
+    }
+
+    public boolean deletePackage(final EaPackage pack, final boolean recursive) {
+        if ((pack == null) || (pack.unwrap() == null)) {
+            return false;
+        }
+        short index = 0;
+        short indexToDelete = -1;
+        final org.sparx.Package parent = pack.getParent()
+                                             .unwrap();
+        for (final Package child : parent.GetPackages()) {
+            if (child.GetName()
+                     .equals(pack.getName())) {
+                indexToDelete = index;
+                break;
+            }
+            ++index;
+        }
+        if (indexToDelete != -1) {
+            parent.GetPackages()
+                  .Delete(indexToDelete);
+            parent.Update();
+            parent.GetPackages()
+                  .Refresh();
+            return true;
+        }
+        return false;
     }
 
     public List<String> findAllMetaTypesInModel() {
@@ -265,15 +323,10 @@ public class EaRepo {
      * @return
      */
     public List<Element> findComponentInstancesInPackage(final Package pack) {
-        final List<Element> theComponents = findElementsOfTypeInPackage(pack, EaMetaType.COMPONENT);
-        final List<Element> componentInstances = new ArrayList<>();
-        for (final Element component : theComponents) {
-            if (EaMetaType.COMPONENT.toString()
-                                    .equals(component.GetClassifierType())) {
-                componentInstances.add(component);
-            }
-        }
-        return componentInstances;
+        return findElementsOfTypeInPackage(pack, EaMetaType.COMPONENT).stream()
+                                                                      .filter(e -> EaMetaType.COMPONENT.toString()
+                                                                                                       .equals(e.GetClassifierType()))
+                                                                      .collect(Collectors.toList());
     }
 
     public EaDiagram findDiagramByName(final String diagramName) {
@@ -324,19 +377,14 @@ public class EaRepo {
      * @param name
      * @return null if no match is found.
      */
-    public Element findElementOfType(final Package pack, final EaMetaType type, final String name) {
+    public Optional<Element> findElementOfType(final Package pack, final EaMetaType type, final String name) {
         ensureRepoIsOpen();
         final String trimmedName = name.trim();
 
-        final List<Element> existingElements = findElementsOfTypeInPackage(pack, type);
-
-        for (final Element element : existingElements) {
-            if (element.GetName()
-                       .equals(trimmedName)) {
-                return element;
-            }
-        }
-        return null;
+        return findElementsOfTypeInPackage(pack, type).stream()
+                                                      .filter(e -> e.GetName()
+                                                                    .equals(trimmedName))
+                                                      .findFirst();
     }
 
     /**
@@ -367,19 +415,28 @@ public class EaRepo {
     public Element findOrCreateClassInPackage(final Package definedPackage, final String className) {
         ensureRepoIsOpen();
 
-        final Element theClass;
-        final Optional<Element> candidate = findNamedElementOnList(findClassesInPackage(definedPackage), className);
+        return findNamedElementOnList(findClassesInPackage(definedPackage), className)
+                .orElseGet(() -> addElementInPackage(definedPackage, className,
+                                                     EaMetaType.CLASS, null));
+    }
 
-        if (candidate.isPresent()) {
-            return candidate.get();
+    /**
+     * @param pack
+     * @param objectName
+     * @param classifier
+     * @return
+     */
+    public Element findOrCreateObjectInPackage(final Package pack, final String objectName, final Element classifier) {
+        ensureRepoIsOpen();
+
+        // We allow for same name on different elements of different type, therefore we must also check type
+        for (final Element element : findObjectsInPackage(pack)) {
+            if (element.GetName()
+                       .equals(objectName) && isOfType(element, classifier)) {
+                return element;
+            }
         }
-
-        theClass = definedPackage.GetElements()
-                                 .AddNew(className, EaMetaType.CLASS.toString());
-        theClass.Update();
-        definedPackage.Update();
-
-        return theClass;
+        return addElementInPackage(pack, objectName, EaMetaType.OBJECT, classifier);
     }
 
     private Optional<Element> findNamedElementOnList(final List<Element> elementList, final String elementName) {
@@ -418,9 +475,11 @@ public class EaRepo {
      */
     public Element findOrCreateComponentInPackage(final Package definedPackage, final String componentName) {
         ensureRepoIsOpen();
-        return findNamedElementOnList(findComponentsInPackage(definedPackage), componentName).orElse(addElementInPackage(definedPackage,
-                                                                                                                         componentName, EaMetaType
-                                                                                                                                 .COMPONENT, null));
+        return findNamedElementOnList(findComponentsInPackage(definedPackage), componentName)
+                .orElseGet(() -> addElementInPackage(definedPackage,
+                                                     componentName,
+                                                     EaMetaType
+                                                             .COMPONENT, null));
     }
 
     /**
@@ -553,27 +612,6 @@ public class EaRepo {
         return c;
     }
 
-    /**
-     * @param pack
-     * @param objectName
-     * @param classifier
-     * @return
-     */
-    public Element findOrCreateObjectInPackage(final Package pack, final String objectName, final Element classifier) {
-        ensureRepoIsOpen();
-
-        // We allow for same name on different elements of different type, therefore
-        // must also check type
-        for (final Element element : findObjectsInPackage(pack)) {
-            if (element.GetName()
-                       .equals(objectName)) {
-                if (isOfType(element, classifier)) {
-                    return element;
-                }
-            }
-        }
-        return addElementInPackage(pack, objectName, EaMetaType.OBJECT, classifier);
-    }
 
     /**
      * Find UML Object elements inside a specific UML Package.
@@ -615,8 +653,8 @@ public class EaRepo {
         return element;
     }
 
-    public Package findOrCreatePackage(final Package parent, final String name) {
-        return findOrCreatePackage(new EaPackage(parent, this, null), name, NON_RECURSIVE).unwrap();
+    public EaPackage findOrCreatePackage(final Package parent, final String name) {
+        return findOrCreatePackage(new EaPackage(parent, this, null), name, NON_RECURSIVE);
     }
 
     private EaPackage findOrCreatePackage(final EaPackage parent, final String name, final boolean recursive) {
@@ -634,11 +672,10 @@ public class EaRepo {
                 .Update();
         unwrapped.GetPackages()
                  .Refresh();
-        unwrapped.GetPackages()
-                 .Refresh();
 
-        return pkg;
+        return new EaPackage(pack, this, parent);
     }
+
 
     /**
      * Looks for a subpackage with a given unqualified name within a given EA package. The
@@ -1010,11 +1047,6 @@ public class EaRepo {
     public String getEaDataTypes() {
         ensureRepoIsOpen();
 
-//        Collection<Author> authors = repository.GetAuthors();
-//        for (Author a : authors) {
-//            System.out.println(a.GetName());
-//        }
-
         final StringBuilder sb = new StringBuilder();
         final Collection<Datatype> dataTypes = repository.GetDatatypes();
         for (final Datatype dt : dataTypes) {
@@ -1065,19 +1097,10 @@ public class EaRepo {
 
         finalDiagram.add(centralElement);
 
-////        final List<DiagramObject> diagramObjects =
         centralElement.findConnectedElements()
                       .stream()
                       .filter(e -> !bannedElementTypes.contains(e.getType()))
                       .forEach(finalDiagram::add);
-//                              .collect(Collectors.toList());
-
-//        final List<DiagramObject> diagramObjects = new ArrayList<>();
-//        for (final EaElement eaElement : centralElement.findConnectedElements()) {
-//            if (!bannedElementTypes.contains(eaElement.getMetaType())) {
-//                diagramObjects.add(eaDiagram.add(eaElement));
-//            }
-//        }
 
         final Project project = getProject();
         // todo, find out which one actually does the job:
@@ -1086,15 +1109,6 @@ public class EaRepo {
                  EA_AUTO_DIAGRAM_ITERATIONS.toInt(),
                  EA_AUTO_DIAGRAM_LAYER_SPACING.toInt(),
                  EA_AUTO_DIAGRAM_COLUMN_SPACING.toInt());
-
-//        layoutResult = doLayout(eaDiagram, eaDiagram.getGuid(),
-//                                EA_AUTO_DIAGRAM_OPTIONS.toInt(),
-//                                EA_AUTO_DIAGRAM_ITERATIONS.toInt(),
-//                                EA_AUTO_DIAGRAM_LAYER_SPACING.toInt(),
-//                                EA_AUTO_DIAGRAM_COLUMN_SPACING.toInt());
-//
-
-//        repository.SaveAllDiagrams();
 
         finalDiagram.adjustElementAppearances();
 
@@ -1143,8 +1157,9 @@ public class EaRepo {
         }
 //        final EaPackage localRoot = findPackageByName(elementCreationPackage, true);
         final EaPackage localRoot = packageCache.findPackageByHierarchicalName(getRootPackage(), elementCreationPackage, packagePattern);
-        LOG.info("Found [{}] local root for [{}] from [{}] using pattern [{}]", localRoot == null ? "no": localRoot + " as ", elementCreationPackage, getRootPackage()
-                .toHierarchicalString(), packagePattern == null ? "no" : packagePattern);
+        LOG.info("Found [{}] local root for [{}] from [{}] using pattern [{}]", localRoot == null ? "no" : localRoot + " as ",
+                 elementCreationPackage, getRootPackage()
+                         .toHierarchicalString(), packagePattern == null ? "no" : packagePattern);
 //        packageCache.populate(this, localRoot, getRootPackage());
         return localRoot;
     }
@@ -1182,5 +1197,10 @@ public class EaRepo {
 
     public Boolean createBaseline(final String packageGuid, final String versionNo, final String notes) {
         return project.CreateBaseline(packageGuid, versionNo, notes);
+    }
+
+    public void clearPackageCache() {
+        packageCache.clear();
+
     }
 }

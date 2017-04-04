@@ -28,10 +28,16 @@ public abstract class AbstractEaTestCase {
         EA_ROOTPKG.setValue("Model");
         EA_PROJECT.setValue("test.eap");
         EA_DOC_ROOT_DIR.setValue("./tmp/");
+
         EA_DIAGRAM_URL_FILE.setValue("diagram_url.txt");
-        File modelFile = new File(EA_PROJECT.value());
+        final File modelFile = new File(EA_PROJECT.value());
         eaRepo = new EaRepo(modelFile);
         eaRepo.open();
+        String testPackageName = "Klasser";
+        // Purge from previous tests
+        eaRepo.deletePackage(eaRepo.findPackageByName(testPackageName, true), true );
+        eaRepo.findOrCreatePackage(eaRepo.findPackageByName("Domain Model", true).unwrap(),
+                                   testPackageName);
     }
 
     @After
