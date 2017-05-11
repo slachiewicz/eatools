@@ -153,7 +153,7 @@ public class EaPackage {
                                      .toString(), eaElement.getStereotypeEx(), eaElement.getElementGUID(), eaElement.getVersion(), booleanToYesNo
                                     (false),
                             eaElement.getClassifierType(),
-                            ELEMENT, parents, eaElement.getAuthor(), imageUrl);
+                            ELEMENT, parents, eaElement.getAuthor(), imageUrl, eaElement.getCreated());
 
         for (final TaggedValue attributeTag : eaElement.getTaggedValuesEx()) {
             ddEntry.addTaggedValue(attributeTag.GetName(), attributeTag.GetValue());
@@ -169,7 +169,8 @@ public class EaPackage {
                 new DDEntry(elementName + ATTRIBUTE_DELIMITER + attribute.GetName(), description, attribute.GetLowerBound() +
                         UML_MULTIPLICITY_DELIMITER + attribute.GetUpperBound(),
                             attribute.GetType(), attribute.GetStereotypeEx(), attribute.GetAttributeGUID(), element.getVersion(),
-                            booleanToYesNo(attribute.GetIsID()), EMPTY, ATTRIBUTE, emptyList(), element.getAuthor(), EMPTY);
+                            booleanToYesNo(attribute.GetIsID()), EMPTY, ATTRIBUTE, emptyList(), element.getAuthor(), EMPTY, element.getCreated());
+
         LOG.debug("DD Entry created {}", ddEntry);
 
         if (!checkTaggedValues(attribute.GetTaggedValuesEx(), elementName, ddEntry)) {

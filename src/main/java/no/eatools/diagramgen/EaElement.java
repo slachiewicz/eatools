@@ -1,5 +1,9 @@
 package no.eatools.diagramgen;
 
+import java.time.DateTimeException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,10 +17,10 @@ import org.sparx.Connector;
 import org.sparx.Diagram;
 import org.sparx.Element;
 import org.sparx.Method;
-import org.sparx.ObjectType;
 import org.sparx.TaggedValue;
 
 import static no.eatools.diagramgen.EaType.*;
+import static no.eatools.util.EaApplicationProperties.*;
 
 /**
  * @author ohs
@@ -288,7 +292,7 @@ public class EaElement {
             }
         }
         if(! hasOld) {
-            TaggedValue taggedValue = taggedValues.AddNew(tageName, tagValue);
+            final TaggedValue taggedValue = taggedValues.AddNew(tageName, tagValue);
             taggedValue.Update();
             taggedValues.Refresh();
             theElement.Refresh();
@@ -304,7 +308,44 @@ public class EaElement {
         theElement.Update();
     }
 
-    public Method addMethod(String methodName) {
-        return theElement.GetMethods().AddNew(methodName, EaObjectType.toString(ObjectType.otMethod));
+    public EaMethod addMethod(final String methodName, final String returnType) {
+        final Method method = theElement.GetMethods()
+                                        .AddNew(methodName, returnType);
+        method.Update();
+        theElement.GetMethods().Refresh();
+        return new EaMethod(this, method);
+    }
+
+    public boolean removeMethod(final String methodName, final String returnType) {
+        short index = 0;
+        for (final Method method : theElement.GetMethods()) {
+            if(method.GetName().equals(methodName) && method.GetReturnType().equals(returnType)) {
+                theElement.GetMethods().Delete(index);
+                theElement.GetMethods().Refresh();
+                return true;
+            }
+            ++index;
+        }
+        return false;
+    }
+
+    public ZonedDateTime getCreated() {
+        final ZoneId zoneId;
+        try {
+            zoneId = ZoneId.of(EA_SERVER_TIMEZONE.value());
+        } catch (DateTimeException e) {
+            LOG.error("No valid timeZone for [{}]:[{}]", EA_SERVER_TIMEZONE, EA_SERVER_TIMEZONE.value());
+            return null;
+        }
+
+        final Instant instant;
+        try {
+            instant = theElement.GetCreated()
+                                .toInstant();
+            return ZonedDateTime.ofInstant(instant, zoneId);
+        } catch (Exception e) {
+            LOG.error("Unable to convert [{}] to a ZonedDateTime in element [{}]", theElement.GetCreated(), toString());
+            return null;
+        }
     }
 }

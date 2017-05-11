@@ -115,6 +115,9 @@ public enum EaApplicationProperties implements EnumProperty {
     @Description(text = "Name of a Json file that contains elements to exclude from export", defaultValue = "")
     EA_EXCLUDE_FILE(),
 
+    @Description(text = "TimeZone for the EA database server", defaultValue = "Europe/Oslo")
+    EA_SERVER_TIMEZONE(),
+
     @Description(text = "How to name diagram paths")
     EA_DIAGRAM_NAME_MODE() {
         @Override
