@@ -68,6 +68,8 @@ public class EaElement {
     }
 
     public EaElement findConnectedElement(final Connector connector) {
+        // Used to track down seemingly missing connectors between elements
+        //        LOG.debug("Connector from [{}] via [{}] ", theElement.GetName(), BStringUtils.describe(new EaConnector(connector)));
         if (connector.GetClientID() == theElement.GetElementID()) {
             return new EaElement(repos.findElementByID(connector.GetSupplierID()), repos);
         } else {

@@ -2,11 +2,12 @@ package no.eatools.diagramgen;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,11 +36,9 @@ import org.sparx.Package;
 import org.sparx.Project;
 import org.sparx.Repository;
 
-import static no.eatools.diagramgen.EaType.*;
+import static no.eatools.diagramgen.EaMetaType.*;
 import static no.eatools.util.EaApplicationProperties.*;
 import static org.apache.commons.lang3.StringUtils.*;
-
-import org.sparx.Package;
 
 /**
  * Utilities for use with the EA (Enterprise Architect DLL).
@@ -72,17 +71,17 @@ public class EaRepo {
     private final Project project;
     private final Pattern elementPattern;
     private final Pattern stereotypeFilter;
-    private File reposFile;
+    private final File reposFile;
     private Repository repository = null;
     private boolean isOpen = false;
     private String reposString;
     private final Pattern packagePattern;
     //Global repository root
     private EaPackage rootPackage;
-    private Map<String, DDEntry> previousElements = new HashMap<>();
-    // Element types that shall not appear on auto-diagrams
-    private final EnumSet<EaType> bannedElementTypes;
-    private PackageCache packageCache = new PackageCache();
+    private final Map<String, DDEntry> previousElements = new HashMap<>();
+    private final List<EaMetaType> metaTypesThatHasDiagrams = Arrays.asList(COMPONENT, INTERFACE, QUEUE, PROCESS, DATA_STORE, WEB_PAGE, CLIENT_PAGE);
+    private final PackageCache packageCache = new PackageCache();
+    private int noOfDiagramsCreated;
 
 // --------------------------- CONSTRUCTORS ---------------------------
 
@@ -95,8 +94,7 @@ public class EaRepo {
         elementPattern = establishFilter(EA_ELEMENT_FILTER);
         stereotypeFilter = establishFilter(EA_STEREOTYPE_FILTER);
         establishExcludeMap();
-        bannedElementTypes = EnumSet.of(Note, Sequence, Text);
-        LOG.info("Types not included in auto-diagrams: {}", bannedElementTypes);
+        LOG.info("Types not included in auto-diagrams: {}", EaDiagram.bannedElementTypes);
         ensureRepoIsOpen();
         project = repository.GetProjectInterface();
     }
@@ -135,7 +133,7 @@ public class EaRepo {
         for (final Package aPackage : repository.GetModels()) {
             if (aPackage.GetName()
                         .equalsIgnoreCase(rootPkgName)) {
-                LOG.debug("Found top level (root) package: " + aPackage.GetName());
+                LOG.debug("Found top level (root) package: [{}]", aPackage.GetName());
                 return new EaPackage(aPackage, this, null);
             }
         }
@@ -195,7 +193,7 @@ public class EaRepo {
         for (final Diagram diagram : pkg.GetDiagrams()) {
             if (diagram.GetName()
                        .equals(diagramName) || diagramName.equals(Integer.toString(diagram.GetDiagramID()))) {
-                LOG.info("Diagram name = " + diagram.GetName() + " ID: " + diagram.GetDiagramID());
+                LOG.info("Diagram name = [{}] ID: [{}]", diagram.GetName(), diagram.GetDiagramID());
                 return new EaDiagram(this, diagram, getPackagePath(pkg));
             }
         }
@@ -246,14 +244,14 @@ public class EaRepo {
     }
 
     public boolean deleteClass(final EaPackage pack, final String componentName) {
-        return deleteElement(pack, componentName, EaMetaType.CLASS);
+        return deleteElement(pack, componentName, CLASS);
     }
 
     public boolean deleteComponent(final EaPackage pack, final String componentName) {
-        return deleteElement(pack, componentName, EaMetaType.COMPONENT);
+        return deleteElement(pack, componentName, COMPONENT);
     }
 
-    private boolean deleteElement(final EaPackage pack, final String name, EaMetaType metaType) {
+    private boolean deleteElement(final EaPackage pack, final String name, final EaMetaType metaType) {
         if ((pack == null) || (pack.unwrap() == null)) {
             return false;
         }
@@ -323,10 +321,10 @@ public class EaRepo {
      * @return
      */
     public List<Element> findComponentInstancesInPackage(final Package pack) {
-        return findElementsOfTypeInPackage(pack, EaMetaType.COMPONENT).stream()
-                                                                      .filter(e -> EaMetaType.COMPONENT.toString()
-                                                                                                       .equals(e.GetClassifierType()))
-                                                                      .collect(Collectors.toList());
+        return findElementsOfTypeInPackage(pack, COMPONENT).stream()
+                                                           .filter(e -> COMPONENT.toString()
+                                                                                 .equals(e.GetClassifierType()))
+                                                           .collect(Collectors.toList());
     }
 
     public EaDiagram findDiagramByName(final String diagramName) {
@@ -342,7 +340,7 @@ public class EaRepo {
             final String packagePath = getPackagePath(findPackageByID(diagram.GetPackageID()));
             return new EaDiagram(this, diagram, packagePath);
         } catch (final Exception e) {
-            LOG.error("Could not find diagram with id {} in repos {}", diagramId, this);
+            LOG.error("Could not find diagram with id [{}] in repos [{}]", diagramId, this);
             return null;
         }
     }
@@ -356,7 +354,7 @@ public class EaRepo {
             final String packagePath = getPackagePath(findPackageByID(diagram.GetPackageID()));
             return new EaDiagram(this, diagram, packagePath);
         } catch (final Exception e) {
-            LOG.error("Could not find diagram with guid {} in repos {}", diagramGuid, this);
+            LOG.error("Could not find diagram with guid [{}] in repos [{}]", diagramGuid, this);
             return null;
         }
     }
@@ -395,7 +393,7 @@ public class EaRepo {
      * @return
      */
     public List<Element> findNodesInPackage(final Package pack) {
-        return findElementsOfTypeInPackage(pack, EaMetaType.NODE);
+        return findElementsOfTypeInPackage(pack, NODE);
     }
 
     public Connector findOrCreateAssociation(final Element from, final Element to, final String name) {
@@ -417,7 +415,7 @@ public class EaRepo {
 
         return findNamedElementOnList(findClassesInPackage(definedPackage), className)
                 .orElseGet(() -> addElementInPackage(definedPackage, className,
-                                                     EaMetaType.CLASS, null));
+                                                     CLASS, null));
     }
 
     /**
@@ -436,7 +434,7 @@ public class EaRepo {
                 return element;
             }
         }
-        return addElementInPackage(pack, objectName, EaMetaType.OBJECT, classifier);
+        return addElementInPackage(pack, objectName, OBJECT, classifier);
     }
 
     private Optional<Element> findNamedElementOnList(final List<Element> elementList, final String elementName) {
@@ -455,7 +453,7 @@ public class EaRepo {
      * @return
      */
     public List<Element> findClassesInPackage(final Package pack) {
-        return findElementsOfTypeInPackage(pack, EaMetaType.CLASS);
+        return findElementsOfTypeInPackage(pack, CLASS);
     }
 
     public Element findOrCreateComponentInstanceInPackage(final Package pack, final String name, final Element classifier) {
@@ -478,8 +476,7 @@ public class EaRepo {
         return findNamedElementOnList(findComponentsInPackage(definedPackage), componentName)
                 .orElseGet(() -> addElementInPackage(definedPackage,
                                                      componentName,
-                                                     EaMetaType
-                                                             .COMPONENT, null));
+                                                     COMPONENT, null));
     }
 
     /**
@@ -490,7 +487,7 @@ public class EaRepo {
      * @return
      */
     public List<Element> findComponentsInPackage(final Package pack) {
-        return findElementsOfTypeInPackage(pack, EaMetaType.COMPONENT);
+        return findElementsOfTypeInPackage(pack, COMPONENT);
     }
 
     /**
@@ -518,7 +515,6 @@ public class EaRepo {
                 result.add(e);
             }
         }
-
         return result;
     }
 
@@ -587,7 +583,7 @@ public class EaRepo {
         }
 
         final Connector c = to.GetConnectors()
-                              .AddNew(name, EaMetaType.ASSOCIATION.toString());
+                              .AddNew(name, ASSOCIATION.toString());
         c.SetSupplierID(to.GetElementID());
         if (!c.Update()) {
             LOG.error("Unable to update connector to: " + to.GetName());
@@ -621,7 +617,7 @@ public class EaRepo {
      * @return
      */
     public List<Element> findObjectsInPackage(final Package pack) {
-        return findElementsOfTypeInPackage(pack, EaMetaType.OBJECT);
+        return findElementsOfTypeInPackage(pack, OBJECT);
     }
 
     public boolean isOfType(final Element theObject, final Element classifier) {
@@ -665,7 +661,7 @@ public class EaRepo {
         }
         final Package pack = parent.unwrap()
                                    .GetPackages()
-                                   .AddNew(name, EaMetaType.PACKAGE.toString());
+                                   .AddNew(name, PACKAGE.toString());
         pack.Update();
         final Package unwrapped = parent.unwrap();
         unwrapped
@@ -745,10 +741,10 @@ public class EaRepo {
             if (reposStrings.length >= 2) {
                 reposString = reposStrings[1];
             }
-            LOG.info("Opening model repository: " + reposString);
-            LOG.debug("Before new repos " + new Date());
+            LOG.info("Opening model repository: [{}]", reposString);
+            LOG.debug("Before new repos [{}]", new Date());
             repository = new Repository();
-            LOG.debug("After new repos " + new Date());
+            LOG.debug("After new repos [{}]", new Date());
             repository.SetSuppressEADialogs(true);
             repository.SetSuppressSecurityDialog(true);
             repository.SetEnableCache(true);
@@ -760,7 +756,7 @@ public class EaRepo {
             } else {
                 repository.OpenFile(reposString);
             }
-            LOG.debug("After open " + new Date());
+            LOG.debug("After open [{}]", new Date());
             isOpen = true;
         } catch (final Exception e) {
             e.printStackTrace();
@@ -780,7 +776,7 @@ public class EaRepo {
      */
     public EaPackage findOrCreatePackageFromNamespace(final String namespaceURI) {
         ensureRepoIsOpen();
-        LOG.debug("Looking for package with namespace:" + namespaceURI);
+        LOG.debug("Looking for package with namespace: [{}]", namespaceURI);
 
         // todo implement
         return findPackageByName("Klasser", true);
@@ -806,7 +802,7 @@ public class EaRepo {
         final String pkgString = pkg.GetName();
 
         if (stereotype.equals(xsdSchemaStereotype)) {
-            LOG.info("Looking for " + xsdTypeName + " inside  package " + pkgString);
+            LOG.info("Looking for [{}]  inside  package [{}]", xsdTypeName, pkgString);
             for (final Element element : pkg.GetElements()) {
                 if (element.GetName()
                            .equals(xsdTypeName)) {
@@ -860,7 +856,7 @@ public class EaRepo {
 
         final List<EaDiagram> diagrams = findDiagramsInPackage(pkg);
         if (!diagrams.isEmpty()) {
-            LOG.debug("Generating diagrams in package: " + pkg.getName());
+            LOG.debug("Generating diagrams in package: [{}]", pkg.getName());
             diagramCount.count = diagramCount.count + diagrams.size();
             for (final EaDiagram eaDiagram : diagrams) {
                 final String diagramUrl = eaDiagram.writeImageToFile(false);
@@ -892,7 +888,7 @@ public class EaRepo {
             return Collections.emptyList();
         }
         if (diagrams == null) {
-            LOG.error("Fuckup in diagram package " + pkg.GetName());
+            LOG.error("Fuckup in diagram package [{}]", pkg.GetName());
             return Collections.emptyList();
         }
         for (final Diagram d : diagrams) {
@@ -950,10 +946,10 @@ public class EaRepo {
         }
         final Matcher matcher = packagePattern.matcher(p.GetName());
         if (matcher.matches()) {
-            LOG.debug("Package match : {}", p.GetName());
+            LOG.debug("Package match : [{}]", p.GetName());
             return true;
         }
-        LOG.debug("Looking for parent match for {} ", p.GetName());
+        LOG.debug("Looking for parent match for [{}] ", p.GetName());
         return packageMatchNoCache(findPackageByIdNoCache(p.GetParentID()));
     }
 
@@ -962,13 +958,13 @@ public class EaRepo {
             // id=0 means this is the root
             return null;
         }
-        LOG.info("Looking for package with id {} ", packageID);
+        LOG.info("Looking for package with id [{}] ", packageID);
         if (packageCache.isEmpty()) {
             ensureRepoIsOpen();
             return findPackageByIdNoCache(packageID);
         } else {
             final EaPackage eaPackage = packageCache.findById(packageID);
-            LOG.info("Found package in cache {} ", eaPackage != null ? eaPackage.getName() : "not found...");
+            LOG.info("Found package [{}] in cache", eaPackage != null ? eaPackage.getName() : "not found...");
             return eaPackage != null ? eaPackage.unwrap() : null;
         }
     }
@@ -1018,7 +1014,7 @@ public class EaRepo {
         final String pkgString = pkg.GetName();
 
         if (stereotype.equals(xsdSchemaStereotype)) {
-            LOG.info("Generate XSD for package " + pkgString);
+            LOG.info("Generate XSD for package [{}]", pkgString);
             eaProj.GenerateXSD(pkg.GetPackageGUID(), directory.getAbsolutePath() + fileSeparator + pkgString + ".xsd", xmlEncoding, null);
         } else {
             // Create subdirectory in generation directory
@@ -1071,69 +1067,58 @@ public class EaRepo {
     }
 
     public EaDiagram createOrUpdateStandardDiagram(final EaElement centralElement) {
+        final EaMetaType metaType = centralElement.getMetaType();
+        if (!metaTypesThatHasDiagrams.contains(metaType)) {
+            LOG.warn("No diagram is generated for [{}] of metaType [{}]. Has to be one of {}", centralElement.getName(), metaType,
+                     metaTypesThatHasDiagrams);
+            return null;
+        }
 
         final String diagramName = EaDiagram.createStandardDiagramName(centralElement);
 
         EaDiagram eaDiagram = centralElement.findDiagram(diagramName);
-
-        if (eaDiagram == null) {
-            final Package pack = findPackageByID(centralElement.getPackageID());
-            final Collection<Diagram> diagrams = pack.GetDiagrams();
-            final Diagram diagram = diagrams.AddNew(diagramName, EaDiagramType.COMPONENT.toString());
-            pack.Update();
-            repository.SaveDiagram(diagram.GetDiagramID());
-            diagrams.Refresh();
-            eaDiagram = new EaDiagram(this, diagram, getPackagePath(pack));
-            eaDiagram.setParentId(centralElement.getId());
-            LOG.info("Created diagram {} below {}", diagramName, centralElement.getName());
-            eaDiagram.setStatus(EaDiagram.Status.NEW);
-        } else {
-            eaDiagram.removeAllElements();
-            LOG.info("Removed elements from {}", eaDiagram.getName());
-            eaDiagram.setStatus(EaDiagram.Status.UPDATED);
+        try {
+            if (eaDiagram == null) {
+                final Package pack = findPackageByID(centralElement.getPackageID());
+                final Collection<Diagram> diagrams = pack.GetDiagrams();
+                final Diagram diagram = diagrams.AddNew(diagramName, EaDiagramType.COMPONENT.toString());
+                pack.Update();
+                repository.SaveDiagram(diagram.GetDiagramID());
+                diagrams.Refresh();
+                eaDiagram = new EaDiagram(this, diagram, getPackagePath(pack));
+                eaDiagram.setParentId(centralElement.getId());
+                LOG.info("Created diagram [{}] below [{}]", diagramName, centralElement.getName());
+                eaDiagram.setStatus(EaDiagram.Status.NEW);
+            } else {
+                eaDiagram.removeAllElements();
+                LOG.info("Removed elements from diagram [{}]", eaDiagram.getName());
+                eaDiagram.setStatus(EaDiagram.Status.UPDATED);
+            }
+        } catch (final Exception e) {
+            LOG.error("Unable to create or update diagram [{}] because: ", eaDiagram != null ? eaDiagram : diagramName, e);
+            return null;
         }
-        final EaDiagram finalDiagram = eaDiagram;
-        finalDiagram.hideDetails();
-
-        finalDiagram.add(centralElement);
-
-        centralElement.findConnectedElements()
-                      .stream()
-                      .filter(e -> !bannedElementTypes.contains(e.getType()))
-                      .forEach(finalDiagram::add);
-
-        final Project project = getProject();
-        // todo, find out which one actually does the job:
-        doLayout(finalDiagram, project.GUIDtoXML(finalDiagram.getGuid()),
-                 EA_AUTO_DIAGRAM_OPTIONS.toInt(),
-                 EA_AUTO_DIAGRAM_ITERATIONS.toInt(),
-                 EA_AUTO_DIAGRAM_LAYER_SPACING.toInt(),
-                 EA_AUTO_DIAGRAM_COLUMN_SPACING.toInt());
-
-        finalDiagram.adjustElementAppearances();
-
-        repository.SaveDiagram(finalDiagram.getDiagramID());
-        return finalDiagram;
+        boolean success = false;
+        success = eaDiagram.layoutAndSaveDiagram(centralElement);
+        if(success) {
+            ++noOfDiagramsCreated;
+        }
+        return success ? eaDiagram : null;
     }
 
-    private boolean doLayout(final EaDiagram eaDiagram, final String guid, final int options, final int iterations, final int layerSpacing, final
-    int columnSpacing) {
-        final boolean result = project.LayoutDiagramEx(guid,
-                                                       options,
-                                                       iterations,
-                                                       layerSpacing,
-                                                       columnSpacing,
-                                                       false);
-
-        LOG.info("Applied autolayout to [{}] [{}] result: [{}]. Ran with options [{}], iterations {} layerSpacing {} columnSpacing {}",
-                 eaDiagram.getName(), guid, result, String.format("%#010x", options), iterations, layerSpacing, columnSpacing);
-        eaDiagram.update();
-        return result;
+    public boolean saveDiagram(final EaDiagram eaDiagram) {
+        try {
+            repository.SaveDiagram(eaDiagram.getDiagramID());
+            return true;
+        } catch (final Exception e) {
+            LOG.error("Unable to save diagram [{}] because [{}]", eaDiagram, e);
+        }
+        return false;
     }
 
     // Check if element shall be exported to file
     public boolean doGenerate(final EaElement eaElement) {
-        return ((eaElement.getMetaType() == EaMetaType.QUEUE) || isBlank(eaElement.getClassifierType()))
+        return ((eaElement.getMetaType() == QUEUE) || isBlank(eaElement.getClassifierType()))
                 && (previousElements.get(eaElement.getElementGUID()) == null)
                 && filterMatches(elementPattern, eaElement.getName())
                 && filterMatches(stereotypeFilter, eaElement.getStereotypeEx());
@@ -1201,6 +1186,22 @@ public class EaRepo {
 
     public void clearPackageCache() {
         packageCache.clear();
+    }
 
+    public int getNoOfDiagramsCreated() {
+        return noOfDiagramsCreated;
+    }
+
+    public List<EaElement> findElementsInPackage(String packageForAutoDiagrams, String elementName) {
+        List<EaElement> result = new ArrayList<>();
+        LinkedList<String> hier = EaPackage.hirearchyToList(packageForAutoDiagrams);
+        Collection<Element> elements = repository.GetElementsByQuery("Simple", elementName);
+        for (Element element : elements) {
+            Package pkg = repository.GetPackageByID(element.GetPackageID());
+            if (hier.contains(pkg.GetName()) && element.GetName().equals(elementName)) {
+                result.add(new EaElement(element, this));
+            }
+        }
+        return result;
     }
 }

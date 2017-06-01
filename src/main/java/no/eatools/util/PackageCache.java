@@ -1,6 +1,5 @@
 package no.eatools.util;
 
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -225,7 +224,7 @@ public class PackageCache {
             return rootPkg;
         }
 
-        final LinkedList<String> hier = new LinkedList<>(Arrays.asList(nameHierarchy.split("->")));
+        final LinkedList<String> hier = EaPackage.hirearchyToList(nameHierarchy);
 
         return findPackage(hier, rootPkg, packagePattern);
     }

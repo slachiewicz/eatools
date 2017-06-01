@@ -216,7 +216,18 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             return;
         }
         if (isNotBlank(packageForAutoDiagrams)) {
-            executeOnPackages(packageForAutoDiagrams, true, EaPackage::generateAutoDiagramsRecursively, "Creating AUTO diagrams for package [{}]");
+            if(isNotBlank(diagram)) {
+                final List<EaElement> elements = eaRepo.findElementsInPackage(packageForAutoDiagrams, diagram);
+                for (final EaElement element : elements) {
+                    final EaDiagram eaDiagram = eaRepo.createOrUpdateStandardDiagram(element);
+                    if (eaDiagram != null) {
+                        LOG.info("Created/updated [{}] status [{}]", eaDiagram.getName(), eaDiagram.getStatus());
+                    }
+                }
+            } else {
+                executeOnPackages(packageForAutoDiagrams, true, EaPackage::generateAutoDiagramsRecursively, "Creating AUTO diagrams for package [{}]");
+            }
+            System.out.println("--------> Number of diagrams created/updated :" + eaRepo.getNoOfDiagramsCreated());
             return;
         }
         if (isNotBlank(htmlOutputPath)) {

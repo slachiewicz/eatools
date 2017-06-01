@@ -138,6 +138,23 @@
             <artifactId>annotations</artifactId>
             <version>3.0.0</version>
         </dependency>
+
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.1</version>
+        </dependency>
+
+        <!--<dependency>-->
+            <!--<groupId>commons-beanutils</groupId>-->
+            <!--<artifactId>commons-beanutils</artifactId>-->
+            <!--<version>20030211.134440</version>-->
+        <!--</dependency>-->
+        <dependency>
+            <groupId>no.bouvet.ohs</groupId>
+            <artifactId>dot</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <properties>

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,7 +46,6 @@ public class EaPackage {
     final Set<String> allConnectors = new HashSet<>();
     final EaPackage parent;
     final int id;
-    private final List<EaMetaType> metaTypesThatHasDiagrams = Arrays.asList(COMPONENT, INTERFACE, QUEUE, PROCESS, DATA_STORE, WEB_PAGE, CLIENT_PAGE);
     private final int parentId;
 
     public EaPackage(final String name, final EaRepo repos) {
@@ -76,6 +76,10 @@ public class EaPackage {
 //        me.GetDiagrams().AddNew()
     }
 
+    public static LinkedList<String> hirearchyToList(String nameHierarchy) {
+        return new LinkedList<>(Arrays.asList(nameHierarchy.split("->")));
+    }
+
     /**
      * Generate relationships between subpackages based on relationships between contained classes
      */
@@ -100,7 +104,8 @@ public class EaPackage {
         for (final EaPackage eaPackage : repos.findPackages(pkg)) {
             generateAttributesInPackage(eaPackage, attributes);
         }
-        final Collection<Element> elements = pkg.unwrap().GetElements();
+        final Collection<Element> elements = pkg.unwrap()
+                                                .GetElements();
         generateAttributesForElements(attributes, elements);
     }
 
@@ -123,19 +128,10 @@ public class EaPackage {
     }
 
     private DDEntry createElementAutoDiagramAndLine(final EaElement eaElement) {
-        final EaMetaType metaType = eaElement.getMetaType();
         final EaDiagram eaDiagram;
         final String imageUrl;
-        if(EaApplicationProperties.EA_AUTO_DIAGRAM_GENERATE.toBoolean()) {
-            if (metaTypesThatHasDiagrams.contains(metaType)) {
-                eaDiagram = repos.createOrUpdateStandardDiagram(eaElement);
-            } else {
-                LOG.warn("No diagram is generated for [{}] of metaType [{}]. Has to be one of {}", eaElement.getName(), metaType,
-                         metaTypesThatHasDiagrams);
-
-
-                eaDiagram = eaElement.findDiagram(EaDiagram.createStandardDiagramName(eaElement));
-            }
+        if (EaApplicationProperties.EA_AUTO_DIAGRAM_GENERATE.toBoolean()) {
+            eaDiagram = repos.createOrUpdateStandardDiagram(eaElement);
             imageUrl = eaDiagram != null ? eaDiagram.writeImageToFile(true) : EMPTY;
         } else {
             imageUrl = EMPTY;
@@ -436,7 +432,9 @@ public class EaPackage {
     public void generateAutoDiagramsRecursively() {
         for (final Element element : me.GetElements()) {
             final EaDiagram eaDiagram = repos.createOrUpdateStandardDiagram(new EaElement(element, repos));
-            LOG.info("Created/updated [{}] status [{}]", eaDiagram.getName(), eaDiagram.getStatus());
+            if (eaDiagram != null) {
+                LOG.info("Created/updated [{}] status [{}]", eaDiagram.getName(), eaDiagram.getStatus());
+            }
         }
         for (final EaPackage eaPackage : children()) {
             eaPackage.generateAutoDiagramsRecursively();
@@ -448,43 +446,43 @@ public class EaPackage {
     }
 
     /**
-     private static EaDiagram recurseElements(EaRepo eaRepo, org.sparx.Package pkg, String diagramName, boolean recursive) {
-     if (pkg == null) {
-     return null;
-     }
-     for (Element element : pkg.GetElements()) {
-     element.GetAttributes();
-     for (Connector connector : element.GetConnectors()) {
-     Repository repository;
-     for (Connector connector1 : element.GetConnectors()) {
-     if (connector1.GetSupplierEnd().GetObjectType() == ObjectType.otElement) {
-
-     }
-     }
-     element.GetConnectors().AddNew();
-     connector.GetSupplierEnd();
-     }
-     Collection<Element> elements = pkg.GetElements();
-     for (Element element1 : elements) {
-     Package p;
-     p.GetConnectors()
-     }
-     }
-
-     if (recursive) {
-     for (Package p : pkg.GetPackages()) {
-     for (Connector connector : p.GetConnectors()) {
-     connector.
-     }
-
-     EaDiagram d = findDiagram(eaRepo, p, diagramName, recursive);
-     if (d != null) {
-     return d;
-     }
-     }
-     }
-     return null;
-     }
+     * private static EaDiagram recurseElements(EaRepo eaRepo, org.sparx.Package pkg, String diagramName, boolean recursive) {
+     * if (pkg == null) {
+     * return null;
+     * }
+     * for (Element element : pkg.GetElements()) {
+     * element.GetAttributes();
+     * for (Connector connector : element.GetConnectors()) {
+     * Repository repository;
+     * for (Connector connector1 : element.GetConnectors()) {
+     * if (connector1.GetSupplierEnd().GetObjectType() == ObjectType.otElement) {
+     *
+     * }
+     * }
+     * element.GetConnectors().AddNew();
+     * connector.GetSupplierEnd();
+     * }
+     * Collection<Element> elements = pkg.GetElements();
+     * for (Element element1 : elements) {
+     * Package p;
+     * p.GetConnectors()
+     * }
+     * }
+     *
+     * if (recursive) {
+     * for (Package p : pkg.GetPackages()) {
+     * for (Connector connector : p.GetConnectors()) {
+     * connector.
+     * }
+     *
+     * EaDiagram d = findDiagram(eaRepo, p, diagramName, recursive);
+     * if (d != null) {
+     * return d;
+     * }
+     * }
+     * }
+     * return null;
+     * }
      **/
 
     public String getName() {
@@ -537,7 +535,7 @@ public class EaPackage {
         return result;
     }
 
-    public Boolean createBaseline(String versionNo, String notes) {
+    public Boolean createBaseline(final String versionNo, final String notes) {
         return repos.createBaseline(me.GetPackageGUID(), versionNo, notes);
     }
 
