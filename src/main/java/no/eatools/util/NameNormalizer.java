@@ -30,6 +30,7 @@ public class NameNormalizer {
      */
     public static final String WINDOWS_SEPARATOR = "\\";
     public static final String ILLEGAL_CHARS_REGEX = "[#%&<>$!^~'\"@\\+`|=:;\\?\\*\\(\\)]";
+    private static final String CYGROOT = "/cygdrive";
 
 
     private NameNormalizer() {
@@ -88,7 +89,7 @@ public class NameNormalizer {
     }
 
     public static boolean isAbsoluteFileName(final String fileName) {
-        return new File(fileName).isAbsolute();
+        return isNotBlank(fileName) && new File(fileName).isAbsolute();
     }
 
     public static File createFile(final int level, final String rootDirName, final String logicalPathname, final String diagramName, final String
@@ -176,5 +177,22 @@ public class NameNormalizer {
             ++index;
         }
         return stringBuilder.toString();
+    }
+
+    public static boolean isCygwinPath(String path) {
+        return trimToEmpty(path).startsWith(CYGROOT);
+    }
+
+    public static String cygPathToWindowsPath(String path) {
+        if (! isCygwinPath(path)) {
+            return FilenameUtils.normalize(path);
+        }
+        String remainderPath = path.replaceFirst(CYGROOT, "");
+        String driveletter = remainderPath.replaceFirst("/([a-z])/.*", "$1");
+        remainderPath = remainderPath.replaceFirst("/[a-z]/", "");
+        if (driveletter.length() == 1) {
+            driveletter = driveletter.toUpperCase() + ":/";
+        }
+        return FilenameUtils.normalize(driveletter + remainderPath);
     }
 }

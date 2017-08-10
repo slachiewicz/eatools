@@ -273,4 +273,11 @@ public class NameNormalizerTest {
         assertEquals("/a/b/c", createPath(logicalPathName, 3));
         assertEquals("/a/b/c", createPath(logicalPathName, 4));
     }
+
+    @Test
+    public void testIsCygPath() throws Exception {
+        String cyppath = "/cygdrive/c/test";
+
+        assertEquals("Not a proper windows path", "C:/test", cygPathToWindowsPath(cyppath));
+    }
 }

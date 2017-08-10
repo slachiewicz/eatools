@@ -140,6 +140,18 @@ public class EaRepo {
         throw new RuntimeException("Root pkg '" + rootPkgName + "' not found");
     }
 
+    /**
+     *
+     * @return a list of all root packages in all models within the repos.
+     */
+    private List<EaPackage> findAllRootPackages() {
+        List<EaPackage> result = new ArrayList<>();
+        for (final Package aPackage : repository.GetModels()) {
+            result.add(new EaPackage(aPackage, this, null));
+        }
+        return result;
+    }
+
 // --------------------- GETTER / SETTER METHODS ---------------------
 
     /**
@@ -833,6 +845,22 @@ public class EaRepo {
         final IntCounter count = new IntCounter();
         generateAllDiagramsRecursive(getRootPackage(), count);
         return count.count;
+    }
+
+    /**
+     * Generate all diagrams from the model into the directory path.
+     * The package structure of the model is retained as directory structure.
+     * All existing diagrams are overwritten.
+     */
+    public int generateAllDiagramsFromAllRoots() {
+        List<EaPackage> allRoots = findAllRootPackages();
+        int totalCount = 0;
+        for (EaPackage root : allRoots) {
+            rootPackage = root;
+            packageCache.clear();
+            totalCount += generateAllDiagramsFromRoot();
+        }
+        return totalCount;
     }
 
     /**

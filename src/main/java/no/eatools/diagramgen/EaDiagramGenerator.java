@@ -21,7 +21,6 @@ import no.bouvet.ohs.jops.PropertyMap;
 import no.eatools.util.EaApplicationProperties;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
@@ -163,7 +162,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
 
         final String reposString = EA_PROJECT.value();
         LOG.info("Trying repos {}", reposString);
-        final String normalizedFileName = FilenameUtils.normalize(reposString);
+        final String normalizedFileName = cygPathToWindowsPath(reposString);
         final File modelFile = new File(normalizedFileName);
         LOG.info("Trying repos: asProperty: [{}] to file: [{}]", reposString, modelFile.getAbsolutePath());
         eaRepo = new EaRepo(modelFile);
@@ -236,13 +235,18 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         }
         if (isNotBlank(diagram)) {
             generateSpecificDiagram(diagram);
-        } else {
+        } else if (EA_ROOTPKG.exists()) {
             // generate all diagrams
-            final int count = eaRepo.generateAllDiagramsFromRoot();
-            final String msg = String.format("Generated %d diagrams", count);
-            LOG.info(msg);
-            System.out.println(msg);
+            logFinalReport(eaRepo.generateAllDiagramsFromRoot());
+        } else {
+            logFinalReport(eaRepo.generateAllDiagramsFromAllRoots());
         }
+    }
+
+    private void logFinalReport(final int count) {
+        final String msg = String.format("Generated %d diagrams", count);
+        LOG.info(msg);
+        System.out.println(msg);
     }
 
     private void listElements(final String packages) {

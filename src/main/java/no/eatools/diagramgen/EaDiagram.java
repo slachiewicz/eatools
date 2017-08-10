@@ -196,6 +196,10 @@ public class EaDiagram {
      * @param urlBase
      */
     public static void updateDiagramUrlFile(final String urlBase) {
+        if(! EA_DIAGRAM_URL_FILE.exists()) {
+            LOG.info("No value for {}. Skipping creation", EA_DIAGRAM_URL_FILE);
+            return;
+        }
         File urlFile = null;
         try {
             urlFile = new File(EA_DIAGRAM_URL_FILE.value());
