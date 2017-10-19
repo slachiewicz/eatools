@@ -224,7 +224,7 @@ public class PackageCache {
             return rootPkg;
         }
 
-        final LinkedList<String> hier = EaPackage.hirearchyToList(nameHierarchy);
+        final LinkedList<String> hier = EaPackage.hierarchyToList(nameHierarchy);
 
         return findPackage(hier, rootPkg, packagePattern);
     }

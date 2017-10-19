@@ -89,7 +89,10 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     @Option(name = "-ad", usage = "Auto generate diagrams for elements in given package(s) recursively", metaVar = "Package root")
     private String packageForAutoDiagrams = "";
 
-//    @Argument(metaVar = PROPERTY_FILE, usage = "property file. If omitted standard file is looked for ", index = 0, required = true)
+    @Option(name = "-i", usage = "Import elements from Json file", metaVar = "Json file")
+    private String importJsonFile = "";
+
+    //    @Argument(metaVar = PROPERTY_FILE, usage = "property file. If omitted standard file is looked for ", index = 0, required = true)
 //    private String propertyFilename;
 
     @Argument(metaVar = "diagram", usage = "diagram name or number. If omitted, all diagrams are generated", index = 1, required = false)
@@ -185,6 +188,10 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
                 usageHelper.terminateWithHelp(-2, "No package to list elements in");
             }
             executeOnPackages(pack, false, EaPackage::listElementProperties, "Listing Element Properties in [{}]");
+            return;
+        }
+        if(isNotBlank(importJsonFile)) {
+            new ElementImporter(eaRepo, importJsonFile).importComponents();
             return;
         }
         if (isNotBlank(rootForPackageList)) {
@@ -328,7 +335,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     private void listAllPackages(final String rootForPackageList) {
         final EaPackage rootpkg = eaRepo.findInPackageCache(rootForPackageList);
         eaRepo.findAllPackages(rootpkg)
-              .forEach(p -> System.out.println(p.toHierarchicalString()));
+              .forEach(p -> System.out.println(p.getHierarchicalName()));
     }
 
     private void createBaselines(final String versionNo, final String notes, final String elementCreationPackage) {

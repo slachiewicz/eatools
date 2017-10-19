@@ -145,7 +145,7 @@ public class EaRepo {
      * @return a list of all root packages in all models within the repos.
      */
     private List<EaPackage> findAllRootPackages() {
-        List<EaPackage> result = new ArrayList<>();
+        final List<EaPackage> result = new ArrayList<>();
         for (final Package aPackage : repository.GetModels()) {
             result.add(new EaPackage(aPackage, this, null));
         }
@@ -853,9 +853,9 @@ public class EaRepo {
      * All existing diagrams are overwritten.
      */
     public int generateAllDiagramsFromAllRoots() {
-        List<EaPackage> allRoots = findAllRootPackages();
+        final List<EaPackage> allRoots = findAllRootPackages();
         int totalCount = 0;
-        for (EaPackage root : allRoots) {
+        for (final EaPackage root : allRoots) {
             rootPackage = root;
             packageCache.clear();
             totalCount += generateAllDiagramsFromRoot();
@@ -982,6 +982,11 @@ public class EaRepo {
     }
 
     public Package findPackageByID(final int packageID) {
+        EaPackage eaPackageByID = findEaPackageByID(packageID);
+        return eaPackageByID != null ? eaPackageByID.unwrap() : null;
+    }
+
+    public EaPackage findEaPackageByID(final int packageID) {
         if (packageID == 0) {
             // id=0 means this is the root
             return null;
@@ -989,11 +994,11 @@ public class EaRepo {
         LOG.info("Looking for package with id [{}] ", packageID);
         if (packageCache.isEmpty()) {
             ensureRepoIsOpen();
-            return findPackageByIdNoCache(packageID);
+            return new EaPackage(findPackageByIdNoCache(packageID), this, null);
         } else {
             final EaPackage eaPackage = packageCache.findById(packageID);
             LOG.info("Found package [{}] in cache", eaPackage != null ? eaPackage.getName() : "not found...");
-            return eaPackage != null ? eaPackage.unwrap() : null;
+            return eaPackage;
         }
     }
 
@@ -1158,22 +1163,20 @@ public class EaRepo {
     }
 
     /**
-     * Ppopulate cache if not already done, then find the packge.
+     * Populate cache if not already done, then find the package.
      *
-     * @param elementCreationPackage
-     * @return
+     * @param hierarchicalPackageName hierarchical name of a package, e.g. "A->subPack->child"
+     * @return null if no package for path is found
      */
-    public EaPackage findInPackageCache(final String elementCreationPackage) {
-        LOG.info("Finding local root [{}]", elementCreationPackage);
+    public EaPackage findInPackageCache(final String hierarchicalPackageName) {
+        LOG.info("Finding local root [{}]", hierarchicalPackageName);
         if (packageCache.isEmpty()) {
             packageCache.populate(this, getRootPackage(), getRootPackage());
         }
-//        final EaPackage localRoot = findPackageByName(elementCreationPackage, true);
-        final EaPackage localRoot = packageCache.findPackageByHierarchicalName(getRootPackage(), elementCreationPackage, packagePattern);
+        final EaPackage localRoot = packageCache.findPackageByHierarchicalName(getRootPackage(), hierarchicalPackageName, packagePattern);
         LOG.info("Found [{}] local root for [{}] from [{}] using pattern [{}]", localRoot == null ? "no" : localRoot + " as ",
-                 elementCreationPackage, getRootPackage()
-                         .toHierarchicalString(), packagePattern == null ? "no" : packagePattern);
-//        packageCache.populate(this, localRoot, getRootPackage());
+                 hierarchicalPackageName, getRootPackage()
+                         .getHierarchicalName(), packagePattern == null ? "no" : packagePattern);
         return localRoot;
     }
 
@@ -1220,12 +1223,12 @@ public class EaRepo {
         return noOfDiagramsCreated;
     }
 
-    public List<EaElement> findElementsInPackage(String packageForAutoDiagrams, String elementName) {
-        List<EaElement> result = new ArrayList<>();
-        LinkedList<String> hier = EaPackage.hirearchyToList(packageForAutoDiagrams);
-        Collection<Element> elements = repository.GetElementsByQuery("Simple", elementName);
-        for (Element element : elements) {
-            Package pkg = repository.GetPackageByID(element.GetPackageID());
+    public List<EaElement> findElementsInPackage(final String pack, final String elementName) {
+        final List<EaElement> result = new ArrayList<>();
+        final LinkedList<String> hier = EaPackage.hierarchyToList(pack);
+        final Collection<Element> elements = repository.GetElementsByQuery("Simple", elementName);
+        for (final Element element : elements) {
+            final Package pkg = repository.GetPackageByID(element.GetPackageID());
             if (hier.contains(pkg.GetName()) && element.GetName().equals(elementName)) {
                 result.add(new EaElement(element, this));
             }

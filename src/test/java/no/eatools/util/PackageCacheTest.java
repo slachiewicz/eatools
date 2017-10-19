@@ -164,7 +164,7 @@ public class PackageCacheTest {
     public void testFindAndPrintHiearchicalName() throws Exception {
         System.out.println(localRoot);
         subject.findDescendantsOf(localRoot, true)
-               .forEach(p-> System.out.println(p.toHierarchicalString()));
+               .forEach(p-> System.out.println(p.getHierarchicalName()));
     }
 
     @Test

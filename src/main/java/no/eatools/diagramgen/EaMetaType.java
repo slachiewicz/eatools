@@ -3,6 +3,7 @@ package no.eatools.diagramgen;
 import no.bouvet.ohs.jops.Camel;
 import no.bouvet.ohs.jops.Enums;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +25,7 @@ public enum EaMetaType {
     GENERALIZATION,
     INTERFACE,
     LINK,
+    NESTING,
     NODE,
     NOTE,
     OBJECT,
@@ -32,6 +34,7 @@ public enum EaMetaType {
     PROVIDED_INTERFACE,
     QUEUE,
     REALIZATION,
+    REALISATION,
     RELATIONSHIP,
     TAGGED_VALUE,
     TEXT,
@@ -53,7 +56,7 @@ public enum EaMetaType {
      */
     public static EaMetaType fromString(final String metaType) {
         LOG.debug("Looking up metatype for [{}]", metaType);
-        EaMetaType result = Enums.valueOf(EaMetaType.class, Camel.toConstantString(metaType), NULL);
+        final EaMetaType result = Enums.valueOf(EaMetaType.class, Camel.toConstantString(metaType), NULL);
         if(result == NULL) {
             LOG.warn("Unknown metaType for {}", metaType);
         }
@@ -69,4 +72,7 @@ public enum EaMetaType {
     }
 
 
+    public String toEaString() {
+        return StringUtils.capitalize(toString().toLowerCase());
+    }
 }

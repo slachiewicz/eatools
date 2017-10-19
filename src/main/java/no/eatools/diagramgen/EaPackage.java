@@ -76,7 +76,7 @@ public class EaPackage {
 //        me.GetDiagrams().AddNew()
     }
 
-    public static LinkedList<String> hirearchyToList(String nameHierarchy) {
+    public static LinkedList<String> hierarchyToList(String nameHierarchy) {
         return new LinkedList<>(Arrays.asList(nameHierarchy.split("->")));
     }
 
@@ -149,7 +149,7 @@ public class EaPackage {
                                      .toString(), eaElement.getStereotypeEx(), eaElement.getElementGUID(), eaElement.getVersion(), booleanToYesNo
                                     (false),
                             eaElement.getClassifierType(),
-                            ELEMENT, parents, eaElement.getAuthor(), imageUrl, eaElement.getCreated());
+                            ELEMENT, parents, eaElement.getAuthor(), imageUrl, eaElement.getCreated(), eaElement.getHierarchicalPackageName());
 
         for (final TaggedValue attributeTag : eaElement.getTaggedValuesEx()) {
             ddEntry.addTaggedValue(attributeTag.GetName(), attributeTag.GetValue());
@@ -165,7 +165,7 @@ public class EaPackage {
                 new DDEntry(elementName + ATTRIBUTE_DELIMITER + attribute.GetName(), description, attribute.GetLowerBound() +
                         UML_MULTIPLICITY_DELIMITER + attribute.GetUpperBound(),
                             attribute.GetType(), attribute.GetStereotypeEx(), attribute.GetAttributeGUID(), element.getVersion(),
-                            booleanToYesNo(attribute.GetIsID()), EMPTY, ATTRIBUTE, emptyList(), element.getAuthor(), EMPTY, element.getCreated());
+                            booleanToYesNo(attribute.GetIsID()), EMPTY, ATTRIBUTE, emptyList(), element.getAuthor(), EMPTY, element.getCreated(), element.getHierarchicalPackageName());
 
         LOG.debug("DD Entry created {}", ddEntry);
 
@@ -539,9 +539,9 @@ public class EaPackage {
         return repos.createBaseline(me.GetPackageGUID(), versionNo, notes);
     }
 
-    public String toHierarchicalString() {
+    public String getHierarchicalName() {
         if (parent != null) {
-            return parent.toHierarchicalString() + "->" + name;
+            return parent.getHierarchicalName() + "->" + name;
         }
         return name;
     }

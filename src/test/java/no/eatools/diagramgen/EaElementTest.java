@@ -22,7 +22,7 @@ public class EaElementTest extends AbstractEaTestCase {
         final int id = theService.getId();
         final String methodName = "operation1";
         final String returnType = "int";
-        EaMethod theMethod = theService.addMethod(methodName, returnType);
+        final EaMethod theMethod = theService.addMethod(methodName, returnType);
         theMethod.addParameter("aParameter", "TypicalType");
 
         eaRepo.clearPackageCache();

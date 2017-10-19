@@ -1,5 +1,6 @@
 package no.eatools.diagramgen;
 
+import java.lang.reflect.InvocationTargetException;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -7,7 +8,9 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
+import no.bouvet.ohs.ea.dd.DDEntry;
+
+import org.apache.commons.beanutils.BeanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sparx.Attribute;
@@ -21,6 +24,7 @@ import org.sparx.TaggedValue;
 
 import static no.eatools.diagramgen.EaType.*;
 import static no.eatools.util.EaApplicationProperties.*;
+import static org.apache.commons.lang3.StringUtils.*;
 
 /**
  * @author ohs
@@ -94,35 +98,67 @@ public class EaElement {
                     .GetName();
     }
 
+    public String getHierarchicalPackageName() {
+        return repos.findEaPackageByID(getPackageID())
+                    .getHierarchicalName();
+    }
+
     public Collection<Connector> getConnectors() {
         return theElement.GetConnectors();
     }
 
-    public void listProperties() {
-        System.out.println("Element " + theElement.GetName());
+    public String listProperties() {
+        final StringBuilder result = new StringBuilder();
+        result.append(" Element " + theElement.GetName());
+        result.append("\n");
         for (final EaElement eaElement : findParents()) {
-            System.out.printf("Element %s has parent %s%n", getName(), eaElement.getName());
+            result.append(" Element ")
+                  .append(getName())
+                  .append(" has parent ")
+                  .append(eaElement.getName());
         }
-        listAttributes();
+        result.append("\n");
+        result.append(listAttributes());
+        result.append(listTaggedValues());
+        return result.toString();
     }
 
-    private void listAttributes() {
+    public String listAttributes() {
+        final StringBuilder result = new StringBuilder();
         for (final Attribute attribute : theElement.GetAttributesEx()) {
-            listTaggedValues(attribute, " (Ex) ");
+            result.append(listAttributeTaggedValues(attribute, " (Ex) "));
         }
+        result.append("\n");
         for (final Attribute attribute : theElement.GetAttributes()) {
-            listTaggedValues(attribute, " (regular) ");
+            result.append(listAttributeTaggedValues(attribute, " (regular) "));
         }
+        result.append("\n");
+        return result.toString();
     }
 
-    private void listTaggedValues(final Attribute attribute, final String prefix) {
-        System.out.println("Attribute : " + prefix + attribute.GetName());
+    public String listAttributeTaggedValues(final Attribute attribute, final String prefix) {
+        final StringBuilder result = new StringBuilder();
+        result.append("Attribute : " + prefix + attribute.GetName());
         for (final AttributeTag attributeTag : attribute.GetTaggedValuesEx()) {
-            System.out.println("Tag (Ex): " + attributeTag.GetName() + " : [" + attributeTag.GetValue() + "]");
+            result.append(" Tag (Ex): " + attributeTag.GetName() + " : [" + attributeTag.GetValue() + "]");
         }
+        result.append("\n");
         for (final AttributeTag attributeTag : attribute.GetTaggedValues()) {
-            System.out.println("Tag : " + attributeTag.GetName() + " : [" + attributeTag.GetValue() + "]");
+            result.append(" Tag : " + attributeTag.GetName() + " : [" + attributeTag.GetValue() + "]");
         }
+        result.append("\n");
+        return result.toString();
+    }
+
+    public String listTaggedValues() {
+        final StringBuilder result = new StringBuilder();
+        for (final TaggedValue taggedValue : theElement.GetTaggedValuesEx()) {
+            result.append(" Tag (Ex): " + taggedValue.GetName() + " : [" + taggedValue.GetValue() + "]");
+        }
+        for (final TaggedValue taggedValue : theElement.GetTaggedValues()) {
+            result.append(" Tag : " + taggedValue.GetName() + " : [" + taggedValue.GetValue() + "]");
+        }
+        return result.toString();
     }
 
     /**
@@ -208,7 +244,7 @@ public class EaElement {
      * @return
      */
     public EaType getType() {
-        return EaType.fromString(theElement.GetType());
+        return fromString(theElement.GetType());
     }
 
     public String getStereotypeEx() {
@@ -273,38 +309,105 @@ public class EaElement {
     }
 
     public void setImageUrl(final String imageUrl) {
-        if (StringUtils.isNotBlank(imageUrl)) {
+        if (isNotBlank(imageUrl)) {
             updateImageTag(imageUrl);
             updateTaggedValue(IMAGE_URL_TAG, imageUrl);
             LOG.info("Added auto image url as tag [{}]", imageUrl);
         }
     }
 
-    private void updateTaggedValue(final String tageName, final String tagValue) {
-        final Collection<TaggedValue> taggedValues = theElement.GetTaggedValuesEx();
-        boolean hasOld = false;
+    /**
+     * TODO taggedValuesEx vs TaggedValues?
+     *
+     * @param tagName
+     * @param tagValue
+     */
+    public void updateTaggedValue(final String tagName, final String tagValue) {
+        LOG.debug("**************** Before: {}", listProperties());
+        LOG.debug("[{}] Looking for [{}]:[{}]", getName(), tagName, tagValue);
+        final String trimmedName = trimToEmpty(tagName);
+        final Collection<TaggedValue> taggedValues = theElement.GetTaggedValues();
+        // EA does not enforce uniqueness on tag keys
+        final List<Short> indexesToRemove = new ArrayList<>();
+        short i = 0;
         for (final TaggedValue taggedValue : taggedValues) {
-            if(tageName.equalsIgnoreCase(taggedValue.GetName())) {
-                hasOld = true;
-                taggedValue.SetValue(tageName);
-                taggedValue.Update();
-                taggedValues.Refresh();
-                theElement.Refresh();
-                theElement.Update();
+            LOG.debug("[{}] has tagged value [{}]:[{}]", getName(), taggedValue.GetName(), taggedValue.GetValue());
+            if (trimmedName.equalsIgnoreCase(taggedValue.GetName()
+                                                        .trim())) {
+                indexesToRemove.add(i);
             }
+            ++i;
         }
-        if(! hasOld) {
-            final TaggedValue taggedValue = taggedValues.AddNew(tageName, tagValue);
-            taggedValue.Update();
-            taggedValues.Refresh();
-            theElement.Refresh();
+        LOG.debug("Found [{}] tags with key [{}]", indexesToRemove.size(), tagName);
+        for (final Short index : indexesToRemove) {
+            LOG.debug("Deleting [{}]", index);
+            taggedValues.Delete(index);
             theElement.Update();
         }
+        taggedValues.Refresh();
+        LOG.debug("Now: [{}]", taggedValues);
+
+        final TaggedValue taggedValue = taggedValues.AddNew(trimmedName, tagValue);
+        taggedValue.Update();
+        taggedValues.Refresh();
+        theElement.GetTaggedValuesEx().Refresh();
+        theElement.Update();
+        theElement.Refresh();
+        LOG.debug("Added [{}]:[{}]", trimmedName, taggedValue);
+        LOG.debug("************* After: {}", listProperties());
     }
 
+    public void updateAssociation(final DDEntry.Association association) {
+        final Collection<Connector> connectors = theElement.GetConnectors();
+
+        final String targetPackage = association.getTargetPackage();
+        final String target = association.getTarget();
+        final List<EaElement> targetElements = repos.findElementsInPackage(targetPackage, target);
+        if (targetElements.size() != 1) {
+            LOG.warn("Unable to find unique target for connector from [{}] to [{}]:[{}]. Found : {}", getName(), targetPackage, target, targetElements);
+            return;
+        }
+        final EaElement targetElement = targetElements.get(0);
+        for (final Connector connector : connectors) {
+            try {
+                LOG.debug("Connector [{}] ", BeanUtils.describe(new EaConnector(repos, connector)).toString().replaceAll(",", "\n"));
+            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+            final int otherId = connector.GetSupplierID();
+
+//            final Element other = repos.findElementByID(otherId);
+            if(otherId == targetElement.getId()
+                    && EaConnector.equals(connector, association)) {
+                LOG.info("Updating association");
+                updateConnector(association, connector);
+                return;
+            }
+        }
+        final Connector connector = connectors.AddNew("", EaMetaType.fromString(association.getType())
+                                                                    .toEaString());
+        connector.SetClientID(theElement.GetElementID());
+        connector.SetSupplierID(targetElement.getId());
+        updateConnector(association, connector);
+        LOG.info("Created association [{}]", association);
+    }
+
+    private void updateConnector(final DDEntry.Association association, final Connector connector) {
+        if (isNotBlank(association.getStereotypes())) {
+            connector.SetStereotype(association.getStereotypes());
+        }
+        if (isNotBlank(association.getTargetRole())) {
+            connector.GetSupplierEnd().SetRole(association.getTargetRole());
+        }
+        connector.Update();
+        theElement.Update();
+    }
+
+
     private void updateImageTag(final String imageUrl) {
-        final String oldTag = StringUtils.trimToEmpty(theElement.GetTag()).replaceAll(IMAGE_URL_TAG + ".*\\.png", "");
-        final String newTag = StringUtils.trimToEmpty(oldTag) + " " + IMAGE_URL_TAG + "=" + imageUrl;
+        final String oldTag = trimToEmpty(theElement.GetTag())
+                                         .replaceAll(IMAGE_URL_TAG + ".*\\.png", "");
+        final String newTag = trimToEmpty(oldTag) + " " + IMAGE_URL_TAG + "=" + imageUrl;
         theElement.SetTag(newTag);
         theElement.Refresh();
         theElement.Update();
@@ -314,16 +417,21 @@ public class EaElement {
         final Method method = theElement.GetMethods()
                                         .AddNew(methodName, returnType);
         method.Update();
-        theElement.GetMethods().Refresh();
+        theElement.GetMethods()
+                  .Refresh();
         return new EaMethod(this, method);
     }
 
     public boolean removeMethod(final String methodName, final String returnType) {
         short index = 0;
         for (final Method method : theElement.GetMethods()) {
-            if(method.GetName().equals(methodName) && method.GetReturnType().equals(returnType)) {
-                theElement.GetMethods().Delete(index);
-                theElement.GetMethods().Refresh();
+            if (method.GetName()
+                      .equals(methodName) && method.GetReturnType()
+                                                   .equals(returnType)) {
+                theElement.GetMethods()
+                          .Delete(index);
+                theElement.GetMethods()
+                          .Refresh();
                 return true;
             }
             ++index;
@@ -335,7 +443,7 @@ public class EaElement {
         final ZoneId zoneId;
         try {
             zoneId = ZoneId.of(EA_SERVER_TIMEZONE.value());
-        } catch (DateTimeException e) {
+        } catch (final DateTimeException e) {
             LOG.error("No valid timeZone for [{}]:[{}]", EA_SERVER_TIMEZONE, EA_SERVER_TIMEZONE.value());
             return null;
         }
@@ -345,7 +453,7 @@ public class EaElement {
             instant = theElement.GetCreated()
                                 .toInstant();
             return ZonedDateTime.ofInstant(instant, zoneId);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOG.error("Unable to convert [{}] to a ZonedDateTime in element [{}]", theElement.GetCreated(), toString());
             return null;
         }
