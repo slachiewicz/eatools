@@ -71,7 +71,7 @@ public class EaRepoTest extends AbstractEaTestCase {
         final String packName = "Komponenter";
         final EaPackage rootPkg = eaRepo.getRootPackage();
         final EaPackage thePkg = eaRepo.findPackageByName(packName, rootPkg, EaRepo.RECURSIVE);
-        final List<Element> components = eaRepo.findComponentsInPackage(thePkg.unwrap());
+        final List<Element> components = eaRepo.findComponentsInPackage(thePkg);
         for (final Element e : components) {
             assertEquals(EaMetaType.COMPONENT.toString(), e.GetMetaType());
             log.info("Component name: " + e.GetName());
@@ -87,7 +87,7 @@ public class EaRepoTest extends AbstractEaTestCase {
         final String packName = "Komponenter";
         final EaPackage rootPkg = eaRepo.getRootPackage();
         final EaPackage thePkg = eaRepo.findPackageByName(packName, rootPkg, EaRepo.RECURSIVE);
-        final List<Element> components = eaRepo.findComponentsInPackage(thePkg.unwrap());
+        final List<Element> components = eaRepo.findComponentsInPackage(thePkg);
         for (final Element e : components) {
             System.out.println("Element name: " + e.GetName());
             assertEquals(EaMetaType.COMPONENT.toString(), e.GetMetaType());
@@ -113,7 +113,7 @@ public class EaRepoTest extends AbstractEaTestCase {
         final String packName = "System";
         final EaPackage rootPkg = eaRepo.getRootPackage();
         final EaPackage thePkg = eaRepo.findPackageByName(packName, rootPkg, EaRepo.RECURSIVE);
-        final List<Element> classes = eaRepo.findClassesInPackage(thePkg.unwrap());
+        final List<Element> classes = eaRepo.findClassesInPackage(thePkg);
         for (final Element e : classes) {
             log.info("Class name: " + e.GetName());
             assertEquals(EaMetaType.CLASS.toString(), e.GetMetaType());
@@ -168,7 +168,7 @@ public class EaRepoTest extends AbstractEaTestCase {
         assertNotNull(theElements);
 
         final String className = "MinKlasse";
-        final Element myClass = eaRepo.findOrCreateClassInPackage(thePkg.unwrap(), className);
+        final Element myClass = eaRepo.findOrCreateClassInPackage(thePkg, className);
 
         assertNotNull(myClass);
 
@@ -216,15 +216,15 @@ public class EaRepoTest extends AbstractEaTestCase {
     public void testFindOrCreateObjectInPackage() throws Exception {
         final String packName = "Klasser";
         EaPackage pkg = eaRepo.findPackageByName(packName, EaRepo.RECURSIVE);
-        Element myObject = eaRepo.findOrCreateObjectInPackage(pkg.unwrap(), "mittObjekt", null);
+        Element myObject = eaRepo.findOrCreateObjectInPackage(pkg, "mittObjekt", null);
         assertNotNull(myObject);
         assertEquals("mittObjekt", myObject.GetName());
         assertEquals("", myObject.GetClassifierName());
 
         pkg = eaRepo.findPackageByName(packName, EaRepo.RECURSIVE);
-        final Element mQueueClass = eaRepo.findOrCreateClassInPackage(pkg.unwrap(), "MQQueue");
+        final Element mQueueClass = eaRepo.findOrCreateClassInPackage(pkg, "MQQueue");
         assertNotNull(mQueueClass);
-        myObject = eaRepo.findOrCreateObjectInPackage(pkg.unwrap(), "enKo", mQueueClass);
+        myObject = eaRepo.findOrCreateObjectInPackage(pkg, "enKo", mQueueClass);
         assertNotNull(myObject);
         assertEquals(mQueueClass.GetElementID(), myObject.GetClassifierID());
 
@@ -233,7 +233,7 @@ public class EaRepoTest extends AbstractEaTestCase {
         // assertEquals(mQueueClass.getName(), myObject.GetClassifierName());
 
         // Do not create another but retrieve the object just created
-        final Element sameObject = eaRepo.findOrCreateObjectInPackage(pkg.unwrap(), "enKo", mQueueClass);
+        final Element sameObject = eaRepo.findOrCreateObjectInPackage(pkg, "enKo", mQueueClass);
         assertEquals(myObject.GetElementID(), sameObject.GetElementID());
         log.info(myObject.GetRunState());
     }
@@ -244,7 +244,7 @@ public class EaRepoTest extends AbstractEaTestCase {
         final String packName = "Klasser";
         final EaPackage pkg = eaRepo.findPackageByName(packName, EaRepo.RECURSIVE);
         final boolean wasDeleted = eaRepo.deleteObjectInPackage(pkg.unwrap(), "mittObjekt", null);
-        final Element myObject = eaRepo.findOrCreateObjectInPackage(pkg.unwrap(), "mittObjekt", null);
+        final Element myObject = eaRepo.findOrCreateObjectInPackage(pkg, "mittObjekt", null);
         assertEquals("mittObjekt", myObject.GetName());
 
         final String runStateBefore = myObject.GetRunState();
@@ -262,8 +262,8 @@ public class EaRepoTest extends AbstractEaTestCase {
         final String packName = "Klasser";
         final EaPackage pkg = eaRepo.findPackageByName(packName, EaRepo.RECURSIVE);
         final String className = "MQQueue";
-        eaRepo.findOrCreateClassInPackage(pkg.unwrap(), className);
-        final Optional<Element> theClass = eaRepo.findElementOfType(pkg.unwrap(), EaMetaType.CLASS, className);
+        eaRepo.findOrCreateClassInPackage(pkg, className);
+        final Optional<Element> theClass = eaRepo.findElementOfType(pkg, EaMetaType.CLASS, className);
         assertTrue(theClass.isPresent());
         assertEquals(className, theClass.get().GetName());
     }
@@ -289,7 +289,7 @@ public class EaRepoTest extends AbstractEaTestCase {
         }
 
         final String objectName = "uniqueObject";
-        final Element anObject = eaRepo.findOrCreateObjectInPackage(unwrappedPkg, objectName, null);
+        final Element anObject = eaRepo.findOrCreateObjectInPackage(pkg, objectName, null);
         assertNotNull(anObject);
         short indexOfAnObject = -1;
         i = 0;
@@ -334,20 +334,20 @@ public class EaRepoTest extends AbstractEaTestCase {
         assertNotNull(pkg);
         final String objectName = "uniqueObject";
         final Package unwrapped = pkg.unwrap();
-        Element anObject = eaRepo.findOrCreateObjectInPackage(unwrapped, objectName, null);
+        Element anObject = eaRepo.findOrCreateObjectInPackage(pkg, objectName, null);
         assertNotNull(anObject);
 
         assertTrue(eaRepo.deleteObjectInPackage(unwrapped, objectName, null));
 
-        final Element classifier = eaRepo.findOrCreateClassInPackage(pkg.unwrap(), "AClass");
-        anObject = eaRepo.findOrCreateObjectInPackage(unwrapped, objectName, classifier);
+        final Element classifier = eaRepo.findOrCreateClassInPackage(pkg, "AClass");
+        anObject = eaRepo.findOrCreateObjectInPackage(pkg, objectName, classifier);
         assertNotNull(anObject);
         assertFalse(eaRepo.deleteObjectInPackage(unwrapped, objectName, anObject));
         assertTrue(eaRepo.deleteObjectInPackage(unwrapped, objectName, classifier));
 
         eaRepo.clearPackageCache();
         final EaPackage rereadPkg = eaRepo.findPackageByName(packName, EaRepo.RECURSIVE);
-        eaRepo.findObjectsInPackage(rereadPkg.unwrap())
+        eaRepo.findObjectsInPackage(rereadPkg)
               .forEach(e -> {
                   log.info("Found elment [{}]", e.GetName());
                   assertNotEquals("uniqueObject", e.GetName());
@@ -362,13 +362,13 @@ public class EaRepoTest extends AbstractEaTestCase {
         assertNotNull(pkg);
         final String className = "FoersteKlasse";
         final Package unwrapped = pkg.unwrap();
-        final Element aClass = eaRepo.findOrCreateClassInPackage(unwrapped, className);
+        final Element aClass = eaRepo.findOrCreateClassInPackage(pkg, className);
         assertNotNull(aClass);
 
         assertTrue(eaRepo.deleteObjectInPackage(unwrapped, className, null));
 
         eaRepo.clearPackageCache();final EaPackage rereadPkg = eaRepo.findPackageByName(packName, EaRepo.RECURSIVE);
-        eaRepo.findClassesInPackage(rereadPkg.unwrap())
+        eaRepo.findClassesInPackage(rereadPkg)
               .forEach(e -> {
                   log.info("Found class [{}]", e.GetName());
                   assertNotEquals(className, e.GetName());
@@ -380,22 +380,22 @@ public class EaRepoTest extends AbstractEaTestCase {
         final String packName = "Klasser";
         final EaPackage pkg = eaRepo.findPackageByName(packName, EaRepo.RECURSIVE);
 
-        Element classifier = eaRepo.findOrCreateClassInPackage(pkg.unwrap(), "AClass");
+        Element classifier = eaRepo.findOrCreateClassInPackage(pkg, "AClass");
         assertNotNull(classifier);
 
         final String objectName = "uniqueObject1";
-        Element anObject = eaRepo.findOrCreateObjectInPackage(pkg.unwrap(), objectName, null);
+        Element anObject = eaRepo.findOrCreateObjectInPackage(pkg, objectName, null);
         assertNotNull(anObject);
 
         assertTrue(eaRepo.isOfType(anObject, null));
         assertFalse(eaRepo.isOfType(anObject, classifier));
 
-        anObject = eaRepo.findOrCreateObjectInPackage(pkg.unwrap(), objectName, classifier);
+        anObject = eaRepo.findOrCreateObjectInPackage(pkg, objectName, classifier);
 
         assertFalse(eaRepo.isOfType(anObject, null));
         assertTrue(eaRepo.isOfType(anObject, classifier));
 
-        classifier = eaRepo.findOrCreateClassInPackage(pkg.unwrap(), "MQQueue");
+        classifier = eaRepo.findOrCreateClassInPackage(pkg, "MQQueue");
         assertNotNull(classifier);
 
         assertFalse(eaRepo.isOfType(anObject, null));
@@ -409,10 +409,10 @@ public class EaRepoTest extends AbstractEaTestCase {
         final EaPackage pkg = eaRepo.findPackageByName(packName, EaRepo.RECURSIVE);
         assertNotNull(pkg);
         final String componentName = "nyKomponent";
-        final Element newComponent = eaRepo.findOrCreateComponentInPackage(pkg.unwrap(), componentName);
+        final Element newComponent = eaRepo.findOrCreateComponentInPackage(pkg, componentName);
         assertNotNull(newComponent);
         assertEquals(componentName, newComponent.GetName());
-        final Element theComponent = eaRepo.findOrCreateComponentInPackage(pkg.unwrap(), componentName);
+        final Element theComponent = eaRepo.findOrCreateComponentInPackage(pkg, componentName);
         assertEquals(newComponent.GetElementID(), theComponent.GetElementID());
 
 
@@ -452,7 +452,7 @@ public class EaRepoTest extends AbstractEaTestCase {
         final String packName = "System";
         final EaPackage rootPkg = eaRepo.getRootPackage();
         final EaPackage thePkg = eaRepo.findPackageByName(packName, rootPkg, EaRepo.RECURSIVE);
-        final List<Element> componentInstances = eaRepo.findComponentInstancesInPackage(thePkg.unwrap());
+        final List<Element> componentInstances = eaRepo.findComponentInstancesInPackage(thePkg);
         assertEquals(2, componentInstances.size());
         for (final Element e : componentInstances) {
             log.info("Component Instance name: " + e.GetName());
@@ -466,9 +466,9 @@ public class EaRepoTest extends AbstractEaTestCase {
         final String packName = "MQ Managers";
         final EaPackage rootPkg = eaRepo.getRootPackage();
         final EaPackage thePkg = eaRepo.findPackageByName(packName, rootPkg, EaRepo.RECURSIVE);
-        final Element classifier = eaRepo.findOrCreateComponentInPackage(thePkg.unwrap(), "KøManager");
+        final Element classifier = eaRepo.findOrCreateComponentInPackage(thePkg, "KøManager");
         final String instanceName = "EnNyManager";
-        final Element componentInstance = eaRepo.findOrCreateComponentInstanceInPackage(thePkg.unwrap(), instanceName, classifier);
+        final Element componentInstance = eaRepo.findOrCreateComponentInstanceInPackage(thePkg, instanceName, classifier);
         assertNotNull(componentInstance);
         assertEquals(EaMetaType.COMPONENT.toString(), componentInstance.GetMetaType());
         // todo this fails the first time, why?
@@ -505,7 +505,7 @@ public class EaRepoTest extends AbstractEaTestCase {
         final String packName = "Komponenter";
         final EaPackage rootPkg = eaRepo.getRootPackage();
         final EaPackage thePkg = eaRepo.findPackageByName(packName, rootPkg, EaRepo.RECURSIVE);
-        final List<Element> components = eaRepo.findComponentsInPackage(thePkg.unwrap());
+        final List<Element> components = eaRepo.findComponentsInPackage(thePkg);
         for (final Element e : components) {
             log.info("Component name: " + e.GetName());
             eaRepo.createOrUpdateStandardDiagram(new EaElement(e, eaRepo));

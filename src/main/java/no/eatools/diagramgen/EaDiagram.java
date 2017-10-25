@@ -292,6 +292,7 @@ public class EaDiagram {
 
     public boolean layoutAndSaveDiagram(final EaElement centralElement) {
         hideDetails();
+//        eaDiagram.WriteStyle("Show Element Property", "1");
 
         add(centralElement);
 

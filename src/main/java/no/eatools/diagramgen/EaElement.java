@@ -6,7 +6,10 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import no.bouvet.ohs.ea.dd.DDEntry;
 
@@ -35,6 +38,7 @@ public class EaElement {
     private final Element theElement;
     private final EaRepo repos;
     private final EaMetaType eaMetaType;
+    private final Set<DDEntry.Operation> operationSet = new HashSet<>();
 
     public EaElement(final Element theElement, final EaRepo repos) {
         this.theElement = theElement;
@@ -350,7 +354,8 @@ public class EaElement {
         final TaggedValue taggedValue = taggedValues.AddNew(trimmedName, tagValue);
         taggedValue.Update();
         taggedValues.Refresh();
-        theElement.GetTaggedValuesEx().Refresh();
+        theElement.GetTaggedValuesEx()
+                  .Refresh();
         theElement.Update();
         theElement.Refresh();
         LOG.debug("Added [{}]:[{}]", trimmedName, taggedValue);
@@ -370,14 +375,16 @@ public class EaElement {
         final EaElement targetElement = targetElements.get(0);
         for (final Connector connector : connectors) {
             try {
-                LOG.debug("Connector [{}] ", BeanUtils.describe(new EaConnector(repos, connector)).toString().replaceAll(",", "\n"));
+                LOG.debug("Connector [{}] ", BeanUtils.describe(new EaConnector(repos, connector))
+                                                      .toString()
+                                                      .replaceAll(",", "\n"));
             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                 e.printStackTrace();
             }
             final int otherId = connector.GetSupplierID();
 
 //            final Element other = repos.findElementByID(otherId);
-            if(otherId == targetElement.getId()
+            if (otherId == targetElement.getId()
                     && EaConnector.equals(connector, association)) {
                 LOG.info("Updating association");
                 updateConnector(association, connector);
@@ -392,12 +399,89 @@ public class EaElement {
         LOG.info("Created association [{}]", association);
     }
 
+    public void createOrUpdateOperation(final DDEntry.Operation operation, final boolean overwriteOps) {
+        final Collection<Method> methods = theElement.GetMethods();
+        if (overwriteOps) {
+            deleteMethodsMatching(methods, operation.getName());
+        }
+        if (operationSet.isEmpty()) {
+            updateOperationsCache(methods);
+        }
+        LOG.debug("Current Methods: \n {}", operationSet.stream()
+                                                        .map(DDEntry.Operation::getSignature)
+                                                        .collect(Collectors.joining("\n")));
+        LOG.info("Updating operation ? [{}]", operation.getName());
+        if (hasMethodMatching(methods, operation)) {
+            LOG.info("Method with same signature already present, not adding or changing, [{}]", operation.getSignature());
+        } else {
+            final EaMethod eaMethod = addMethod(operation.getName(), operation.getReturnType(), methods, operation.getParameters());
+            LOG.info("Added method [{}] ", operation.getSignature());
+        }
+    }
+
+    private void deleteMethodsMatching(final Collection<Method> methods, final String name) {
+        final List<Short> toBeDeleted = new ArrayList<>();
+        short index = 0;
+        for (final Method method : methods) {
+            if (method.GetName()
+                      .equalsIgnoreCase(name)) {
+                toBeDeleted.add(index);
+            }
+            ++index;
+        }
+        for (final Short deleteAt : toBeDeleted) {
+            methods.Delete(deleteAt);
+            LOG.info("Deleted method [{}] from [{}]", name, getName());
+        }
+        operationSet.clear();
+        theElement.Update();
+    }
+
+    private void updateOperationsCache(final Collection<Method> methods) {
+        for (final Method method : methods) {
+            operationSet.add(operationFromMethod(method));
+        }
+    }
+
+    private DDEntry.Operation operationFromMethod(final Method method) {
+        final DDEntry.Operation op = new DDEntry.Operation(method.GetName(), method.GetReturnType());
+        final List<DDEntry.Parameter> params = op.getParameters();
+        for (final org.sparx.Parameter parameter : method.GetParameters()) {
+            params.add(new DDEntry.Parameter(parameter.GetName(), parameter.GetType()));
+        }
+        LOG.debug("Operation: [{}]", op);
+        return op;
+    }
+
+    private boolean hasMethodMatching(final Collection<Method> methods, final DDEntry.Operation operation) {
+        if (operationSet.isEmpty()) {
+            updateOperationsCache(methods);
+        }
+        return operationSet.contains(operation);
+//        for (Method method : methods) {
+//            DDEntry.Operation op = new DDEntry.Operation();
+//            op.getParameters().add(new DDEntry.Parameter())
+//            if (method.GetName()
+//                      .equalsIgnoreCase(operation.getName())) {
+//                if (!operation.getReturnType()
+//                              .equalsIgnoreCase(method.GetReturnType())) {
+//                    return false;
+//                        return false;
+//                    }
+//                }
+//                return true;
+//            }
+//        }
+//        return false;
+    }
+
     private void updateConnector(final DDEntry.Association association, final Connector connector) {
         if (isNotBlank(association.getStereotypes())) {
             connector.SetStereotype(association.getStereotypes());
         }
         if (isNotBlank(association.getTargetRole())) {
-            connector.GetSupplierEnd().SetRole(association.getTargetRole());
+            connector.GetSupplierEnd()
+                     .SetRole(association.getTargetRole());
         }
         connector.Update();
         theElement.Update();
@@ -406,20 +490,24 @@ public class EaElement {
 
     private void updateImageTag(final String imageUrl) {
         final String oldTag = trimToEmpty(theElement.GetTag())
-                                         .replaceAll(IMAGE_URL_TAG + ".*\\.png", "");
+                .replaceAll(IMAGE_URL_TAG + ".*\\.png", "");
         final String newTag = trimToEmpty(oldTag) + " " + IMAGE_URL_TAG + "=" + imageUrl;
         theElement.SetTag(newTag);
         theElement.Refresh();
         theElement.Update();
     }
 
-    public EaMethod addMethod(final String methodName, final String returnType) {
-        final Method method = theElement.GetMethods()
-                                        .AddNew(methodName, returnType);
+    public EaMethod addMethod(final String methodName, final String returnType, final Collection<Method> methods, final List<DDEntry.Parameter> parameters) {
+        final Method method = methods.AddNew(methodName, returnType);
         method.Update();
-        theElement.GetMethods()
-                  .Refresh();
-        return new EaMethod(this, method);
+        methods.Refresh();
+        final EaMethod eaMethod = new EaMethod(this, method);
+        for (final DDEntry.Parameter parameter : parameters) {
+            eaMethod.addParameter(parameter.getName(), parameter.getType());
+        }
+        theElement.Update();
+        operationSet.add(operationFromMethod(eaMethod.getTheMethod()));
+        return eaMethod;
     }
 
     public boolean removeMethod(final String methodName, final String returnType) {
@@ -432,6 +520,7 @@ public class EaElement {
                           .Delete(index);
                 theElement.GetMethods()
                           .Refresh();
+                operationSet.remove(operationFromMethod(method));
                 return true;
             }
             ++index;

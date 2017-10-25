@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -92,6 +93,9 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     @Option(name = "-i", usage = "Import elements from Json file", metaVar = "Json file")
     private String importJsonFile = "";
 
+    @Option(name = "-o", usage = "Overwrite operations if match on name only")
+    private boolean overwriteOps = false;
+
     //    @Argument(metaVar = PROPERTY_FILE, usage = "property file. If omitted standard file is looked for ", index = 0, required = true)
 //    private String propertyFilename;
 
@@ -139,8 +143,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
                 .keySet()
                 .stream()
                 .filter(EnumProperty::exists)
-                .sorted((o1, o2) -> o1.name()
-                                      .compareTo(o2.name()))
+                .sorted(Comparator.comparing(Enum::name))
                 .forEach(e -> System.out.println(e.getKeyValue()));
 
         if (showVersion) {
@@ -191,7 +194,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             return;
         }
         if(isNotBlank(importJsonFile)) {
-            new ElementImporter(eaRepo, importJsonFile).importComponents();
+            new ElementImporter(eaRepo, importJsonFile).importComponents(overwriteOps);
             return;
         }
         if (isNotBlank(rootForPackageList)) {

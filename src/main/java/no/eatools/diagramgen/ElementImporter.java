@@ -26,19 +26,19 @@ public class ElementImporter {
     }
 
 
-    public void importComponents() {
+    public void importComponents(final boolean overwriteOps) {
         final DDEntryList ddEntryList = DDEntryList.parseFromFile(fileToImport);
 
         int numberUpdated = 0;
         for (final DDEntry ddEntry : ddEntryList) {
-            if (createOrUpdate(ddEntry)) {
+            if (createOrUpdate(ddEntry, overwriteOps)) {
                 ++numberUpdated;
             }
         }
         LOG.info("Updated [{}] elements", numberUpdated);
     }
 
-    private boolean createOrUpdate(final DDEntry entry) {
+    private boolean createOrUpdate(final DDEntry entry, final boolean overwriteOps) {
 
         final EaPackage pack = eaRepo.findInPackageCache(entry.getPackagePath());
         if (pack == null) {
@@ -46,7 +46,7 @@ public class ElementImporter {
             return false;
         }
 
-        final Element element = eaRepo.findOrCreateComponentInPackage(pack.me, entry.getTitle()
+        final Element element = eaRepo.findOrCreateComponentInPackage(pack, entry.getTitle()
                                                                                     .trim());
         final EaElement eaElement = new EaElement(element, eaRepo);
 
@@ -72,11 +72,20 @@ public class ElementImporter {
 
         LOG.debug("TaggedValues: [{}]", entry.getTaggedValues());
 
-        element.Update();
-        pack.me.Update();
+//        element.Update();
+// ??        pack.me.Update();
 
         entry.getAssociations()
              .forEach(eaElement::updateAssociation);
+        entry.getOperations()
+             .forEach(operation -> eaElement.createOrUpdateOperation(operation, overwriteOps));
+        //        entry.getImplementations()
+//             .forEach(e -> {
+//                 String type = EaMetaType.REALISATION.toEaString();
+//                 DDEntry.Association association =
+//                         new DDEntry.Association(e.getName(), e.getType(), type, "", "", "", "");
+//                 eaElement.updateAssociation(association);
+//             });
         return true;
     }
 }

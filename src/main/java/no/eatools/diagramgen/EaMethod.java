@@ -1,5 +1,6 @@
 package no.eatools.diagramgen;
 
+import org.sparx.Collection;
 import org.sparx.Method;
 import org.sparx.Parameter;
 
@@ -22,10 +23,16 @@ public class EaMethod {
     }
 
     public Parameter addParameter(final String name, final String type) {
-        final Parameter par = theMethod.GetParameters()
-                                       .AddNew(name, type);
+        final Collection<Parameter> parameters = theMethod.GetParameters();
+        final Parameter par = parameters.AddNew(name, type);
         par.Update();
-        theMethod.GetParameters().Refresh();
+
+        parameters.Refresh();
+        theMethod.Update();
         return par;
+    }
+
+    public Method getTheMethod() {
+        return theMethod;
     }
 }

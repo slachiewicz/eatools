@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -332,7 +331,7 @@ public class EaRepo {
      * @param pack the Package to search in.
      * @return
      */
-    public List<Element> findComponentInstancesInPackage(final Package pack) {
+    public List<Element> findComponentInstancesInPackage(final EaPackage pack) {
         return findElementsOfTypeInPackage(pack, COMPONENT).stream()
                                                            .filter(e -> COMPONENT.toString()
                                                                                  .equals(e.GetClassifierType()))
@@ -387,7 +386,7 @@ public class EaRepo {
      * @param name
      * @return null if no match is found.
      */
-    public Optional<Element> findElementOfType(final Package pack, final EaMetaType type, final String name) {
+    public Optional<Element> findElementOfType(final EaPackage pack, final EaMetaType type, final String name) {
         ensureRepoIsOpen();
         final String trimmedName = name.trim();
 
@@ -404,7 +403,7 @@ public class EaRepo {
      * @param pack
      * @return
      */
-    public List<Element> findNodesInPackage(final Package pack) {
+    public List<Element> findNodesInPackage(final EaPackage pack) {
         return findElementsOfTypeInPackage(pack, NODE);
     }
 
@@ -422,7 +421,7 @@ public class EaRepo {
      * @param className
      * @return
      */
-    public Element findOrCreateClassInPackage(final Package definedPackage, final String className) {
+    public Element findOrCreateClassInPackage(final EaPackage definedPackage, final String className) {
         ensureRepoIsOpen();
 
         return findNamedElementOnList(findClassesInPackage(definedPackage), className)
@@ -436,7 +435,7 @@ public class EaRepo {
      * @param classifier
      * @return
      */
-    public Element findOrCreateObjectInPackage(final Package pack, final String objectName, final Element classifier) {
+    public Element findOrCreateObjectInPackage(final EaPackage pack, final String objectName, final Element classifier) {
         ensureRepoIsOpen();
 
         // We allow for same name on different elements of different type, therefore we must also check type
@@ -464,11 +463,11 @@ public class EaRepo {
      * @param pack the Package to serach in.
      * @return
      */
-    public List<Element> findClassesInPackage(final Package pack) {
+    public List<Element> findClassesInPackage(final EaPackage pack) {
         return findElementsOfTypeInPackage(pack, CLASS);
     }
 
-    public Element findOrCreateComponentInstanceInPackage(final Package pack, final String name, final Element classifier) {
+    public Element findOrCreateComponentInstanceInPackage(final EaPackage pack, final String name, final Element classifier) {
         final Element component = findOrCreateComponentInPackage(pack, name);
         if (classifier != null) {
             component.SetClassifierID(classifier.GetElementID());
@@ -483,7 +482,7 @@ public class EaRepo {
      * @param componentName
      * @return
      */
-    public Element findOrCreateComponentInPackage(final Package definedPackage, final String componentName) {
+    public Element findOrCreateComponentInPackage(final EaPackage definedPackage, final String componentName) {
         ensureRepoIsOpen();
         return findNamedElementOnList(findComponentsInPackage(definedPackage), componentName)
                 .orElseGet(() -> addElementInPackage(definedPackage,
@@ -498,7 +497,7 @@ public class EaRepo {
      * @param pack
      * @return
      */
-    public List<Element> findComponentsInPackage(final Package pack) {
+    public List<Element> findComponentsInPackage(final EaPackage pack) {
         return findElementsOfTypeInPackage(pack, COMPONENT);
     }
 
@@ -510,24 +509,9 @@ public class EaRepo {
      * @param type the type of Element to look for.
      * @return a List of found Elements, possibly empty, but never null.
      */
-    public List<Element> findElementsOfTypeInPackage(final Package pkg, final EaMetaType type) {
+    public List<Element> findElementsOfTypeInPackage(final EaPackage pkg, final EaMetaType type) {
         ensureRepoIsOpen();
-
-        if (pkg == null) {
-            return Collections.emptyList();
-        }
-
-        final EaMetaType safeType = (type == null) ? EaMetaType.NULL : type;
-
-        final List<Element> result = new ArrayList<>();
-
-        for (final Element e : pkg.GetElements()) {
-            if (safeType.toString()
-                        .equals(e.GetMetaType())) {
-                result.add(e);
-            }
-        }
-        return result;
+        return pkg.findElementsOfType(type);
     }
 
     /**
@@ -628,7 +612,7 @@ public class EaRepo {
      * @param pack the Package to serach in.
      * @return
      */
-    public List<Element> findObjectsInPackage(final Package pack) {
+    public List<Element> findObjectsInPackage(final EaPackage pack) {
         return findElementsOfTypeInPackage(pack, OBJECT);
     }
 
@@ -641,9 +625,10 @@ public class EaRepo {
         return (classifier.GetElementID() == classifierId);
     }
 
-    private Element addElementInPackage(final Package pack, final String name, final EaMetaType umlType, final Element classifier) {
+    private Element addElementInPackage(final EaPackage pkg, final String name, final EaMetaType umlType, final Element classifier) {
         ensureRepoIsOpen();
 
+        Package pack = pkg.unwrap();
         final Element element = pack.GetElements()
                                     .AddNew(name, umlType.toString());
         pack.GetElements()
@@ -982,7 +967,7 @@ public class EaRepo {
     }
 
     public Package findPackageByID(final int packageID) {
-        EaPackage eaPackageByID = findEaPackageByID(packageID);
+        final EaPackage eaPackageByID = findEaPackageByID(packageID);
         return eaPackageByID != null ? eaPackageByID.unwrap() : null;
     }
 
@@ -1225,14 +1210,24 @@ public class EaRepo {
 
     public List<EaElement> findElementsInPackage(final String pack, final String elementName) {
         final List<EaElement> result = new ArrayList<>();
-        final LinkedList<String> hier = EaPackage.hierarchyToList(pack);
+//        final LinkedList<String> hier = EaPackage.hierarchyToList(pack);
         final Collection<Element> elements = repository.GetElementsByQuery("Simple", elementName);
+        final EaPackage requiredPackage = packageCache.findPackageByHierarchicalName(rootPackage, pack, null);
         for (final Element element : elements) {
-            final Package pkg = repository.GetPackageByID(element.GetPackageID());
-            if (hier.contains(pkg.GetName()) && element.GetName().equals(elementName)) {
+
+//            final Package elementPackage = repository.GetPackageByID(element.GetPackageID());
+            // Simple search returns partial name match
+            if(elementName.equalsIgnoreCase(trimToEmpty(element.GetName())) && requiredPackage.getId() == element.GetPackageID()) {
+//            final EaPackage eaPackage = new EaPackage(elementPackage, this, null);
+//            eaPackage.getHierarchicalName()
+//            if (hier.contains(elementPackage.GetName()) && element.GetName().equals(elementName)) {
                 result.add(new EaElement(element, this));
             }
         }
         return result;
+    }
+
+    private boolean matchPackageToHierarchy() {
+        return true;
     }
 }

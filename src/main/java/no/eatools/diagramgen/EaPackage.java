@@ -47,6 +47,7 @@ public class EaPackage {
     final EaPackage parent;
     final int id;
     private final int parentId;
+    private Map<EaMetaType, List<Element>> elementCache = new HashMap<>();
 
     public EaPackage(final String name, final EaRepo repos) {
         this.name = trimToEmpty(name);
@@ -76,8 +77,33 @@ public class EaPackage {
 //        me.GetDiagrams().AddNew()
     }
 
-    public static LinkedList<String> hierarchyToList(String nameHierarchy) {
+    public static LinkedList<String> hierarchyToList(final String nameHierarchy) {
         return new LinkedList<>(Arrays.asList(nameHierarchy.split("->")));
+    }
+
+    /**
+     * Assemble a List of all Model elements of a certain EaMetaType in the given package.
+     * Sub-packages are not examined (non-recursive).
+     *
+     * @param type the type of Element to look for.
+     * @return a List of found Elements, possibly empty, but never null.
+     */
+    public List<Element> findElementsOfType(final EaMetaType type) {
+        if (me == null) {
+            return emptyList();
+        }
+        if (elementCache.isEmpty()) {
+            populateElementCache();
+        }
+        return elementCache.get(type);
+    }
+
+    private void populateElementCache() {
+        for (final Element e : me.GetElements()) {
+            final EaMetaType key = EaMetaType.fromString(e.GetMetaType());
+            final List<Element> elementList = elementCache.computeIfAbsent(key, eaMetaType -> new ArrayList<>());
+            elementList.add(e);
+        }
     }
 
     /**
@@ -165,7 +191,8 @@ public class EaPackage {
                 new DDEntry(elementName + ATTRIBUTE_DELIMITER + attribute.GetName(), description, attribute.GetLowerBound() +
                         UML_MULTIPLICITY_DELIMITER + attribute.GetUpperBound(),
                             attribute.GetType(), attribute.GetStereotypeEx(), attribute.GetAttributeGUID(), element.getVersion(),
-                            booleanToYesNo(attribute.GetIsID()), EMPTY, ATTRIBUTE, emptyList(), element.getAuthor(), EMPTY, element.getCreated(), element.getHierarchicalPackageName());
+                            booleanToYesNo(attribute.GetIsID()), EMPTY, ATTRIBUTE, emptyList(), element.getAuthor(), EMPTY, element.getCreated(), element
+                                    .getHierarchicalPackageName());
 
         LOG.debug("DD Entry created {}", ddEntry);
 

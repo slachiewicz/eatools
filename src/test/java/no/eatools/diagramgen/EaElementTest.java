@@ -1,5 +1,7 @@
 package no.eatools.diagramgen;
 
+import java.util.Collections;
+
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,12 +19,12 @@ public class EaElementTest extends AbstractEaTestCase {
     @Test
     public void testAddMethod() throws Exception {
         final EaPackage pkg = eaRepo.findPackageByName("Objekter", true);
-        final Element service = eaRepo.findOrCreateComponentInPackage(pkg.unwrap(), "AService");
+        final Element service = eaRepo.findOrCreateComponentInPackage(pkg, "AService");
         final EaElement theService = new EaElement(service, eaRepo);
         final int id = theService.getId();
         final String methodName = "operation1";
         final String returnType = "int";
-        final EaMethod theMethod = theService.addMethod(methodName, returnType);
+        final EaMethod theMethod = theService.addMethod(methodName, returnType, service.GetMethods(), Collections.emptyList());
         theMethod.addParameter("aParameter", "TypicalType");
 
         eaRepo.clearPackageCache();
