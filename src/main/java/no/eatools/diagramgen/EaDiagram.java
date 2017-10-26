@@ -67,7 +67,7 @@ public class EaDiagram {
         } else {
             diagram = eaRepo.findDiagramByName(diagramName);
         }
-        if(diagram != null) {
+        if (diagram != null) {
             final String msg = "Found diagram :" + diagram.getPathname() + ":" + diagram.getName() + " " + diagram.getGuid();
             System.out.println(msg);
             LOG.info(msg);
@@ -141,7 +141,7 @@ public class EaDiagram {
     }
 
     public String writeImageToFile(final ImageFileFormat imageFileFormat, final boolean urlForFileOnly) {
-        if(eaDiagram == null) {
+        if (eaDiagram == null) {
             LOG.info("No diagram to generate");
             return "";
         }
@@ -149,7 +149,7 @@ public class EaDiagram {
         final String diagramGUID = eaDiagram.GetDiagramGUID();
 
         final int level = NumberUtils.toInt(EA_DIAGRAM_NAME_LEVEL.value("0"));
-        final String urlPart =  createUrlPart(level, logicalPathname, eaDiagram.GetName(), eaDiagram.GetDiagramGUID(), eaDiagram
+        final String urlPart = createUrlPart(level, logicalPathname, eaDiagram.GetName(), eaDiagram.GetDiagramGUID(), eaDiagram
                 .GetVersion(), diagramNameMode, imageFileFormat.getFileExtension());
 
         final File file = createFile(level, EA_DOC_ROOT_DIR.value(), logicalPathname, eaDiagram.GetName(), eaDiagram.GetDiagramGUID(), eaDiagram
@@ -176,7 +176,7 @@ public class EaDiagram {
                 return EMPTY;
             }
             new ImageMetadata().writeCustomMetaData(file, "EA_GUID", diagramGUID);
-            LOG.info("Adding metadata [{}] to [{}]",diagramGUID, file.getAbsolutePath());
+            LOG.info("Adding metadata [{}] to [{}]", diagramGUID, file.getAbsolutePath());
             return completeUrl;
         } else {
             LOG.error("Unable to create diagram: [{}]", file.getAbsolutePath());
@@ -196,7 +196,7 @@ public class EaDiagram {
      * @param urlBase
      */
     public static void updateDiagramUrlFile(final String urlBase) {
-        if(! EA_DIAGRAM_URL_FILE.exists()) {
+        if (!EA_DIAGRAM_URL_FILE.exists()) {
             LOG.info("No value for {}. Skipping creation", EA_DIAGRAM_URL_FILE);
             return;
         }
@@ -234,12 +234,13 @@ public class EaDiagram {
     public DiagramObject add(final EaElement element) {
         final Collection<DiagramObject> diagramObjects = eaDiagram.GetDiagramObjects();
         final DiagramObject diagramObject = diagramObjects
-                .AddNew(element.getName(), element.getMetaType().toString());
+                .AddNew(element.getName(), element.getMetaType()
+                                                  .toString());
         diagramObject.SetElementID(element.getId());
         diagramObject.Update();
         eaDiagram.Update();
         diagramObjects.Refresh();
-        LOG.info("Added ({}, {}, {}) [{}] to diagram [{}]", element.getMetaType(), element.getType(), element.getEaMetaType(),  element.getName(), getName());
+        LOG.info("Added ({}, {}, {}) [{}] to diagram [{}]", element.getMetaType(), element.getType(), element.getEaMetaType(), element.getName(), getName());
 
         diagramElements.put(diagramObject.GetInstanceID(), element);
         return diagramObject;
@@ -287,12 +288,13 @@ public class EaDiagram {
     }
 
     public void setStatus(final Status status) {
-        this.status = status == null? Status.UNKNOWN : status;
+        this.status = status == null ? Status.UNKNOWN : status;
     }
 
     public boolean layoutAndSaveDiagram(final EaElement centralElement) {
         hideDetails();
-//        eaDiagram.WriteStyle("Show Element Property", "1");
+        setAttribute(EaAttributeName.ShowNotes, "1");
+        setAttribute(EaAttributeName.ShowTags, "1");
 
         add(centralElement);
 
@@ -303,16 +305,41 @@ public class EaDiagram {
 
         final Project project = eaRepo.getProject();
         // todo, find out which one actually does the job:
-        if(doLayout(project.GUIDtoXML(getGuid()),
-                 EA_AUTO_DIAGRAM_OPTIONS.toInt(),
-                 EA_AUTO_DIAGRAM_ITERATIONS.toInt(),
-                 EA_AUTO_DIAGRAM_LAYER_SPACING.toInt(),
-                 EA_AUTO_DIAGRAM_COLUMN_SPACING.toInt())) {
+        if (doLayout(project.GUIDtoXML(getGuid()),
+                     EA_AUTO_DIAGRAM_OPTIONS.toInt(),
+                     EA_AUTO_DIAGRAM_ITERATIONS.toInt(),
+                     EA_AUTO_DIAGRAM_LAYER_SPACING.toInt(),
+                     EA_AUTO_DIAGRAM_COLUMN_SPACING.toInt())) {
             if (adjustElementAppearances()) {
                 return eaRepo.saveDiagram(this);
             }
         }
         return false;
+    }
+
+    public String setAttribute(final EaAttributeName key, final String value) {
+        final String oldValue;
+        final EaAttributeSet currentSet;
+        switch (key.getType()) {
+            case StyleEx:
+                currentSet = new EaAttributeSet(eaDiagram.GetStyleEx());
+                LOG.info("Before setting StyleEx [{}] ", currentSet);
+                oldValue = currentSet.add(key, value);
+                eaDiagram.SetStyleEx(currentSet.toString());
+                break;
+            case ExtendedStyle:
+                currentSet = new EaAttributeSet(eaDiagram.GetExtendedStyle());
+                LOG.info("Before setting ExtendedStyle [{}]", currentSet);
+                oldValue = currentSet.add(key, value);
+                eaDiagram.SetExtendedStyle(currentSet.toString());
+                break;
+            default:
+                oldValue = "";
+                currentSet = EaAttributeSet.EMPTY;
+        }
+        LOG.info("After setting [{}]=[{}] : [{}]", key, value, currentSet);
+        eaDiagram.Update();
+        return oldValue;
     }
 
     private boolean doLayout(final String guid, final int options, final int iterations, final int layerSpacing, final
