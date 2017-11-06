@@ -1159,7 +1159,7 @@ public class EaRepo {
             packageCache.populate(this, getRootPackage(), getRootPackage());
         }
         final EaPackage localRoot = packageCache.findPackageByHierarchicalName(getRootPackage(), hierarchicalPackageName, packagePattern);
-        LOG.info("Found [{}] local root for [{}] from [{}] using pattern [{}]", localRoot == null ? "no" : localRoot + " as ",
+        LOG.info("Found [{} local root for [{}] from [{}] using pattern [{}]", localRoot == null ? "no]" : localRoot + "] as ",
                  hierarchicalPackageName, getRootPackage()
                          .getHierarchicalName(), packagePattern == null ? "no" : packagePattern);
         return localRoot;

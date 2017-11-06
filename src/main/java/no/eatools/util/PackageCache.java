@@ -220,11 +220,15 @@ public class PackageCache {
      */
     public EaPackage findPackageByHierarchicalName(final EaPackage rootPkg, final String nameHierarchy, final Pattern packagePattern) {
         // root is special
-        if(rootPkg.getName().equals(nameHierarchy)) {
+        String rootPkgName = rootPkg.getName();
+        if(rootPkgName.equals(nameHierarchy)) {
             return rootPkg;
         }
 
         final LinkedList<String> hier = EaPackage.hierarchyToList(nameHierarchy);
+        if (rootPkgName.equals(hier.getFirst())) {
+            hier.pollFirst();
+        }
 
         return findPackage(hier, rootPkg, packagePattern);
     }

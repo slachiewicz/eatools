@@ -175,7 +175,11 @@ public class EaDiagram {
                 LOG.error("Unable to read file [{}] Make sure the drive [{}] is properly mounted ", file.getAbsolutePath(), EA_DOC_ROOT_DIR.value());
                 return EMPTY;
             }
-            new ImageMetadata().writeCustomMetaData(file, "EA_GUID", diagramGUID);
+            Map<String, String> metadata = new HashMap<>();
+            metadata.put("EA_GUID", diagramGUID);
+            metadata.put("EA_Package", getPathname());
+            new ImageMetadata().writeCustomMetaData(file, metadata);
+
             LOG.info("Adding metadata [{}] to [{}]", diagramGUID, file.getAbsolutePath());
             return completeUrl;
         } else {

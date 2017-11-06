@@ -157,6 +157,16 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
 
         LOG.info("Using properties" + allProperties.toString()
                                                    .replaceAll(",", "\n"));
+        final String reposString = EA_PROJECT.value();
+        LOG.info("Trying repos [{}]", reposString);
+        final String normalizedFileName = cygPathToWindowsPath(reposString);
+        final File modelFile = new File(normalizedFileName);
+        LOG.info("Trying repos: asProperty: [{}] to file: [{}]", reposString, modelFile.getAbsolutePath());
+        eaRepo = new EaRepo(modelFile);
+        if (!eaRepo.open()) {
+            usageHelper.terminateWithHelp(-2, ERROR_ON_EXIT);
+        }
+
         if (isNotBlank(nodePath)) {
             final EaDiagram eaDiagram = eaRepo.findDiagramByGUID(nodePath);
             String urlForNode = nodePathToUrl(nodePath);
@@ -166,15 +176,6 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
         }
         startProgress();
 
-        final String reposString = EA_PROJECT.value();
-        LOG.info("Trying repos {}", reposString);
-        final String normalizedFileName = cygPathToWindowsPath(reposString);
-        final File modelFile = new File(normalizedFileName);
-        LOG.info("Trying repos: asProperty: [{}] to file: [{}]", reposString, modelFile.getAbsolutePath());
-        eaRepo = new EaRepo(modelFile);
-        if (!eaRepo.open()) {
-            usageHelper.terminateWithHelp(-2, ERROR_ON_EXIT);
-        }
 
         executeTasks();
         eaRepo.close();
@@ -279,7 +280,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
 
     private void createBaselines(final String packages, final String baseline) {
         if (isBlank(packages)) {
-            System.out.println("No packages specified");
+            LOG.error("No baseline packages are specified");
             return;
         }
         final String[] baselineElms = baseline.split(",");
@@ -344,11 +345,17 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
     private void createBaselines(final String versionNo, final String notes, final String elementCreationPackage) {
 //        executeOnPackages(packageForAutoDiagrams, EaPackage::createBaseline(versionNo, notes), "Creating baseline for package [{}], version [{}],
 //  Note [{}]", versionNo, notes);
-        for (final String pack : toListOfPackages(elementCreationPackage)) {
+        final List<String> packages = toListOfPackages(elementCreationPackage);
+        if(packages.isEmpty()) {
+            LOG.warn("Package list is empty [{}]", elementCreationPackage);
+        }
+        for (final String pack : packages) {
             LOG.info("Creating baseline for package [{}], version [{}],  Note [{}]", pack, versionNo, notes);
             final EaPackage eaPackage = eaRepo.findInPackageCache(pack);
             if (eaPackage != null) {
                 eaPackage.createBaseline(versionNo, notes);
+            } else {
+                LOG.warn("Unable to find packge [{}]. No baseline is created", pack);
             }
         }
     }
