@@ -4,11 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -20,16 +16,15 @@ import no.bouvet.ohs.jops.EnumProperty;
 import no.bouvet.ohs.jops.Enums;
 import no.bouvet.ohs.jops.PropertyMap;
 import no.eatools.util.EaApplicationProperties;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.Option;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import static no.eatools.util.EaApplicationProperties.*;
-import static no.eatools.util.NameNormalizer.*;
+import static no.eatools.util.NameNormalizer.cygPathToWindowsPath;
+import static no.eatools.util.NameNormalizer.nodePathToUrl;
 import static org.apache.commons.lang.StringUtils.*;
 
 /**
@@ -355,7 +350,7 @@ public class EaDiagramGenerator extends CliApp implements HelpProducer {
             if (eaPackage != null) {
                 eaPackage.createBaseline(versionNo, notes);
             } else {
-                LOG.warn("Unable to find packge [{}]. No baseline is created", pack);
+                LOG.warn("Unable to find package [{}]. No baseline is created", pack);
             }
         }
     }

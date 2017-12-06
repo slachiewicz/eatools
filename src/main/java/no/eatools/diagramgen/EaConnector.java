@@ -1,7 +1,5 @@
 package no.eatools.diagramgen;
 
-import no.bouvet.ohs.ea.dd.DDEntry;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sparx.Collection;
@@ -76,7 +74,7 @@ public class EaConnector {
 //        return c;
 //    }
 
-    public static boolean equals(final Connector connector, final DDEntry.Association association) {
+    public static boolean equals(final Connector connector, final no.bouvet.ohs.ea.dd.Association association) {
         boolean isEqual = equalsIgnoreCase(trimToEmpty(connector.GetName()), trimToEmpty(association.getName()))
                 && (equalsIgnoreCase(trimToEmpty(connector.GetStereotype()), trimToEmpty(association.getStereotypes()))
                 && (EaMetaType.fromString(connector.GetMetaType()) == EaMetaType.fromString(association.getType())))

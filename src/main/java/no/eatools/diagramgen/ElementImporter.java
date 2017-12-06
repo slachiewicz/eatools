@@ -2,9 +2,11 @@ package no.eatools.diagramgen;
 
 import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.List;
 
 import no.bouvet.ohs.ea.dd.DDEntry;
 import no.bouvet.ohs.ea.dd.DDEntryList;
+import no.bouvet.ohs.ea.dd.TagValue;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -67,10 +69,11 @@ public class ElementImporter {
         if (created != null) {
             element.SetCreated(new Date(created.toEpochSecond()));
         }
-        entry.getTaggedValues()
+        List<TagValue> taggedValues = entry.getTaggedValues();
+        taggedValues
              .forEach(eaElement::updateTaggedValue);
 
-        LOG.debug("TaggedValues: [{}]", entry.getTaggedValues());
+        LOG.debug("TaggedValues: [{}]", taggedValues);
 
 //        element.Update();
 // ??        pack.me.Update();

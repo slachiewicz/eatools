@@ -11,23 +11,16 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import no.bouvet.ohs.ea.dd.DDEntry;
-
+import no.bouvet.ohs.ea.dd.Operation;
+import no.bouvet.ohs.ea.dd.TagValue;
 import org.apache.commons.beanutils.BeanUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.sparx.Attribute;
-import org.sparx.AttributeTag;
-import org.sparx.Collection;
-import org.sparx.Connector;
-import org.sparx.Diagram;
-import org.sparx.Element;
-import org.sparx.Method;
-import org.sparx.TaggedValue;
-
+import org.sparx.*;
 import static no.eatools.diagramgen.EaType.*;
-import static no.eatools.util.EaApplicationProperties.*;
-import static org.apache.commons.lang3.StringUtils.*;
+import static no.eatools.util.EaApplicationProperties.EA_SERVER_TIMEZONE;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.apache.commons.lang3.StringUtils.trimToEmpty;
 
 /**
  * @author ohs
@@ -38,7 +31,7 @@ public class EaElement {
     private final Element theElement;
     private final EaRepo repos;
     private final EaMetaType eaMetaType;
-    private final Set<DDEntry.Operation> operationSet = new HashSet<>();
+    private final Set<Operation> operationSet = new HashSet<>();
 
     public EaElement(final Element theElement, final EaRepo repos) {
         this.theElement = theElement;
@@ -51,7 +44,7 @@ public class EaElement {
         for (final Connector connector : getConnectors()) {
             LOG.debug("Element {} has connector of type {}", getName(), connector.GetType());
             if (EaMetaType.GENERALIZATION.toString()
-                                         .equals(connector.GetType())
+                    .equals(connector.GetType())
                     && connector.GetClientID() == theElement.GetElementID()) {
                 result.add(findConnectedElement(connector));
             }
@@ -99,12 +92,12 @@ public class EaElement {
 
     public String getPackageName() {
         return repos.findPackageByID(getPackageID())
-                    .GetName();
+                .GetName();
     }
 
     public String getHierarchicalPackageName() {
         return repos.findEaPackageByID(getPackageID())
-                    .getHierarchicalName();
+                .getHierarchicalName();
     }
 
     public Collection<Connector> getConnectors() {
@@ -117,9 +110,9 @@ public class EaElement {
         result.append("\n");
         for (final EaElement eaElement : findParents()) {
             result.append(" Element ")
-                  .append(getName())
-                  .append(" has parent ")
-                  .append(eaElement.getName());
+                    .append(getName())
+                    .append(" has parent ")
+                    .append(eaElement.getName());
         }
         result.append("\n");
         result.append(listAttributes());
@@ -296,7 +289,7 @@ public class EaElement {
     public EaDiagram findDiagram(final String diagramName) {
         for (final Diagram diagram : theElement.GetDiagrams()) {
             if (diagram.GetName()
-                       .equals(diagramName)) {
+                    .equals(diagramName)) {
                 final EaDiagram eaDiagram = new EaDiagram(repos, diagram, repos.getPackagePath(repos.findPackageByID(theElement.GetPackageID())));
                 LOG.info("Found element diagram for {}: {}:{}", getName(), eaDiagram.getPathname(), eaDiagram.getName());
                 return eaDiagram;
@@ -315,7 +308,7 @@ public class EaElement {
     public void setImageUrl(final String imageUrl) {
         if (isNotBlank(imageUrl)) {
             updateImageTag(imageUrl);
-            updateTaggedValue(IMAGE_URL_TAG, imageUrl);
+            updateTaggedValue(new TagValue(IMAGE_URL_TAG, imageUrl));
             LOG.info("Added auto image url as tag [{}]", imageUrl);
         }
     }
@@ -323,12 +316,13 @@ public class EaElement {
     /**
      * TODO taggedValuesEx vs TaggedValues?
      *
-     * @param tagName
      * @param tagValue
      */
-    public void updateTaggedValue(final String tagName, final String tagValue) {
+    public void updateTaggedValue(final TagValue tagValue) {
         LOG.debug("**************** Before: {}", listProperties());
-        LOG.debug("[{}] Looking for [{}]:[{}]", getName(), tagName, tagValue);
+        String tagName = tagValue.getKey();
+        String value = tagValue.getValue();
+        LOG.debug("[{}] Looking for [{}]:[{}]", getName(), tagName, value);
         final String trimmedName = trimToEmpty(tagName);
         final Collection<TaggedValue> taggedValues = theElement.GetTaggedValues();
         // EA does not enforce uniqueness on tag keys
@@ -337,12 +331,12 @@ public class EaElement {
         for (final TaggedValue taggedValue : taggedValues) {
             LOG.debug("[{}] has tagged value [{}]:[{}]", getName(), taggedValue.GetName(), taggedValue.GetValue());
             if (trimmedName.equalsIgnoreCase(taggedValue.GetName()
-                                                        .trim())) {
+                    .trim())) {
                 indexesToRemove.add(i);
             }
             ++i;
         }
-        LOG.debug("Found [{}] tags with key [{}]", indexesToRemove.size(), tagName);
+        LOG.debug("Found [{}] tags with tagName [{}]", indexesToRemove.size(), tagName);
         for (final Short index : indexesToRemove) {
             LOG.debug("Deleting [{}]", index);
             taggedValues.Delete(index);
@@ -351,18 +345,18 @@ public class EaElement {
         taggedValues.Refresh();
         LOG.debug("Now: [{}]", taggedValues);
 
-        final TaggedValue taggedValue = taggedValues.AddNew(trimmedName, tagValue);
+        final TaggedValue taggedValue = taggedValues.AddNew(trimmedName, value);
         taggedValue.Update();
         taggedValues.Refresh();
         theElement.GetTaggedValuesEx()
-                  .Refresh();
+                .Refresh();
         theElement.Update();
         theElement.Refresh();
         LOG.debug("Added [{}]:[{}]", trimmedName, taggedValue);
         LOG.debug("************* After: {}", listProperties());
     }
 
-    public void updateAssociation(final DDEntry.Association association) {
+    public void updateAssociation(final no.bouvet.ohs.ea.dd.Association association) {
         final Collection<Connector> connectors = theElement.GetConnectors();
 
         final String targetPackage = association.getTargetPackage();
@@ -376,8 +370,8 @@ public class EaElement {
         for (final Connector connector : connectors) {
             try {
                 LOG.debug("Connector [{}] ", BeanUtils.describe(new EaConnector(repos, connector))
-                                                      .toString()
-                                                      .replaceAll(",", "\n"));
+                        .toString()
+                        .replaceAll(",", "\n"));
             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                 e.printStackTrace();
             }
@@ -392,14 +386,14 @@ public class EaElement {
             }
         }
         final Connector connector = connectors.AddNew("", EaMetaType.fromString(association.getType())
-                                                                    .toEaString());
+                .toEaString());
         connector.SetClientID(theElement.GetElementID());
         connector.SetSupplierID(targetElement.getId());
         updateConnector(association, connector);
         LOG.info("Created association [{}]", association);
     }
 
-    public void createOrUpdateOperation(final DDEntry.Operation operation, final boolean overwriteOps) {
+    public void createOrUpdateOperation(final no.bouvet.ohs.ea.dd.Operation operation, final boolean overwriteOps) {
         final Collection<Method> methods = theElement.GetMethods();
         if (overwriteOps) {
             deleteMethodsMatching(methods, operation.getName());
@@ -408,8 +402,8 @@ public class EaElement {
             updateOperationsCache(methods);
         }
         LOG.debug("Current Methods: \n {}", operationSet.stream()
-                                                        .map(DDEntry.Operation::getSignature)
-                                                        .collect(Collectors.joining("\n")));
+                .map(no.bouvet.ohs.ea.dd.Operation::getSignature)
+                .collect(Collectors.joining("\n")));
         LOG.info("Updating operation ? [{}]", operation.getName());
         if (hasMethodMatching(methods, operation)) {
             LOG.info("Method with same signature already present, not adding or changing, [{}]", operation.getSignature());
@@ -424,7 +418,7 @@ public class EaElement {
         short index = 0;
         for (final Method method : methods) {
             if (method.GetName()
-                      .equalsIgnoreCase(name)) {
+                    .equalsIgnoreCase(name)) {
                 toBeDeleted.add(index);
             }
             ++index;
@@ -443,24 +437,24 @@ public class EaElement {
         }
     }
 
-    private DDEntry.Operation operationFromMethod(final Method method) {
-        final DDEntry.Operation op = new DDEntry.Operation(method.GetName(), method.GetReturnType());
-        final List<DDEntry.Parameter> params = op.getParameters();
+    private no.bouvet.ohs.ea.dd.Operation operationFromMethod(final Method method) {
+        final no.bouvet.ohs.ea.dd.Operation op = new no.bouvet.ohs.ea.dd.Operation(method.GetName(), method.GetReturnType());
+        final List<no.bouvet.ohs.ea.dd.Parameter> params = op.getParameters();
         for (final org.sparx.Parameter parameter : method.GetParameters()) {
-            params.add(new DDEntry.Parameter(parameter.GetName(), parameter.GetType()));
+            params.add(new no.bouvet.ohs.ea.dd.Parameter(parameter.GetName(), parameter.GetType()));
         }
         LOG.debug("Operation: [{}]", op);
         return op;
     }
 
-    private boolean hasMethodMatching(final Collection<Method> methods, final DDEntry.Operation operation) {
+    private boolean hasMethodMatching(final Collection<Method> methods, final no.bouvet.ohs.ea.dd.Operation operation) {
         if (operationSet.isEmpty()) {
             updateOperationsCache(methods);
         }
         return operationSet.contains(operation);
 //        for (Method method : methods) {
-//            DDEntry.Operation op = new DDEntry.Operation();
-//            op.getParameters().add(new DDEntry.Parameter())
+//            no.bouvet.ohs.ea.dd.Operation op = new no.bouvet.ohs.ea.dd.Operation();
+//            op.getParameters().add(new no.bouvet.ohs.ea.dd.Parameter())
 //            if (method.GetName()
 //                      .equalsIgnoreCase(operation.getName())) {
 //                if (!operation.getReturnType()
@@ -475,13 +469,13 @@ public class EaElement {
 //        return false;
     }
 
-    private void updateConnector(final DDEntry.Association association, final Connector connector) {
+    private void updateConnector(final no.bouvet.ohs.ea.dd.Association association, final Connector connector) {
         if (isNotBlank(association.getStereotypes())) {
             connector.SetStereotype(association.getStereotypes());
         }
         if (isNotBlank(association.getTargetRole())) {
             connector.GetSupplierEnd()
-                     .SetRole(association.getTargetRole());
+                    .SetRole(association.getTargetRole());
         }
         connector.Update();
         theElement.Update();
@@ -497,12 +491,12 @@ public class EaElement {
         theElement.Update();
     }
 
-    public EaMethod addMethod(final String methodName, final String returnType, final Collection<Method> methods, final List<DDEntry.Parameter> parameters) {
+    public EaMethod addMethod(final String methodName, final String returnType, final Collection<Method> methods, final List<no.bouvet.ohs.ea.dd.Parameter> parameters) {
         final Method method = methods.AddNew(methodName, returnType);
         method.Update();
         methods.Refresh();
         final EaMethod eaMethod = new EaMethod(this, method);
-        for (final DDEntry.Parameter parameter : parameters) {
+        for (final no.bouvet.ohs.ea.dd.Parameter parameter : parameters) {
             eaMethod.addParameter(parameter.getName(), parameter.getType());
         }
         theElement.Update();
@@ -514,12 +508,12 @@ public class EaElement {
         short index = 0;
         for (final Method method : theElement.GetMethods()) {
             if (method.GetName()
-                      .equals(methodName) && method.GetReturnType()
-                                                   .equals(returnType)) {
+                    .equals(methodName) && method.GetReturnType()
+                    .equals(returnType)) {
                 theElement.GetMethods()
-                          .Delete(index);
+                        .Delete(index);
                 theElement.GetMethods()
-                          .Refresh();
+                        .Refresh();
                 operationSet.remove(operationFromMethod(method));
                 return true;
             }
@@ -540,7 +534,7 @@ public class EaElement {
         final Instant instant;
         try {
             instant = theElement.GetCreated()
-                                .toInstant();
+                    .toInstant();
             return ZonedDateTime.ofInstant(instant, zoneId);
         } catch (final Exception e) {
             LOG.error("Unable to convert [{}] to a ZonedDateTime in element [{}]", theElement.GetCreated(), toString());
