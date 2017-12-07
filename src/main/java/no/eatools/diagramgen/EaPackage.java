@@ -78,6 +78,9 @@ public class EaPackage {
     }
 
     public static LinkedList<String> hierarchyToList(final String nameHierarchy) {
+        if(nameHierarchy == null) {
+            return new LinkedList<>();
+        }
         return new LinkedList<>(Arrays.asList(nameHierarchy.split("->")));
     }
 

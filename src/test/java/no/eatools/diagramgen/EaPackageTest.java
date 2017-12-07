@@ -13,10 +13,10 @@ public class EaPackageTest {
     public void testHierarchyToList() throws Exception {
         String hier = "";
 
-        assertTrue(EaPackage.hierarchyToList(hier).isEmpty());
+        assertEquals(1, EaPackage.hierarchyToList(hier).size());
         assertTrue(EaPackage.hierarchyToList(null).isEmpty());
 
         assertEquals(2, EaPackage.hierarchyToList("a->b").size());
-        assertEquals(2, EaPackage.hierarchyToList("a->").size());
+        assertEquals(1, EaPackage.hierarchyToList("a->").size());
     }
 }
