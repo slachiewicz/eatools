@@ -3,11 +3,12 @@ package no.eatools.util;
 import java.io.File;
 
 import no.bouvet.ohs.futil.ImageFileFormat;
-
 import org.junit.Before;
 import org.junit.Test;
-
-import static no.bouvet.ohs.jops.SystemPropertySet.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import static no.bouvet.ohs.jops.SystemPropertySet.FILE_SEPARATOR;
+import static no.bouvet.ohs.jops.SystemPropertySet.OS_NAME;
 import static no.eatools.util.NameNormalizer.*;
 import static org.junit.Assert.*;
 
@@ -15,13 +16,14 @@ import static org.junit.Assert.*;
  * @author ohs
  */
 public class NameNormalizerTest {
+    private static final transient Logger LOG = LoggerFactory.getLogger(NameNormalizerTest.class);
 
     private boolean isWindows;
 
     @Before
     public void setUp() throws Exception {
         isWindows = OS_NAME.value()
-                           .startsWith("Win");
+                .startsWith("Win");
         if (isWindows) {
             FILE_SEPARATOR.setValue(WINDOWS_SEPARATOR);
         } else {
@@ -45,6 +47,14 @@ public class NameNormalizerTest {
         FILE_SEPARATOR.setValue("\\");
         result = nodePathToUrl(nodePath);
         assertEquals("/elhub_architecture/information_architecture/eim/logical/common/eim_address.png", result);
+    }
+
+    @Test
+    public void testDiagramNameWithLongDash() {
+        final String diagramName = "Project Management – Building Block cross reference";
+
+        String result = makeWebFriendlyName(diagramName, true, false);
+        assertEquals("project_management___building_block_cross_reference", result);
     }
 
     @Test
@@ -153,13 +163,13 @@ public class NameNormalizerTest {
 
     @Test
     public void testCreateFile() throws Exception {
-        String fileExtension = ImageFileFormat.PNG.getFileExtension();
-        String rootDir;
-        String rootDirRel;
+        final String fileExtension = ImageFileFormat.PNG.getFileExtension();
+        final String rootDir;
+        final String rootDirRel;
         String logicalPathName = "/Level.too dåp";
-        String diagramName = "The Diagram";
-        String diagramGUID = "{CAFE-BABE-B16B-00B5}";
-        String diagramVersion = "1.0";
+        final String diagramName = "The Diagram";
+        final String diagramGUID = "{CAFE-BABE-B16B-00B5}";
+        final String diagramVersion = "1.0";
         DiagramNameMode diagramNameMode;
 
         File result;
@@ -214,11 +224,11 @@ public class NameNormalizerTest {
 
     @Test
     public void testCreateUrlPart() throws Exception {
-        String fileExtension = ImageFileFormat.PNG.getFileExtension();
-        String logicalPathName = "/Level.too dåp/hær";
-        String diagramName = "The Diagram";
-        String diagramGUID = "{CAFE-BABE-B16B-00B5}";
-        String diagramVersion = "1.0";
+        final String fileExtension = ImageFileFormat.PNG.getFileExtension();
+        final String logicalPathName = "/Level.too dåp/hær";
+        final String diagramName = "The Diagram";
+        final String diagramGUID = "{CAFE-BABE-B16B-00B5}";
+        final String diagramVersion = "1.0";
         DiagramNameMode diagramNameMode;
 
         String result;
@@ -263,7 +273,7 @@ public class NameNormalizerTest {
 
     @Test
     public void testCreatePath() throws Exception {
-        String logicalPathName = "/a/b/c";
+        final String logicalPathName = "/a/b/c";
 
         assertEquals("", createPath(logicalPathName, -1));
 
@@ -276,7 +286,7 @@ public class NameNormalizerTest {
 
     @Test
     public void testIsCygPath() throws Exception {
-        String cyppath = "/cygdrive/c/test";
+        final String cyppath = "/cygdrive/c/test";
 
         assertEquals("Not a proper windows path", "C:/test", cygPathToWindowsPath(cyppath));
     }

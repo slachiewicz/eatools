@@ -29,9 +29,8 @@ public class NameNormalizer {
      * The Windows separator character.
      */
     public static final String WINDOWS_SEPARATOR = "\\";
-    public static final String ILLEGAL_CHARS_REGEX = "[#%&<>$!^~'\"@\\+`|=:;\\?\\*\\(\\)]";
+    public static final String ILLEGAL_CHARS_REGEX = "[–#%&<>$!^~'\"@\\+`|=:;\\?\\*\\(\\)]";
     private static final String CYGROOT = "/cygdrive";
-
 
     private NameNormalizer() {
     }
