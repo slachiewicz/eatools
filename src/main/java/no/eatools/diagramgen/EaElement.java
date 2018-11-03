@@ -1,5 +1,6 @@
 package no.eatools.diagramgen;
 
+import java.lang.Object;
 import java.lang.reflect.InvocationTargetException;
 import java.time.DateTimeException;
 import java.time.Instant;
@@ -44,7 +45,7 @@ public class EaElement {
         for (final Connector connector : getConnectors()) {
             LOG.debug("Element {} has connector of type {}", getName(), connector.GetType());
             if (EaMetaType.GENERALIZATION.toString()
-                    .equals(connector.GetType())
+                                         .equals(connector.GetType())
                     && connector.GetClientID() == theElement.GetElementID()) {
                 result.add(findConnectedElement(connector));
             }
@@ -92,12 +93,12 @@ public class EaElement {
 
     public String getPackageName() {
         return repos.findPackageByID(getPackageID())
-                .GetName();
+                    .GetName();
     }
 
     public String getHierarchicalPackageName() {
         return repos.findEaPackageByID(getPackageID())
-                .getHierarchicalName();
+                    .getHierarchicalName();
     }
 
     public Collection<Connector> getConnectors() {
@@ -110,9 +111,9 @@ public class EaElement {
         result.append("\n");
         for (final EaElement eaElement : findParents()) {
             result.append(" Element ")
-                    .append(getName())
-                    .append(" has parent ")
-                    .append(eaElement.getName());
+                  .append(getName())
+                  .append(" has parent ")
+                  .append(eaElement.getName());
         }
         result.append("\n");
         result.append(listAttributes());
@@ -136,12 +137,26 @@ public class EaElement {
     public String listAttributeTaggedValues(final Attribute attribute, final String prefix) {
         final StringBuilder result = new StringBuilder();
         result.append("Attribute : " + prefix + attribute.GetName());
-        for (final AttributeTag attributeTag : attribute.GetTaggedValuesEx()) {
-            result.append(" Tag (Ex): " + attributeTag.GetName() + " : [" + attributeTag.GetValue() + "]");
+
+        for (final Object objectTag : attribute.GetTaggedValuesEx()) {
+            if (objectTag instanceof AttributeTag) {
+                final AttributeTag attributeTag = (AttributeTag) objectTag;
+                result.append(" Tag (Ex): " + attributeTag.GetName() + " : [" + attributeTag.GetValue() + "]");
+            } else {
+                LOG.warn("[{}] (type : [{}]) not instamce of [{}]", objectTag, objectTag != null ? objectTag.getClass() : "",
+                         AttributeTag.class.getName());
+            }
         }
         result.append("\n");
-        for (final AttributeTag attributeTag : attribute.GetTaggedValues()) {
-            result.append(" Tag : " + attributeTag.GetName() + " : [" + attributeTag.GetValue() + "]");
+        for (final Object objectTag : attribute.GetTaggedValues()) {
+            if (objectTag instanceof AttributeTag) {
+                final AttributeTag attributeTag = (AttributeTag) objectTag;
+
+                result.append(" Tag : " + attributeTag.GetName() + " : [" + attributeTag.GetValue() + "]");
+            } else {
+                LOG.warn("[{}] (type : [{}]) not instamce of [{}]", objectTag, objectTag != null ? objectTag.getClass() : "",
+                         AttributeTag.class.getName());
+            }
         }
         result.append("\n");
         return result.toString();
@@ -149,11 +164,27 @@ public class EaElement {
 
     public String listTaggedValues() {
         final StringBuilder result = new StringBuilder();
-        for (final TaggedValue taggedValue : theElement.GetTaggedValuesEx()) {
-            result.append(" Tag (Ex): " + taggedValue.GetName() + " : [" + taggedValue.GetValue() + "]");
+        return findTags(result, theElement.GetTaggedValuesEx(), theElement.GetTaggedValues());
+    }
+
+    private String findTags(final StringBuilder result, final Collection<TaggedValue> taggedValuesEx, final Collection<TaggedValue> taggedValues) {
+        for (final Object objectTag : taggedValuesEx) {
+            if (objectTag instanceof TaggedValue) {
+                final TaggedValue taggedValue = (TaggedValue) objectTag;
+                result.append(" Tag (Ex): " + taggedValue.GetName() + " : [" + taggedValue.GetValue() + "]");
+            } else {
+                LOG.warn("[{}] (type : [{}]) not instamce of [{}]", objectTag, objectTag != null ? objectTag.getClass() : "",
+                         TaggedValue.class.getName());
+            }
         }
-        for (final TaggedValue taggedValue : theElement.GetTaggedValues()) {
-            result.append(" Tag : " + taggedValue.GetName() + " : [" + taggedValue.GetValue() + "]");
+        for (final Object objectTag : taggedValues) {
+            if (objectTag instanceof TaggedValue) {
+                final TaggedValue taggedValue = (TaggedValue) objectTag;
+                result.append(" Tag : " + taggedValue.GetName() + " : [" + taggedValue.GetValue() + "]");
+            } else {
+                LOG.warn("[{}] (type : [{}]) not instamce of [{}]", objectTag, objectTag != null ? objectTag.getClass() : "",
+                         TaggedValue.class.getName());
+            }
         }
         return result.toString();
     }
@@ -256,7 +287,6 @@ public class EaElement {
         return theElement.GetAttributes();
     }
 
-
     public Collection<TaggedValue> getTaggedValuesEx() {
         return theElement.GetTaggedValuesEx();
     }
@@ -289,7 +319,7 @@ public class EaElement {
     public EaDiagram findDiagram(final String diagramName) {
         for (final Diagram diagram : theElement.GetDiagrams()) {
             if (diagram.GetName()
-                    .equals(diagramName)) {
+                       .equals(diagramName)) {
                 final EaDiagram eaDiagram = new EaDiagram(repos, diagram, repos.getPackagePath(repos.findPackageByID(theElement.GetPackageID())));
                 LOG.info("Found element diagram for {}: {}:{}", getName(), eaDiagram.getPathname(), eaDiagram.getName());
                 return eaDiagram;
@@ -320,8 +350,8 @@ public class EaElement {
      */
     public void updateTaggedValue(final TagValue tagValue) {
         LOG.debug("**************** Before: {}", listProperties());
-        String tagName = tagValue.getKey();
-        String value = tagValue.getValue();
+        final String tagName = tagValue.getKey();
+        final String value = tagValue.getValue();
         LOG.debug("[{}] Looking for [{}]:[{}]", getName(), tagName, value);
         final String trimmedName = trimToEmpty(tagName);
         final Collection<TaggedValue> taggedValues = theElement.GetTaggedValues();
@@ -331,7 +361,7 @@ public class EaElement {
         for (final TaggedValue taggedValue : taggedValues) {
             LOG.debug("[{}] has tagged value [{}]:[{}]", getName(), taggedValue.GetName(), taggedValue.GetValue());
             if (trimmedName.equalsIgnoreCase(taggedValue.GetName()
-                    .trim())) {
+                                                        .trim())) {
                 indexesToRemove.add(i);
             }
             ++i;
@@ -349,7 +379,7 @@ public class EaElement {
         taggedValue.Update();
         taggedValues.Refresh();
         theElement.GetTaggedValuesEx()
-                .Refresh();
+                  .Refresh();
         theElement.Update();
         theElement.Refresh();
         LOG.debug("Added [{}]:[{}]", trimmedName, taggedValue);
@@ -363,21 +393,22 @@ public class EaElement {
         final String target = association.getTarget();
         final List<EaElement> targetElements = repos.findElementsInPackage(targetPackage, target);
         if (targetElements.size() != 1) {
-            LOG.warn("Unable to find unique target for connector from [{}] to [{}]:[{}]. Found : {}", getName(), targetPackage, target, targetElements);
+            LOG.warn("Unable to find unique target for connector from [{}] to [{}]:[{}]. Found : {}", getName(), targetPackage, target,
+                     targetElements);
             return;
         }
         final EaElement targetElement = targetElements.get(0);
         for (final Connector connector : connectors) {
             try {
                 LOG.debug("Connector [{}] ", BeanUtils.describe(new EaConnector(repos, connector))
-                        .toString()
-                        .replaceAll(",", "\n"));
-            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                                                      .toString()
+                                                      .replaceAll(",", "\n"));
+            } catch (final IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                 e.printStackTrace();
             }
             final int otherId = connector.GetSupplierID();
 
-//            final Element other = repos.findElementByID(otherId);
+            //            final Element other = repos.findElementByID(otherId);
             if (otherId == targetElement.getId()
                     && EaConnector.equals(connector, association)) {
                 LOG.info("Updating association");
@@ -386,7 +417,7 @@ public class EaElement {
             }
         }
         final Connector connector = connectors.AddNew("", EaMetaType.fromString(association.getType())
-                .toEaString());
+                                                                    .toEaString());
         connector.SetClientID(theElement.GetElementID());
         connector.SetSupplierID(targetElement.getId());
         updateConnector(association, connector);
@@ -402,8 +433,8 @@ public class EaElement {
             updateOperationsCache(methods);
         }
         LOG.debug("Current Methods: \n {}", operationSet.stream()
-                .map(no.bouvet.ohs.ea.dd.Operation::getSignature)
-                .collect(Collectors.joining("\n")));
+                                                        .map(no.bouvet.ohs.ea.dd.Operation::getSignature)
+                                                        .collect(Collectors.joining("\n")));
         LOG.info("Updating operation ? [{}]", operation.getName());
         if (hasMethodMatching(methods, operation)) {
             LOG.info("Method with same signature already present, not adding or changing, [{}]", operation.getSignature());
@@ -418,7 +449,7 @@ public class EaElement {
         short index = 0;
         for (final Method method : methods) {
             if (method.GetName()
-                    .equalsIgnoreCase(name)) {
+                      .equalsIgnoreCase(name)) {
                 toBeDeleted.add(index);
             }
             ++index;
@@ -452,21 +483,21 @@ public class EaElement {
             updateOperationsCache(methods);
         }
         return operationSet.contains(operation);
-//        for (Method method : methods) {
-//            no.bouvet.ohs.ea.dd.Operation op = new no.bouvet.ohs.ea.dd.Operation();
-//            op.getParameters().add(new no.bouvet.ohs.ea.dd.Parameter())
-//            if (method.GetName()
-//                      .equalsIgnoreCase(operation.getName())) {
-//                if (!operation.getReturnType()
-//                              .equalsIgnoreCase(method.GetReturnType())) {
-//                    return false;
-//                        return false;
-//                    }
-//                }
-//                return true;
-//            }
-//        }
-//        return false;
+        //        for (Method method : methods) {
+        //            no.bouvet.ohs.ea.dd.Operation op = new no.bouvet.ohs.ea.dd.Operation();
+        //            op.getParameters().add(new no.bouvet.ohs.ea.dd.Parameter())
+        //            if (method.GetName()
+        //                      .equalsIgnoreCase(operation.getName())) {
+        //                if (!operation.getReturnType()
+        //                              .equalsIgnoreCase(method.GetReturnType())) {
+        //                    return false;
+        //                        return false;
+        //                    }
+        //                }
+        //                return true;
+        //            }
+        //        }
+        //        return false;
     }
 
     private void updateConnector(final no.bouvet.ohs.ea.dd.Association association, final Connector connector) {
@@ -475,12 +506,11 @@ public class EaElement {
         }
         if (isNotBlank(association.getTargetRole())) {
             connector.GetSupplierEnd()
-                    .SetRole(association.getTargetRole());
+                     .SetRole(association.getTargetRole());
         }
         connector.Update();
         theElement.Update();
     }
-
 
     private void updateImageTag(final String imageUrl) {
         final String oldTag = trimToEmpty(theElement.GetTag())
@@ -491,7 +521,8 @@ public class EaElement {
         theElement.Update();
     }
 
-    public EaMethod addMethod(final String methodName, final String returnType, final Collection<Method> methods, final List<no.bouvet.ohs.ea.dd.Parameter> parameters) {
+    public EaMethod addMethod(final String methodName, final String returnType, final Collection<Method> methods,
+                              final List<no.bouvet.ohs.ea.dd.Parameter> parameters) {
         final Method method = methods.AddNew(methodName, returnType);
         method.Update();
         methods.Refresh();
@@ -508,12 +539,12 @@ public class EaElement {
         short index = 0;
         for (final Method method : theElement.GetMethods()) {
             if (method.GetName()
-                    .equals(methodName) && method.GetReturnType()
-                    .equals(returnType)) {
+                      .equals(methodName) && method.GetReturnType()
+                                                   .equals(returnType)) {
                 theElement.GetMethods()
-                        .Delete(index);
+                          .Delete(index);
                 theElement.GetMethods()
-                        .Refresh();
+                          .Refresh();
                 operationSet.remove(operationFromMethod(method));
                 return true;
             }
@@ -534,7 +565,7 @@ public class EaElement {
         final Instant instant;
         try {
             instant = theElement.GetCreated()
-                    .toInstant();
+                                .toInstant();
             return ZonedDateTime.ofInstant(instant, zoneId);
         } catch (final Exception e) {
             LOG.error("Unable to convert [{}] to a ZonedDateTime in element [{}]", theElement.GetCreated(), toString());
