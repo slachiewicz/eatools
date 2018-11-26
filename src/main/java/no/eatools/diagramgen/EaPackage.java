@@ -40,12 +40,12 @@ public class EaPackage {
     private static final transient Logger LOG = LoggerFactory.getLogger(EaPackage.class);
 
     final String name;
-    final EaRepo repos;
-    final Package me;
-    final Map<Connector, String> connectorMap = new HashMap<>();
-    final Set<String> allConnectors = new HashSet<>();
-    final EaPackage parent;
-    final int id;
+    private final EaRepo repos;
+    private final Package me;
+//    final Map<Connector, String> connectorMap = new HashMap<>();
+    private final Set<String> allConnectors = new HashSet<>();
+    private final EaPackage parent;
+    private final int id;
     private final int parentId;
     private Map<EaMetaType, List<Element>> elementCache = new HashMap<>();
 
@@ -59,8 +59,7 @@ public class EaPackage {
             id = 0;
             parentId = 0;
         } else {
-            this.me = cachedPkg
-                    .unwrap();
+            this.me = cachedPkg.unwrap();
             id = me.GetPackageID();
             parentId = me.GetParentID();
         }
@@ -91,7 +90,7 @@ public class EaPackage {
      * @param type the type of Element to look for.
      * @return a List of found Elements, possibly empty, but never null.
      */
-    public List<Element> findElementsOfType(final EaMetaType type) {
+    List<Element> findElementsOfType(final EaMetaType type) {
         if (me == null) {
             return emptyList();
         }
@@ -112,7 +111,7 @@ public class EaPackage {
     /**
      * Generate relationships between subpackages based on relationships between contained classes
      */
-    public void generatePackageRelationships() {
+    void generatePackageRelationships() {
         if (me == null) {
             LOG.warn("Cannot generate relationships. Package {} is not found", name);
             return;
@@ -147,7 +146,8 @@ public class EaPackage {
                 final String msg = "Processing " + eaElement.toString();
                 LOG.info(msg);
                 System.out.println(msg);
-                final DDEntry elementLine = createElementAutoDiagramAndLine(eaElement);
+                String imageUrl = createAutoDiagram(eaElement);
+                final DDEntry elementLine = createDDEntry(eaElement, imageUrl);
                 attributes.add(elementLine);
                 for (final Attribute attribute : eaElement.getAttributes()) {
                     attributes.add(createAttributeLine(eaElement, attribute));
@@ -156,15 +156,7 @@ public class EaPackage {
         }
     }
 
-    private DDEntry createElementAutoDiagramAndLine(final EaElement eaElement) {
-        final EaDiagram eaDiagram;
-        final String imageUrl;
-        if (EaApplicationProperties.EA_AUTO_DIAGRAM_GENERATE.toBoolean()) {
-            eaDiagram = repos.createOrUpdateStandardDiagram(eaElement);
-            imageUrl = eaDiagram != null ? eaDiagram.writeImageToFile(true) : EMPTY;
-        } else {
-            imageUrl = EMPTY;
-        }
+    private DDEntry createDDEntry(final EaElement eaElement, String imageUrl) {
         eaElement.setImageUrl(imageUrl);
         final String description = eaElement.getNotes();//.replaceAll("\n", "\\\\n").replaceAll("\r", "");
 
@@ -184,6 +176,18 @@ public class EaPackage {
             ddEntry.addTaggedValue(attributeTag.GetName(), attributeTag.GetValue());
         }
         return ddEntry;
+    }
+
+    private String createAutoDiagram(EaElement eaElement) {
+        EaDiagram eaDiagram;
+        final String imageUrl;
+        if (EaApplicationProperties.EA_AUTO_DIAGRAM_GENERATE.toBoolean()) {
+            eaDiagram = repos.createOrUpdateStandardDiagram(eaElement);
+            imageUrl = eaDiagram != null ? eaDiagram.writeImageToFile(true) : EMPTY;
+        } else {
+            imageUrl = EMPTY;
+        }
+        return imageUrl;
     }
 
     private DDEntry createAttributeLine(final EaElement element, final Attribute attribute) {
@@ -319,7 +323,7 @@ public class EaPackage {
         LOG.debug(otherPkg.GetName());
     }
 
-    public void listElementProperties() {
+    void listElementProperties() {
         for (final Element element : me.GetElements()) {
             new EaElement(element, repos).listProperties();
         }
@@ -396,7 +400,7 @@ public class EaPackage {
 //        attribute.Update();
     }
 
-    public void listElements(final EaMetaType metaType) {
+    void listElements(final EaMetaType metaType) {
         final List<String> components = new ArrayList<>();
         components.add(new StringJoiner(";").add(metaType.toString())
                                             .add(" name")
@@ -423,16 +427,16 @@ public class EaPackage {
         }
         if (repos.packageMatch(pkg)) {
             for (final Element element : pkg.GetElements()) {
-                listElementAttributes(result, metaType, element);
+                listElementMetaAttributes(result, metaType, element);
             }
         } else {
             System.out.println("************** Skipping package " + pkg.GetName() + " id:" + pkg.GetPackageID());
         }
     }
 
-    private void listElementAttributes(final List<String> result, final EaMetaType metaType, final Element element) {
+    private void listElementMetaAttributes(final List<String> result, final EaMetaType metaType, final Element element) {
         for (final Element element1 : element.GetElements()) {
-            listElementAttributes(result, metaType, element1);
+            listElementMetaAttributes(result, metaType, element1);
         }
         if (metaType.equals(element.GetType())
                 || metaType.equals(element.GetClassifierType())) {
@@ -459,7 +463,7 @@ public class EaPackage {
                     .add(element.GetAuthor());
     }
 
-    public void generateAutoDiagramsRecursively() {
+    void generateAutoDiagramsRecursively() {
         for (final Element element : me.GetElements()) {
             final EaDiagram eaDiagram = repos.createOrUpdateStandardDiagram(new EaElement(element, repos));
             if (eaDiagram != null) {
@@ -565,7 +569,7 @@ public class EaPackage {
         return result;
     }
 
-    public Boolean createBaseline(final String versionNo, final String notes) {
+    Boolean createBaseline(final String versionNo, final String notes) {
         return repos.createBaseline(me.GetPackageGUID(), versionNo, notes);
     }
 

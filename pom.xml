@@ -7,10 +7,10 @@
     <packaging>jar</packaging>
     <name>EaTools</name>
     <description>
-        A little tool for generating PNG diagram files with logical file names, i.e. the same names as used in the
+        A tool for generating PNG diagram files with logical file names, i.e. the same names as used in the
         model in EA. And other EA-related chores...
     </description>
-    <version>1.1-SNAPSHOT</version>
+    <version>2.0</version>
 
     <scm>
         <connection>scm:svn:http://127.0.0.1/dummy</connection>
